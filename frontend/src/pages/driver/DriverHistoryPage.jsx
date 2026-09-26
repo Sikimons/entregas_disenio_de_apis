@@ -72,10 +72,10 @@ export default function DriverHistoryPage() {
     if (activeTab !== 'mapa' || !selected || selected.latitude == null || selected.longitude == null || !mapContainerRef.current) return
 
     const map = L.map(mapContainerRef.current).setView([selected.latitude, selected.longitude], 16)
-    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx a Carto): algunas redes
+    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx): algunas redes
     // moviles/corporativas del conductor bloquean CDNs de terceros directo.
-    L.tileLayer('/map-tiles/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    L.tileLayer('/map-tiles/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map)
     L.circleMarker([selected.latitude, selected.longitude], {

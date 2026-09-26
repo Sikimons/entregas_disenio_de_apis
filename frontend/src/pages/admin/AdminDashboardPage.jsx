@@ -68,10 +68,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (mapRef.current || !mapContainerRef.current) return
     const map = L.map(mapContainerRef.current).setView([-1.8312, -78.1834], 6) // Ecuador
-    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx a Carto): algunas redes
+    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx): algunas redes
     // moviles/corporativas bloquean CDNs de terceros directo.
-    L.tileLayer('/map-tiles/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    L.tileLayer('/map-tiles/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map)
     markersLayerRef.current = L.layerGroup().addTo(map)
