@@ -4,23 +4,72 @@ Aplicacion independiente con frontend React, backend Java 17 / Spring Boot y
 PostgreSQL. Gestiona sus propias facturas, productos, PIN, fotos, coordenadas,
 conductores e historial. El paquete Java es `com.ruta.deliverypin`.
 
-## Iniciar con datos de prueba
+## Desplegar con data mock
+
+Necesitas Docker Desktop abierto. Para generar lotes adicionales tambien necesitas
+Python 3; la carga inicial no requiere Python ni ejecutar un script manualmente.
+
+### 1. Levantar los servicios
+
+Abre PowerShell en la carpeta del proyecto y ejecuta:
 
 ```powershell
+cd C:\Users\fabia\Desktop\middleware_account_move_delivery_pin
 docker compose -f docker-compose.mock.yml up -d --build
 ```
+
+Este comando levanta PostgreSQL, el backend y el frontend. El archivo Compose
+ya activa `APP_DEMO_ENABLED=true` y monta `demo/invoices.json` para la carga inicial.
+Espera a que termine el arranque del backend. Puedes consultar el estado y los logs:
+
+```powershell
+docker compose -f docker-compose.mock.yml ps
+docker compose -f docker-compose.mock.yml logs --tail 50 backend
+```
+
+### 2. Consultar las facturas y los PIN
 
 - Aplicacion: http://localhost:15180
 - API: http://localhost:18091
 - Administrador: `admin` / `admin123`
 - Conductor existente: `conductor` / `conductor123`
 
+Entra como administrador y abre **Facturas** para consultar los datos y los PIN.
 En una instalacion nueva, crea el conductor desde **Equipo**. El administrador
 se crea automaticamente. `demo/invoices.json` carga las 59 facturas originales
-solo si no hay facturas en la base. Incluye las 50 facturas aleatorias con 314
-lineas de supermercado en total; los PIN se conservan en los CSV de `demo/`.
+solo si no hay facturas en la base. El conjunto contiene 314 lineas de productos
+e incluye las 50 facturas aleatorias de supermercado. Sus numeros y PIN estan en
+[`demo/facturas_y_pines.csv`](demo/facturas_y_pines.csv).
 El volumen `middleware_data` conserva usuarios, entregas, fotos y facturas.
-Los reinicios no restablecen datos.
+Si ya tienes facturas cargadas, volver a levantar los servicios no las reemplaza
+ni vuelve a importar el JSON.
+
+### 3. Generar otras 50 facturas (opcional)
+
+Con los servicios encendidos, ejecuta desde la misma carpeta:
+
+```powershell
+python scripts/generate_invoices.py --count 50
+```
+
+El script crea y publica 50 facturas adicionales con productos de supermercado,
+numeros aleatorios como `001-104-0000001234` y PIN de seis digitos. Se agregan a las
+facturas existentes. Actualiza la pantalla **Facturas** para verlas.
+
+El CSV del nuevo lote se guarda en `demo/nuevo_lote_facturas_y_pines.csv`.
+Cada ejecucion reemplaza ese CSV, pero conserva las facturas anteriores en la base.
+Puedes cambiar `--count 50` por la cantidad deseada, entre 1 y 1000.
+El script usa por defecto la API `http://localhost:18091` y `admin` / `admin123`;
+configura `RUTA_API`, `RUTA_ADMIN` y `RUTA_PASSWORD` si cambias esos valores.
+
+### 4. Apagar el entorno conservando los datos
+
+```powershell
+docker compose -f docker-compose.mock.yml down
+```
+
+Para volver a iniciarlo, repite el comando del paso 1. Las facturas, los PIN y las
+entregas permanecen guardados en el volumen de PostgreSQL.
 
 ## Uso
 
@@ -69,15 +118,6 @@ python scripts/verify_delivery.py
 
 Las pruebas crean sus propios pedidos con prefijo `VERIFY/`. Comprueban permisos,
 preservacion de datos, publicacion, PIN, concurrencia, foto, GPS e incidencias.
-Para generar otro lote de supermercado y su CSV:
-
-```powershell
-python scripts/generate_invoices.py --count 50
-```
-
-El lote nuevo se agrega sin borrar el anterior; su CSV se guarda en
-`demo/nuevo_lote_facturas_y_pines.csv`. Configura `RUTA_API`, `RUTA_ADMIN` y
-`RUTA_PASSWORD` si cambias los datos de acceso locales.
 
 El backend usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`,
 `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
@@ -88,9 +128,4 @@ El Compose habitual (`docker-compose.yml`) conserva los puertos 5180/8091 y
 lee `backend/.env`. No combines ambos Compose. Configura las claves y el origen
 de la aplicacion para ese entorno. El frontend usa `/api` en el mismo origen.
 
-```powershell
-docker compose -f docker-compose.mock.yml down
-```
-
-Este comando apaga los servicios conservando sus datos. Los respaldos locales
-de la migracion estan en `output/backups/` y no se versionan.
+Los respaldos locales de la migracion estan en `output/backups/` y no se versionan.
