@@ -5,4 +5,5 @@
 backend/.env
 output/
 .playwright-cli/
+docker-compose.yml
 /demo
