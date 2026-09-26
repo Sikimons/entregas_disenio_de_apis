@@ -5,6 +5,8 @@ import com.ruta.deliverypin.domain.port.in.ListDeliveryAttemptsInRangeUseCase;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.DeliveryAttemptResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.DriverMetricResponse;
 import org.springframework.format.annotation.DateTimeFormat;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +20,7 @@ import java.util.List;
  * y metricas por conductor, ambos acotados a un rango de fechas.
  */
 @RestController
+@Tag(name = "Panorama", description = "ADMIN: mapa y metricas por rango de fechas ISO 8601")
 @RequestMapping("/api/admin/dashboard")
 public class AdminDashboardController {
 
@@ -33,6 +36,7 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/map")
+    @Operation(summary = "Consultar entregas e incidencias con ubicacion")
     public List<DeliveryAttemptResponse> map(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to
@@ -44,6 +48,7 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/metrics")
+    @Operation(summary = "Consultar metricas por conductor")
     public List<DriverMetricResponse> metrics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to

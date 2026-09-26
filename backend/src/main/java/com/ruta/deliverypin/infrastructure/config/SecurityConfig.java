@@ -69,6 +69,7 @@ public class SecurityConfig {
                             response.getWriter().write("{\"message\":\"No tienes permiso para realizar esta accion.\"}");
                         }))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/driver/**").hasAnyRole("ADMIN", "CONDUCTOR")

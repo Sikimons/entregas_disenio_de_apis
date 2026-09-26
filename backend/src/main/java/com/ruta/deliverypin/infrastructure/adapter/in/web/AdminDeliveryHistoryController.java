@@ -7,6 +7,8 @@ import com.ruta.deliverypin.domain.port.in.ListDeliveryHistoryUseCase;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.DeliveryAttemptResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.PageResponse;
 import org.springframework.http.MediaType;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Tag(name = "Historial administrativo", description = "ADMIN: historial y fotos de todo el equipo")
 @RequestMapping("/api/admin/deliveries")
 public class AdminDeliveryHistoryController {
 
@@ -30,6 +33,7 @@ public class AdminDeliveryHistoryController {
     }
 
     @GetMapping
+    @Operation(summary = "Consultar el historial paginado de entregas")
     public PageResponse<DeliveryAttemptResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -39,6 +43,7 @@ public class AdminDeliveryHistoryController {
     }
 
     @GetMapping("/{id}/photo")
+    @Operation(summary = "Descargar la foto de una entrega")
     public ResponseEntity<byte[]> photo(@PathVariable Long id) {
         return getDeliveryPhotoUseCase.getPhoto(id)
                 .map(this::toImageResponse)

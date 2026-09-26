@@ -20,6 +20,8 @@ import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.ReportIncidentRequ
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.ReportIncidentResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.security.CurrentDriverResolver;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +33,7 @@ import java.util.List;
  * o reportar una incidencia cuando no se puede entregar.
  */
 @RestController
+@Tag(name = "Conductor", description = "ADMIN o CONDUCTOR: consulta de pendientes, confirmacion y seguimiento propio")
 @RequestMapping("/api/driver")
 public class DriverDeliveryController {
 
@@ -61,16 +64,19 @@ public class DriverDeliveryController {
     }
 
     @GetMapping("/invoices")
+    @Operation(summary = "Buscar facturas pendientes", description = "Busca por numero o cliente y devuelve hasta 20 resultados.")
     public List<InvoiceResponse> search(@RequestParam("q") String query) {
         return searchPendingInvoicesUseCase.search(query).stream().map(InvoiceResponse::from).toList();
     }
 
     @GetMapping("/invoices/{id}/lines")
+    @Operation(summary = "Consultar los productos de una factura")
     public List<InvoiceLineResponse> lines(@PathVariable Long id) {
         return listInvoiceLinesUseCase.list(id).stream().map(InvoiceLineResponse::from).toList();
     }
 
     @PostMapping("/deliveries/confirm")
+    @Operation(summary = "Confirmar una entrega con PIN, GPS y foto", description = "La foto debe enviarse en Base64. Guarda la confirmacion y la evidencia en una sola transaccion.")
     public ConfirmDeliveryResponse confirmDelivery(@Valid @RequestBody ConfirmDeliveryRequest request) {
         Driver driver = currentDriverResolver.resolve();
         DeliveryPhoto photo = new DeliveryPhoto(request.photoBase64(), request.photoFilename(), request.photoContentType());
@@ -84,6 +90,7 @@ public class DriverDeliveryController {
     }
 
     @PostMapping("/deliveries/incident")
+    @Operation(summary = "Reportar una incidencia de entrega")
     public ReportIncidentResponse reportIncident(@Valid @RequestBody ReportIncidentRequest request) {
         Driver driver = currentDriverResolver.resolve();
         var command = new ReportIncidentUseCase.ReportIncidentCommand(
@@ -95,6 +102,7 @@ public class DriverDeliveryController {
     }
 
     @GetMapping("/deliveries/history")
+    @Operation(summary = "Consultar el historial paginado del usuario autenticado")
     public PageResponse<DeliveryAttemptResponse> history(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -105,6 +113,7 @@ public class DriverDeliveryController {
     }
 
     @GetMapping("/deliveries/{id}/photo")
+    @Operation(summary = "Descargar la foto de una entrega propia")
     public ResponseEntity<byte[]> deliveryPhoto(@PathVariable Long id) {
         Driver driver = currentDriverResolver.resolve();
         return getDriverDeliveryPhotoUseCase.getPhoto(id, driver.getId())

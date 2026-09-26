@@ -9,11 +9,14 @@ import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.CreateDriverReques
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.DriverResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.UpdateDriverRequest;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@Tag(name = "Equipo", description = "ADMIN: gestion de usuarios y conductores")
 @RequestMapping("/api/admin/users")
 public class AdminDriverController {
 
@@ -35,11 +38,13 @@ public class AdminDriverController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar usuarios")
     public List<DriverResponse> list() {
         return listDriversUseCase.listAll().stream().map(DriverResponse::from).toList();
     }
 
     @PostMapping
+    @Operation(summary = "Crear un usuario")
     public DriverResponse create(@Valid @RequestBody CreateDriverRequest request) {
         Driver created = createDriverUseCase.create(new CreateDriverUseCase.CreateDriverCommand(
                 request.username(), request.password(), request.fullName(), request.role()
@@ -48,6 +53,7 @@ public class AdminDriverController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar datos, estado o clave de un usuario")
     public DriverResponse update(@PathVariable Long id, @Valid @RequestBody UpdateDriverRequest request) {
         Driver updated = updateDriverUseCase.update(id, new UpdateDriverUseCase.UpdateDriverCommand(
                 request.fullName(), request.active(), request.password()
@@ -56,6 +62,7 @@ public class AdminDriverController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar un usuario")
     public void delete(@PathVariable Long id) {
         deleteDriverUseCase.delete(id);
     }

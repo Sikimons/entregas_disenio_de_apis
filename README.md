@@ -83,6 +83,33 @@ Solo los administradores pueden consultar los PIN. La busqueda del conductor
 muestra hasta 20 resultados; utiliza el numero completo para encontrar una factura.
 En el navegador permite el acceso a ubicacion/camara desde `localhost`.
 
+## Swagger UI y OpenAPI
+
+Con el entorno mock encendido, abre:
+
+- **Swagger UI:** http://localhost:18091/swagger-ui/index.html
+- **OpenAPI JSON:** http://localhost:18091/v3/api-docs
+- **OpenAPI YAML:** http://localhost:18091/v3/api-docs.yaml
+
+Si acabas de incorporar esta configuracion, reconstruye el backend:
+
+```powershell
+docker compose -f docker-compose.mock.yml up -d --build backend
+```
+
+Para probar los endpoints desde Swagger:
+
+1. Abre **Autenticacion → POST /api/auth/login → Try it out**.
+2. Ingresa `admin` / `admin123` (o las credenciales de tu conductor) y pulsa **Execute**.
+3. Copia el campo `token` de la respuesta.
+4. Pulsa **Authorize**, pega solo el token, sin escribir `Bearer`, y confirma.
+5. Abre cualquier endpoint permitido para tu rol y usa **Try it out → Execute**.
+
+La documentacion se puede abrir sin iniciar sesion; las operaciones de negocio
+mantienen la autenticacion JWT y sus permisos. Las llamadas desde Swagger usan
+la base del entorno actual y pueden crear o modificar datos.
+Con `docker-compose.yml`, usa el puerto `8091` en las URL anteriores.
+
 ## API de facturas (administrador)
 
 - `GET /api/admin/invoices?q=`: consultar facturas, estados y PIN.

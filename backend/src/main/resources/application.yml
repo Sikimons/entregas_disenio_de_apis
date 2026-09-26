@@ -34,6 +34,14 @@ app:
     bootstrap-username: ${ADMIN_USERNAME:admin}
     bootstrap-password: ${ADMIN_PASSWORD:admin123}
 
+springdoc:
+  paths-to-match: /api/**
+  override-with-generic-response: false
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+
 logging:
   level:
     com.ruta.deliverypin: INFO
