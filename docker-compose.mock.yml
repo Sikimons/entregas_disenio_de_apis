@@ -1,0 +1,44 @@
+name: delivery-pin-mock
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: delivery_pin_middleware
+      POSTGRES_USER: delivery_pin
+      POSTGRES_PASSWORD: mock_middleware
+    volumes:
+      - middleware_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U delivery_pin -d delivery_pin_middleware"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: delivery_pin_middleware
+      DB_USERNAME: delivery_pin
+      DB_PASSWORD: mock_middleware
+      APP_DEMO_ENABLED: "true"
+      APP_DEMO_FILE: file:/app/demo/invoices.json
+      JWT_SECRET: local_mock_only_secret_at_least_32_characters_long
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin123
+      CORS_ALLOWED_ORIGINS: http://localhost:15180,http://127.0.0.1:15180
+    volumes:
+      - ./demo:/app/demo:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18091:8080"
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:15180:80"
+volumes:
+  middleware_data:

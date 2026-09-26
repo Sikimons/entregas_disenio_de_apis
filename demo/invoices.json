@@ -1,0 +1,2693 @@
+[
+  {
+    "id": 1,
+    "number": "MOCK/2026/0001",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "123456",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 12,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 2.0
+      },
+      {
+        "id": 13,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 14,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 1.0
+      },
+      {
+        "id": 15,
+        "description": "Aceite de girasol - botella 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 16,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 2.0
+      },
+      {
+        "id": 17,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "number": "MOCK/2026/0002",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "000042",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 18,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 19,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 20,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 21,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 22,
+        "description": "Cafe molido - paquete 250 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 23,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "number": "MOCK/2026/0003",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": false,
+    "pin": null,
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 24,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 25,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 26,
+        "description": "Lenteja seca - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 27,
+        "description": "Salsa de tomate - frasco 400 g",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "number": "MOCK/2026/0004",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "draft",
+    "requires_pin": true,
+    "pin": "444444",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 28,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 29,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 2.0
+      },
+      {
+        "id": 30,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 31,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "number": "MOCK/2026/0005",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "555555",
+    "confirmed": true,
+    "confirmed_at": "2026-09-26 20:04:15.975620",
+    "latitude": -2.170998,
+    "longitude": -79.922359,
+    "driver_name": "Conductor previo",
+    "lines": [
+      {
+        "id": 32,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 33,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 34,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 35,
+        "description": "Papas fritas - funda 150 g",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "number": "MOCK/2026/0006",
+    "partner_name": "Cliente sin GPS",
+    "delivery_address": "Av. Principal, Guayaquil, Guayas",
+    "expected_latitude": null,
+    "expected_longitude": null,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "666666",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 36,
+        "description": "Banano - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 37,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 38,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 0.75
+      },
+      {
+        "id": 39,
+        "description": "Papa chola - venta por kg",
+        "quantity": 2.5
+      },
+      {
+        "id": 40,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 1.25
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "number": "MOCK/2026/0007",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "draft",
+    "requires_pin": false,
+    "pin": null,
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 41,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 1.0
+      },
+      {
+        "id": 42,
+        "description": "Jabon de tocador - paquete de 3 unidades",
+        "quantity": 2.0
+      },
+      {
+        "id": 43,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 1.0
+      },
+      {
+        "id": 44,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "number": "MOCK/2026/0008",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "cancel",
+    "requires_pin": true,
+    "pin": "888888",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 45,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 46,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 47,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "number": "MOCK/2026/0009",
+    "partner_name": "Cliente Demo Guayaquil",
+    "delivery_address": "Av. Francisco de Orellana, Casa 10, Guayaquil, Guayas",
+    "expected_latitude": -2.170998,
+    "expected_longitude": -79.922359,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": null,
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 48,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 49,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 50,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "number": "001-104-2954073967",
+    "partner_name": "Cliente Supermercado 01 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 01, Guayaquil",
+    "expected_latitude": -2.1808317,
+    "expected_longitude": -79.9171698,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "553490",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 52,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 53,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 54,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 5.0
+      },
+      {
+        "id": 55,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 6.0
+      },
+      {
+        "id": 56,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 57,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 58,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 1.5
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "number": "001-104-6845087369",
+    "partner_name": "Cliente Supermercado 02 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 02, Guayaquil",
+    "expected_latitude": -2.1777275,
+    "expected_longitude": -79.9338561,
+    "invoice_date": "2026-09-25",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "328520",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 59,
+        "description": "Jabon de tocador - paquete de 3 unidades",
+        "quantity": 3.0
+      },
+      {
+        "id": 60,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 61,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "number": "001-104-3640955438",
+    "partner_name": "Cliente Supermercado 03 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 03, Guayaquil",
+    "expected_latitude": -2.1651567,
+    "expected_longitude": -79.9356342,
+    "invoice_date": "2026-09-19",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "850245",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 62,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 63,
+        "description": "Salsa de tomate - frasco 400 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 64,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 3.0
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "number": "001-104-3215787302",
+    "partner_name": "Cliente Supermercado 04 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 04, Guayaquil",
+    "expected_latitude": -2.1737569,
+    "expected_longitude": -79.9364756,
+    "invoice_date": "2026-09-25",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "180909",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 65,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 0.5
+      },
+      {
+        "id": 66,
+        "description": "Salsa de tomate - frasco 400 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 67,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 4.0
+      },
+      {
+        "id": 68,
+        "description": "Lenteja seca - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 69,
+        "description": "Cafe molido - paquete 250 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 70,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 71,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 72,
+        "description": "Aceite de girasol - botella 1 L",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "number": "001-104-8779151165",
+    "partner_name": "Cliente Supermercado 05 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 05, Guayaquil",
+    "expected_latitude": -2.1777293,
+    "expected_longitude": -79.9119401,
+    "invoice_date": "2026-09-15",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "429324",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 73,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 74,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 4.0
+      },
+      {
+        "id": 75,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 76,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "number": "001-104-0600050815",
+    "partner_name": "Cliente Supermercado 06 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 06, Guayaquil",
+    "expected_latitude": -2.1722495,
+    "expected_longitude": -79.9073643,
+    "invoice_date": "2026-09-13",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "740879",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 77,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 78,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 79,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 2.0
+      },
+      {
+        "id": 80,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 81,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "number": "001-104-8584643668",
+    "partner_name": "Cliente Supermercado 07 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 07, Guayaquil",
+    "expected_latitude": -2.1662948,
+    "expected_longitude": -79.9213749,
+    "invoice_date": "2026-09-21",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "646686",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 82,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 83,
+        "description": "Papas fritas - funda 150 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 84,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 85,
+        "description": "Papa chola - venta por kg",
+        "quantity": 1.25
+      },
+      {
+        "id": 86,
+        "description": "Salsa de tomate - frasco 400 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 87,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 88,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "number": "001-104-7632853243",
+    "partner_name": "Cliente Supermercado 08 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 08, Guayaquil",
+    "expected_latitude": -2.1806614,
+    "expected_longitude": -79.9181725,
+    "invoice_date": "2026-09-13",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "909200",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 89,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 6.0
+      },
+      {
+        "id": 90,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 1.0
+      },
+      {
+        "id": 91,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 92,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 1.25
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "number": "001-104-8583207447",
+    "partner_name": "Cliente Supermercado 09 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 09, Guayaquil",
+    "expected_latitude": -2.1841459,
+    "expected_longitude": -79.9070932,
+    "invoice_date": "2026-09-25",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "529440",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 93,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 94,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 3.0
+      },
+      {
+        "id": 95,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 96,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 97,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 1.0
+      },
+      {
+        "id": 98,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 1.5
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "number": "001-104-8621965712",
+    "partner_name": "Cliente Supermercado 10 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 10, Guayaquil",
+    "expected_latitude": -2.1587291,
+    "expected_longitude": -79.9204397,
+    "invoice_date": "2026-09-14",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "658586",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 99,
+        "description": "Jabon de tocador - paquete de 3 unidades",
+        "quantity": 3.0
+      },
+      {
+        "id": 100,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 101,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 6.0
+      },
+      {
+        "id": 102,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 2.0
+      },
+      {
+        "id": 103,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 0.75
+      },
+      {
+        "id": 104,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 105,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 106,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "number": "001-104-4181652699",
+    "partner_name": "Cliente Supermercado 01 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 01, Guayaquil",
+    "expected_latitude": -2.1808317,
+    "expected_longitude": -79.9171698,
+    "invoice_date": "2026-09-15",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "835238",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 107,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 108,
+        "description": "Lenteja seca - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 109,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 110,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 111,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 5.0
+      },
+      {
+        "id": 112,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 113,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 5.0
+      },
+      {
+        "id": 114,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 0.75
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "number": "001-104-2877472742",
+    "partner_name": "Cliente Supermercado 02 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 02, Guayaquil",
+    "expected_latitude": -2.1777275,
+    "expected_longitude": -79.9338561,
+    "invoice_date": "2026-09-16",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "139743",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 115,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 116,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 4.0
+      },
+      {
+        "id": 117,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 0.5
+      },
+      {
+        "id": 118,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 119,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 120,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 121,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "number": "001-104-1883725436",
+    "partner_name": "Cliente Supermercado 03 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 03, Guayaquil",
+    "expected_latitude": -2.1651567,
+    "expected_longitude": -79.9356342,
+    "invoice_date": "2026-09-24",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "588958",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 122,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 123,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 6.0
+      },
+      {
+        "id": 124,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 125,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 126,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 127,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 128,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 2.0
+      },
+      {
+        "id": 129,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 0.25
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "number": "001-104-9645143894",
+    "partner_name": "Cliente Supermercado 04 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 04, Guayaquil",
+    "expected_latitude": -2.1737569,
+    "expected_longitude": -79.9364756,
+    "invoice_date": "2026-09-18",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "409712",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 130,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 131,
+        "description": "Cafe molido - paquete 250 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 132,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 133,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 134,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 135,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 136,
+        "description": "Papa chola - venta por kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 137,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "number": "001-104-8282370602",
+    "partner_name": "Cliente Supermercado 05 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 05, Guayaquil",
+    "expected_latitude": -2.1777293,
+    "expected_longitude": -79.9119401,
+    "invoice_date": "2026-09-25",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "747949",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 138,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 139,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 140,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "number": "001-104-0992339002",
+    "partner_name": "Cliente Supermercado 06 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 06, Guayaquil",
+    "expected_latitude": -2.1722495,
+    "expected_longitude": -79.9073643,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "711875",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 141,
+        "description": "Papas fritas - funda 150 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 142,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 1.0
+      },
+      {
+        "id": 143,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 6.0
+      },
+      {
+        "id": 144,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "number": "001-104-8660525312",
+    "partner_name": "Cliente Supermercado 07 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 07, Guayaquil",
+    "expected_latitude": -2.1662948,
+    "expected_longitude": -79.9213749,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "989188",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 145,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 2.0
+      },
+      {
+        "id": 146,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 147,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "number": "001-104-8558220893",
+    "partner_name": "Cliente Supermercado 08 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 08, Guayaquil",
+    "expected_latitude": -2.1806614,
+    "expected_longitude": -79.9181725,
+    "invoice_date": "2026-09-14",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "834793",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 148,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 149,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 150,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 3.0
+      },
+      {
+        "id": 151,
+        "description": "Banano - venta por kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 152,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 153,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "number": "001-104-9111647591",
+    "partner_name": "Cliente Supermercado 09 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 09, Guayaquil",
+    "expected_latitude": -2.1841459,
+    "expected_longitude": -79.9070932,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "342032",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 154,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 155,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 156,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 157,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 158,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 159,
+        "description": "Aceite de girasol - botella 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 160,
+        "description": "Salsa de tomate - frasco 400 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 161,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "number": "001-104-0030453185",
+    "partner_name": "Cliente Supermercado 10 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 10, Guayaquil",
+    "expected_latitude": -2.1587291,
+    "expected_longitude": -79.9204397,
+    "invoice_date": "2026-09-17",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "795976",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 162,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 6.0
+      },
+      {
+        "id": 163,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 164,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 165,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 166,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 167,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "number": "001-104-4890047587",
+    "partner_name": "Cliente Supermercado 01 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 01, Guayaquil",
+    "expected_latitude": -2.1808317,
+    "expected_longitude": -79.9171698,
+    "invoice_date": "2026-09-13",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "542297",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 168,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 169,
+        "description": "Cafe molido - paquete 250 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 170,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "number": "001-104-7596148216",
+    "partner_name": "Cliente Supermercado 02 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 02, Guayaquil",
+    "expected_latitude": -2.1777275,
+    "expected_longitude": -79.9338561,
+    "invoice_date": "2026-09-15",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "693934",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 171,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 2.0
+      },
+      {
+        "id": 172,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 1.0
+      },
+      {
+        "id": 173,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 174,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 175,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "number": "001-104-5102506523",
+    "partner_name": "Cliente Supermercado 03 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 03, Guayaquil",
+    "expected_latitude": -2.1651567,
+    "expected_longitude": -79.9356342,
+    "invoice_date": "2026-09-18",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "434499",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 176,
+        "description": "Avena en hojuelas - funda 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 177,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 178,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "number": "001-104-4700618609",
+    "partner_name": "Cliente Supermercado 04 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 04, Guayaquil",
+    "expected_latitude": -2.1737569,
+    "expected_longitude": -79.9364756,
+    "invoice_date": "2026-09-23",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "655748",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 179,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 5.0
+      },
+      {
+        "id": 180,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 1.0
+      },
+      {
+        "id": 181,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 5.0
+      },
+      {
+        "id": 182,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "number": "001-104-5162241214",
+    "partner_name": "Cliente Supermercado 05 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 05, Guayaquil",
+    "expected_latitude": -2.1777293,
+    "expected_longitude": -79.9119401,
+    "invoice_date": "2026-09-17",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "905147",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 183,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 6.0
+      },
+      {
+        "id": 184,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 185,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 186,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 187,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 188,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 6.0
+      },
+      {
+        "id": 189,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 190,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "number": "001-104-7889485853",
+    "partner_name": "Cliente Supermercado 06 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 06, Guayaquil",
+    "expected_latitude": -2.1722495,
+    "expected_longitude": -79.9073643,
+    "invoice_date": "2026-09-13",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "041072",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 191,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 5.0
+      },
+      {
+        "id": 192,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 193,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 194,
+        "description": "Lenteja seca - funda 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 195,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "number": "001-104-5672741593",
+    "partner_name": "Cliente Supermercado 07 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 07, Guayaquil",
+    "expected_latitude": -2.1662948,
+    "expected_longitude": -79.9213749,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "415446",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 196,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 197,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 198,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 0.25
+      },
+      {
+        "id": 199,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 1.0
+      },
+      {
+        "id": 200,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "number": "001-104-5007441086",
+    "partner_name": "Cliente Supermercado 08 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 08, Guayaquil",
+    "expected_latitude": -2.1806614,
+    "expected_longitude": -79.9181725,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "144203",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 201,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 202,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 203,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 204,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 205,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 0.25
+      },
+      {
+        "id": 206,
+        "description": "Banano - venta por kg",
+        "quantity": 2.5
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "number": "001-104-9557724093",
+    "partner_name": "Cliente Supermercado 09 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 09, Guayaquil",
+    "expected_latitude": -2.1841459,
+    "expected_longitude": -79.9070932,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "909802",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 207,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 208,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 6.0
+      },
+      {
+        "id": 209,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 210,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 5.0
+      },
+      {
+        "id": 211,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "number": "001-104-5555113271",
+    "partner_name": "Cliente Supermercado 10 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 10, Guayaquil",
+    "expected_latitude": -2.1587291,
+    "expected_longitude": -79.9204397,
+    "invoice_date": "2026-09-12",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "581898",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 212,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 0.75
+      },
+      {
+        "id": 213,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 214,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 215,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 1.0
+      },
+      {
+        "id": 216,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 217,
+        "description": "Banano - venta por kg",
+        "quantity": 3.0
+      },
+      {
+        "id": 218,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 219,
+        "description": "Aceite de girasol - botella 1 L",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "number": "001-104-3542390551",
+    "partner_name": "Cliente Supermercado 01 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 01, Guayaquil",
+    "expected_latitude": -2.1808317,
+    "expected_longitude": -79.9171698,
+    "invoice_date": "2026-09-15",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "321195",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 220,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 221,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 5.0
+      },
+      {
+        "id": 222,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 223,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "number": "001-104-1936065832",
+    "partner_name": "Cliente Supermercado 02 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 02, Guayaquil",
+    "expected_latitude": -2.1777275,
+    "expected_longitude": -79.9338561,
+    "invoice_date": "2026-09-17",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "456732",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 224,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 0.25
+      },
+      {
+        "id": 225,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 5.0
+      },
+      {
+        "id": 226,
+        "description": "Banano - venta por kg",
+        "quantity": 1.0
+      },
+      {
+        "id": 227,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "number": "001-104-1836808110",
+    "partner_name": "Cliente Supermercado 03 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 03, Guayaquil",
+    "expected_latitude": -2.1651567,
+    "expected_longitude": -79.9356342,
+    "invoice_date": "2026-09-18",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "135363",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 228,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 229,
+        "description": "Salsa de tomate - frasco 400 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 230,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 1.25
+      },
+      {
+        "id": 231,
+        "description": "Cafe molido - paquete 250 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 232,
+        "description": "Papas fritas - funda 150 g",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "number": "001-104-4894665575",
+    "partner_name": "Cliente Supermercado 04 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 04, Guayaquil",
+    "expected_latitude": -2.1737569,
+    "expected_longitude": -79.9364756,
+    "invoice_date": "2026-09-23",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "023875",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 233,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 234,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 0.25
+      },
+      {
+        "id": 235,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 236,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 0.75
+      },
+      {
+        "id": 237,
+        "description": "Papas fritas - funda 150 g",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "number": "001-104-2336358175",
+    "partner_name": "Cliente Supermercado 05 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 05, Guayaquil",
+    "expected_latitude": -2.1777293,
+    "expected_longitude": -79.9119401,
+    "invoice_date": "2026-09-18",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "136804",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 238,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 3.0
+      },
+      {
+        "id": 239,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 240,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 241,
+        "description": "Papa chola - venta por kg",
+        "quantity": 0.5
+      },
+      {
+        "id": 242,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 243,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 5.0
+      },
+      {
+        "id": 244,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 5.0
+      },
+      {
+        "id": 245,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "number": "001-104-6104677600",
+    "partner_name": "Cliente Supermercado 06 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 06, Guayaquil",
+    "expected_latitude": -2.1722495,
+    "expected_longitude": -79.9073643,
+    "invoice_date": "2026-09-24",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "152970",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 246,
+        "description": "Lenteja seca - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 247,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 248,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 0.75
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "number": "001-104-8139902394",
+    "partner_name": "Cliente Supermercado 07 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 07, Guayaquil",
+    "expected_latitude": -2.1662948,
+    "expected_longitude": -79.9213749,
+    "invoice_date": "2026-09-16",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "272559",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 249,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 250,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 4.0
+      },
+      {
+        "id": 251,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 252,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 253,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 3.0
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "number": "001-104-8240747619",
+    "partner_name": "Cliente Supermercado 08 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 08, Guayaquil",
+    "expected_latitude": -2.1806614,
+    "expected_longitude": -79.9181725,
+    "invoice_date": "2026-09-21",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "098832",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 254,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 5.0
+      },
+      {
+        "id": 255,
+        "description": "Aceite de girasol - botella 1 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 256,
+        "description": "Lenteja seca - funda 500 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 257,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 258,
+        "description": "Banano - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 259,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "number": "001-104-4027021195",
+    "partner_name": "Cliente Supermercado 09 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 09, Guayaquil",
+    "expected_latitude": -2.1841459,
+    "expected_longitude": -79.9070932,
+    "invoice_date": "2026-09-20",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "879595",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 260,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 2.0
+      },
+      {
+        "id": 261,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 6.0
+      },
+      {
+        "id": 262,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 263,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 264,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 6.0
+      },
+      {
+        "id": 265,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 1.0
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "number": "001-104-5654871784",
+    "partner_name": "Cliente Supermercado 10 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 10, Guayaquil",
+    "expected_latitude": -2.1587291,
+    "expected_longitude": -79.9204397,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "202380",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 266,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 4.0
+      },
+      {
+        "id": 267,
+        "description": "Pan integral - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 268,
+        "description": "Azucar blanca - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 269,
+        "description": "Papa chola - venta por kg",
+        "quantity": 1.25
+      },
+      {
+        "id": 270,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 5.0
+      },
+      {
+        "id": 271,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 4.0
+      },
+      {
+        "id": 272,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 273,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "number": "001-104-2143103945",
+    "partner_name": "Cliente Supermercado 01 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 01, Guayaquil",
+    "expected_latitude": -2.1808317,
+    "expected_longitude": -79.9171698,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "575741",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 274,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 5.0
+      },
+      {
+        "id": 275,
+        "description": "Desinfectante de pisos - botella 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 276,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 3.0
+      },
+      {
+        "id": 277,
+        "description": "Esponjas de cocina - paquete de 3 unidades",
+        "quantity": 5.0
+      },
+      {
+        "id": 278,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 279,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 2.0
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "number": "001-104-2758534371",
+    "partner_name": "Cliente Supermercado 02 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 02, Guayaquil",
+    "expected_latitude": -2.1777275,
+    "expected_longitude": -79.9338561,
+    "invoice_date": "2026-09-22",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "256367",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 280,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 281,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 282,
+        "description": "Pechuga de pollo - venta por kg",
+        "quantity": 1.25
+      },
+      {
+        "id": 283,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 284,
+        "description": "Sal yodada - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 285,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 6.0
+      },
+      {
+        "id": 286,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "number": "001-104-4407916535",
+    "partner_name": "Cliente Supermercado 03 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 03, Guayaquil",
+    "expected_latitude": -2.1651567,
+    "expected_longitude": -79.9356342,
+    "invoice_date": "2026-09-18",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "929293",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 287,
+        "description": "Papel higienico - paquete de 12 rollos",
+        "quantity": 3.0
+      },
+      {
+        "id": 288,
+        "description": "Detergente en polvo - funda 1 kg",
+        "quantity": 5.0
+      },
+      {
+        "id": 289,
+        "description": "Jabon de tocador - paquete de 3 unidades",
+        "quantity": 5.0
+      },
+      {
+        "id": 290,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "number": "001-104-5009528852",
+    "partner_name": "Cliente Supermercado 04 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 04, Guayaquil",
+    "expected_latitude": -2.1737569,
+    "expected_longitude": -79.9364756,
+    "invoice_date": "2026-09-26",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "337373",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 291,
+        "description": "Arroz blanco - funda 1 kg",
+        "quantity": 4.0
+      },
+      {
+        "id": 292,
+        "description": "Jugo de naranja - carton 1 L",
+        "quantity": 1.0
+      },
+      {
+        "id": 293,
+        "description": "Jabon de tocador - paquete de 3 unidades",
+        "quantity": 4.0
+      },
+      {
+        "id": 294,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 6.0
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "number": "001-104-4902091850",
+    "partner_name": "Cliente Supermercado 05 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 05, Guayaquil",
+    "expected_latitude": -2.1777293,
+    "expected_longitude": -79.9119401,
+    "invoice_date": "2026-09-12",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "568139",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 295,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 0.25
+      },
+      {
+        "id": 296,
+        "description": "Pasta dental - tubo 100 mL",
+        "quantity": 3.0
+      },
+      {
+        "id": 297,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 3.0
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "number": "001-104-3465810093",
+    "partner_name": "Cliente Supermercado 06 (MOCK)",
+    "delivery_address": "Calle Demo Norte, Casa de prueba 06, Guayaquil",
+    "expected_latitude": -2.1722495,
+    "expected_longitude": -79.9073643,
+    "invoice_date": "2026-09-17",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "088452",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 298,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 299,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 3.0
+      },
+      {
+        "id": 300,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 6.0
+      },
+      {
+        "id": 301,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 302,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 4.0
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "number": "001-104-8289795323",
+    "partner_name": "Cliente Supermercado 07 (MOCK)",
+    "delivery_address": "Calle Demo Sur, Casa de prueba 07, Guayaquil",
+    "expected_latitude": -2.1662948,
+    "expected_longitude": -79.9213749,
+    "invoice_date": "2026-09-16",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "556469",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 303,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 304,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 305,
+        "description": "Tomate rinon - venta por kg",
+        "quantity": 1.5
+      },
+      {
+        "id": 306,
+        "description": "Pasta espagueti - paquete 400 g",
+        "quantity": 4.0
+      },
+      {
+        "id": 307,
+        "description": "Champu familiar - botella 750 mL",
+        "quantity": 6.0
+      },
+      {
+        "id": 308,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 3.0
+      },
+      {
+        "id": 309,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "number": "001-104-2877245774",
+    "partner_name": "Cliente Supermercado 08 (MOCK)",
+    "delivery_address": "Av. Mercado de Pruebas, Casa de prueba 08, Guayaquil",
+    "expected_latitude": -2.1806614,
+    "expected_longitude": -79.9181725,
+    "invoice_date": "2026-09-17",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "983037",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 310,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 311,
+        "description": "Lavavajillas liquido - botella 750 mL",
+        "quantity": 4.0
+      },
+      {
+        "id": 312,
+        "description": "Vegetales mixtos congelados - funda 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 313,
+        "description": "Cafe molido - paquete 250 g",
+        "quantity": 6.0
+      },
+      {
+        "id": 314,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 0.25
+      },
+      {
+        "id": 315,
+        "description": "Huevos - cubeta de 30 unidades",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "number": "001-104-7045097525",
+    "partner_name": "Cliente Supermercado 09 (MOCK)",
+    "delivery_address": "Calle Demo Central, Casa de prueba 09, Guayaquil",
+    "expected_latitude": -2.1841459,
+    "expected_longitude": -79.9070932,
+    "invoice_date": "2026-09-24",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "846530",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 316,
+        "description": "Filete de pescado congelado - paquete 500 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 317,
+        "description": "Mermelada de frutilla - frasco 300 g",
+        "quantity": 2.0
+      },
+      {
+        "id": 318,
+        "description": "Atun en agua - lata 170 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 319,
+        "description": "Jabon de tocador - paquete de 3 unidades",
+        "quantity": 1.0
+      },
+      {
+        "id": 320,
+        "description": "Helado de vainilla - envase 1 L",
+        "quantity": 5.0
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "number": "001-104-9881078294",
+    "partner_name": "Cliente Supermercado 10 (MOCK)",
+    "delivery_address": "Av. Supermercado Demo, Casa de prueba 10, Guayaquil",
+    "expected_latitude": -2.1587291,
+    "expected_longitude": -79.9204397,
+    "invoice_date": "2026-09-25",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "956785",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      {
+        "id": 321,
+        "description": "Agua sin gas - botella 1.5 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 322,
+        "description": "Manzana roja - venta por kg",
+        "quantity": 2.0
+      },
+      {
+        "id": 323,
+        "description": "Galletas de avena - paquete 300 g",
+        "quantity": 1.0
+      },
+      {
+        "id": 324,
+        "description": "Leche entera UHT - carton 1 L",
+        "quantity": 5.0
+      },
+      {
+        "id": 325,
+        "description": "Yogur natural - botella 1 L",
+        "quantity": 4.0
+      },
+      {
+        "id": 326,
+        "description": "Queso fresco - paquete 500 g",
+        "quantity": 3.0
+      }
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+**/node_modules/
+**/target/
+**/dist/
+**/__pycache__/
+backend/.env
+output/
+.playwright-cli/
