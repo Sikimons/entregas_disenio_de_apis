@@ -98,7 +98,7 @@ export default function DriverHistoryPage() {
     <DriverShell>
       <PageIntro eyebrow="CADA PASO QUEDA REGISTRADO" title="Tu recorrido" description="Consulta tus entregas, evidencias e incidencias en un solo lugar." />
 
-      {error && <p className="error-text">{error}</p>}
+      {error && <p role="alert" className="error-text">{error}</p>}
 
       {loading ? (
         <p>Cargando...</p>

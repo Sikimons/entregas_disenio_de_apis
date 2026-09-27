@@ -74,7 +74,7 @@ export function InvoiceSearchPanel({
       {!hasSearched && <div className="start-guide"><p className="eyebrow">UNA ENTREGA EN TRES PASOS</p><div className="guide-grid"><div><span>01</span><Icon name="box" /><h3>Revisa el pedido</h3><p>Encuentra la factura y verifica los productos.</p></div><div><span>02</span><Icon name="camera" /><h3>Guarda la evidencia</h3><p>Toma una foto al completar la entrega.</p></div><div><span>03</span><Icon name="shield" /><h3>Confirma con PIN</h3><p>Pide los seis dígitos al cliente. Listo.</p></div></div></div>}
       {hasSearched && <div className="section-heading"><h2>Pedidos encontrados</h2><span>{searching ? 'Buscando…' : `${invoices.length} resultados`}</span></div>}
 
-      {searchError && <p className="error-text">{searchError}</p>}
+      {searchError && <p role="alert" className="error-text">{searchError}</p>}
       {feedback?.type === 'success' && <p className="success-text">{feedback.message}</p>}
       {feedback?.type === 'warning' && <p className="warning-text">{feedback.message}</p>}
 

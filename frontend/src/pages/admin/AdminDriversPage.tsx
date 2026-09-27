@@ -103,7 +103,7 @@ export default function AdminDriversPage() {
         <button type="submit">Agregar al equipo</button>
       </form>
 
-      {(error || actionError) && <p className="error-text">{error || actionError}</p>}
+      {(error || actionError) && <p role="alert" className="error-text">{error || actionError}</p>}
       </div></section>
       <div className="section-heading"><h2>Personas y accesos</h2><span>{data.totalElements} cuentas</span></div>
 
