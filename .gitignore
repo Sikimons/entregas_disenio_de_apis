@@ -4,6 +4,7 @@ data
 **/dist/
 **/__pycache__/
 backend/.env
+/.env
 output/
 .playwright-cli/
 /docker-compose.yml

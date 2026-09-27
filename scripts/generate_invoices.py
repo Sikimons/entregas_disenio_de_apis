@@ -13,7 +13,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not 1 <= args.count <= 1000:
         parser.error('--count debe estar entre 1 y 1000')
-    token = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'admin_local_demo_only'))
+    token = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'local_only_admin_password_change_me'))
     folder = Path(__file__).resolve().parents[1] / 'demo'
     catalog = sorted({line['description'] for invoice in json.loads((folder / 'invoices.json').read_text(encoding='utf-8')) for line in invoice['lines']})
     rng = random.SystemRandom()

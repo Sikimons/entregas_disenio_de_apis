@@ -1,6 +1,6 @@
 # Pruebas de carga (k6)
 
-Requiere el stack levantado (`docker compose -f ../docker-compose.demo.yml up -d --build`)
+Requiere el stack levantado (`docker compose -f ../docker-compose.seed.yml up -d --build`)
 y la imagen `grafana/k6`.
 
 ## Carga sostenida
@@ -59,7 +59,7 @@ fraccion real, aunque no toda, del techo: subirlo a 30 movio el breakpoint un ~1
 mas alla antes de que la latencia se degrade, con 0% de errores en ambos casos (el
 sistema nunca cae, solo se vuelve mas lento). El resto del techo en esta maquina de
 desarrollo es CPU del propio contenedor del backend, no la base de datos.
-`DB_POOL_MAX_SIZE` es una variable de entorno real de `docker-compose.demo.yml`
+`DB_POOL_MAX_SIZE` es una variable de entorno real de `docker-compose.seed.yml`
 (`spring.datasource.hikari.maximum-pool-size` en `application.yml`).
 
 ## Qué no se prueba y por qué

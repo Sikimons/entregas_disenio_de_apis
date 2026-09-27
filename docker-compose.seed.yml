@@ -1,46 +1,51 @@
-name: delivery-pin-demo
+name: ruta-seed
 
+# Stack local con datos de muestra sembrados automaticamente (ver README). Los secretos
+# (contrasenas, JWT_SECRET) NO viven en este archivo: se leen de un ".env" en esta misma
+# carpeta (docker compose lo carga solo), que no se comitea -- copia ".env.example" a
+# ".env" y define tus propios valores antes de levantar el stack.
+#
 # Variables comunes a "seed" y "backend": antes cada servicio las repetia a mano y se
 # desincronizaron ("seed" no recibia JWT_SECRET/ADMIN_*, asi que el admin quedaba creado
-# con el valor de ejemplo en vez de la contrasena real de esta demo -- hallazgo N1,
+# con el valor de ejemplo en vez de la contrasena real de este stack -- hallazgo N1,
 # docs/EVALUACION_TECNICA.md §18). Con el ancla, los dos servicios comparten una sola
 # fuente y no pueden volver a divergir.
 x-backend-env: &backend-env
   DB_HOST: postgres
   DB_PORT: "5432"
-  DB_NAME: delivery_pin_middleware
-  DB_USERNAME: delivery_pin
-  DB_PASSWORD: demo_local_only
-  JWT_SECRET: local_demo_only_secret_at_least_32_characters_long
-  ADMIN_USERNAME: admin
-  ADMIN_PASSWORD: admin_local_demo_only
+  DB_NAME: ${DB_NAME:-delivery_pin_middleware}
+  DB_USERNAME: ${DB_USERNAME:-delivery_pin}
+  DB_PASSWORD: ${DB_PASSWORD:?Definila en .env (copia .env.example a .env primero)}
+  JWT_SECRET: ${JWT_SECRET:?Definila en .env (copia .env.example a .env primero)}
+  ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Definila en .env (copia .env.example a .env primero)}
 
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: delivery_pin_middleware
-      POSTGRES_USER: delivery_pin
-      POSTGRES_PASSWORD: demo_local_only
+      POSTGRES_DB: ${DB_NAME:-delivery_pin_middleware}
+      POSTGRES_USER: ${DB_USERNAME:-delivery_pin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Definila en .env (copia .env.example a .env primero)}
     volumes:
       - middleware_data:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD-SHELL, "pg_isready -U delivery_pin -d delivery_pin_middleware"]
+      test: [CMD-SHELL, "pg_isready -U ${DB_USERNAME:-delivery_pin} -d ${DB_NAME:-delivery_pin_middleware}"]
       interval: 3s
       timeout: 3s
       retries: 30
   # Job de una sola pasada: corre Flyway y siembra las facturas/PIN y el conductor de
-  # demostracion (demo/invoices.json), y termina (DemoSeedExitRunner). El backend "real"
-  # de abajo arranca siempre con APP_DEMO_ENABLED=false, para que el guard de secretos
-  # (SecretsGuardRunner) siga activo incluso en este compose de demostracion.
+  # muestra (demo/invoices.json), y termina (SeedExitRunner). El backend "real" de abajo
+  # arranca siempre con APP_SEED_ENABLED=false, para que el guard de secretos
+  # (SecretsGuardRunner) siga activo incluso en este stack de muestra.
   seed:
     image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-local}
     build: ./backend
     environment:
       <<: *backend-env
-      APP_DEMO_ENABLED: "true"
-      APP_DEMO_SEED_ONLY: "true"
-      APP_DEMO_FILE: file:/app/demo/invoices.json
+      APP_SEED_ENABLED: "true"
+      APP_SEED_ONE_SHOT: "true"
+      APP_SEED_FILE: file:/app/demo/invoices.json
     volumes:
       - ./demo:/app/demo:ro
     depends_on:
@@ -52,7 +57,7 @@ services:
     build: ./backend
     environment:
       <<: *backend-env
-      APP_DEMO_ENABLED: "false"
+      APP_SEED_ENABLED: "false"
       CORS_ALLOWED_ORIGINS: http://localhost:15180,http://127.0.0.1:15180
       DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
     depends_on:

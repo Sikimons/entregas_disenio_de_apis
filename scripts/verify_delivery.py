@@ -48,7 +48,7 @@ def fetch_all_invoices(token, q=''):
 
 
 if __name__ == '__main__':
-    admin = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'admin_local_demo_only'))
+    admin = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'local_only_admin_password_change_me'))
     driver = login('conductor', 'conductor123')
     assert request('/api/v1/admin/invoices', token=driver)[0] == 403
     assert request('/api/v1/driver/invoices?q=001-104-')[0] == 401

@@ -1,10 +1,10 @@
 name: ${COMPOSE_PROJECT_NAME:-ruta-delivery}
 
-# Stack de despliegue (staging/produccion), separado del docker-compose.demo.yml de la
-# raiz (ese es solo para demos locales). Los tres ejes de variacion se resuelven cada
-# uno con la herramienta que le corresponde:
+# Stack de despliegue (staging/produccion), separado del docker-compose.seed.yml de la
+# raiz (ese es solo para el stack local con datos de muestra). Los tres ejes de variacion
+# se resuelven cada uno con la herramienta que le corresponde:
 #   - staging vs produccion (URLs, secretos, tags)  -> --env-file deploy/env/<entorno>.env
-#   - topologia (¿postgres local? ¿frontend aqui?)  -> profiles ("db", "frontend", "demo")
+#   - topologia (¿postgres local? ¿frontend aqui?)  -> profiles ("db", "frontend", "seed")
 #   - config de nginx segun topologia               -> NGINX_SITE=api|full (envsubst)
 #
 # Uso tipico:
@@ -14,8 +14,8 @@ name: ${COMPOSE_PROJECT_NAME:-ruta-delivery}
 #   COMPOSE_PROFILES=db          NGINX_SITE=api
 # Escenario B: todo en la misma VM detras del mismo nginx.
 #   COMPOSE_PROFILES=db,frontend NGINX_SITE=full
-# Primer arranque con datos de demostracion (nunca en produccion real):
-#   COMPOSE_PROFILES=db,demo (o db,frontend,demo)
+# Primer arranque con datos de muestra (nunca en produccion real):
+#   COMPOSE_PROFILES=db,seed (o db,frontend,seed)
 #
 # En la VM no se corre "up" a mano: deploy/scripts/deploy.sh (lo invoca CD) fija el tag
 # de imagen, respalda la BD, espera los healthchecks y hace rollback si algo falla.
@@ -58,20 +58,20 @@ services:
       start_period: 10s
 
   # Job de una sola pasada: siembra demo/invoices.json (facturas, PIN y el conductor de
-  # demostracion) y termina. Solo se activa con el profile "demo" (ver README); el
-  # servicio "backend" de abajo siempre arranca con APP_DEMO_ENABLED=false, para que el
+  # muestra) y termina. Solo se activa con el profile "seed" (ver README); el
+  # servicio "backend" de abajo siempre arranca con APP_SEED_ENABLED=false, para que el
   # guard de secretos (SecretsGuardRunner) este activo tambien en el primer arranque.
   seed:
-    profiles: [demo]
+    profiles: [seed]
     image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-latest}
     env_file:
       - ${APP_ENV_FILE:?define APP_ENV_FILE en el .env del entorno (ruta al mismo archivo pasado en --env-file)}
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
-      APP_DEMO_ENABLED: "true"
-      APP_DEMO_SEED_ONLY: "true"
-      APP_DEMO_FILE: file:/app/demo/invoices.json
+      APP_SEED_ENABLED: "true"
+      APP_SEED_ONE_SHOT: "true"
+      APP_SEED_FILE: file:/app/demo/invoices.json
     volumes:
       - ../demo:/app/demo:ro
     depends_on:
@@ -94,7 +94,7 @@ services:
       # no los define.
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
-      APP_DEMO_ENABLED: "false"
+      APP_SEED_ENABLED: "false"
       # La JVM dimensiona el heap segun el limite de memoria del contenedor (mem_limit)
       # en vez de la RAM de toda la VM, y ante un OutOfMemoryError termina (restart lo
       # levanta de nuevo) en vez de quedar vivo en un estado inconsistente.

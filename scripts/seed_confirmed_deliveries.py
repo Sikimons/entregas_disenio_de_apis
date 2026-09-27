@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--count', type=int, default=500)
     args = parser.parse_args()
 
-    admin = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'admin_local_demo_only'))
+    admin = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'local_only_admin_password_change_me'))
 
     conductor_username = 'loadtest_conductor'
     status, _ = request('/api/v1/admin/users', {

@@ -4,43 +4,55 @@ Aplicacion independiente con frontend React, backend Java 17 / Spring Boot y
 PostgreSQL. Gestiona sus propias facturas, productos, PIN, fotos, coordenadas,
 conductores e historial. El paquete Java es `com.ruta.deliverypin`.
 
-## Desplegar con datos de demostración
+## Desplegar con datos de muestra
 
 Necesitas Docker Desktop abierto. Para generar lotes adicionales tambien necesitas
 Python 3; la carga inicial no requiere Python ni ejecutar un script manualmente.
 
-### 1. Levantar los servicios
+### 1. Configurar los secretos
+
+Copia el archivo de ejemplo y define tus propios valores (contrasena de la base de
+datos, `JWT_SECRET` y la contrasena del administrador):
+
+```bash
+cp .env.example .env
+```
+
+`.env` no se comitea (ver `.gitignore`); `docker compose` lo carga automaticamente
+para las variables de `docker-compose.seed.yml`.
+
+### 2. Levantar los servicios
 
 Desde la carpeta del proyecto (PowerShell, bash o cualquier shell con Docker):
 
 ```bash
-docker compose -f docker-compose.demo.yml up -d --build
+docker compose -f docker-compose.seed.yml up -d --build
 ```
 
-> Si ya habias levantado esta demo antes de que el archivo se llamara
-> `docker-compose.demo.yml` (o si el backend falla al conectar a la base con un error de
-> autenticacion), borra el volumen viejo primero: `docker compose -p delivery-pin-demo down -v`.
-> La contrasena de PostgreSQL solo se aplica al crear el volumen, y el nombre del proyecto
-> (`delivery-pin-demo`) no cambio con el renombrado del archivo.
+> Si ya habias levantado un stack local con una version anterior de este archivo
+> (`docker-compose.mock.yml` o `docker-compose.demo.yml`), esos contenedores y su
+> volumen quedaron con el nombre de proyecto viejo (`delivery-pin-demo`) y no
+> interfieren con este; puedes eliminarlos con `docker compose -p delivery-pin-demo down -v`
+> si ya no los necesitas.
 
 Este comando levanta PostgreSQL, un job `seed` que carga `demo/invoices.json` (facturas,
-PIN y el conductor de demostracion) y termina, y despues el backend y el frontend. El
-backend real siempre arranca con `APP_DEMO_ENABLED=false` -el guard de secretos
-(`SecretsGuardRunner`) sigue activo incluso en esta demo-; solo el job `seed` usa
-`APP_DEMO_ENABLED=true` momentaneamente. El backend expone un healthcheck real en
+PIN y un conductor de muestra) y termina, y despues el backend y el frontend. El
+backend real siempre arranca con `APP_SEED_ENABLED=false` -el guard de secretos
+(`SecretsGuardRunner`) sigue activo incluso en este stack de muestra-; solo el job `seed`
+usa `APP_SEED_ENABLED=true` momentaneamente. El backend expone un healthcheck real en
 `/actuator/health`; el frontend espera a que el backend este `healthy` antes de
 arrancar. Puedes consultar el estado y los logs:
 
 ```powershell
-docker compose -f docker-compose.demo.yml ps
-docker compose -f docker-compose.demo.yml logs --tail 50 backend
+docker compose -f docker-compose.seed.yml ps
+docker compose -f docker-compose.seed.yml logs --tail 50 backend
 ```
 
-### 2. Consultar las facturas y los PIN
+### 3. Consultar las facturas y los PIN
 
 - Aplicacion: http://localhost:15180
 - API: http://localhost:18091
-- Administrador: `admin` / `admin_local_demo_only`
+- Administrador: `admin` / la contrasena que definiste en `ADMIN_PASSWORD` (tu `.env`)
 - Conductor existente: `conductor` / `conductor123`
 
 Entra como administrador y abre **Facturas** para consultar los datos y los PIN.
@@ -53,7 +65,7 @@ El volumen `middleware_data` conserva usuarios, entregas, fotos y facturas.
 Si ya tienes facturas cargadas, volver a levantar los servicios no las reemplaza
 ni vuelve a importar el JSON.
 
-### 3. Generar otras 50 facturas (opcional)
+### 4. Generar otras 50 facturas (opcional)
 
 Con los servicios encendidos, ejecuta desde la misma carpeta:
 
@@ -68,16 +80,17 @@ facturas existentes. Actualiza la pantalla **Facturas** para verlas.
 El CSV del nuevo lote se guarda en `demo/nuevo_lote_facturas_y_pines.csv`.
 Cada ejecucion reemplaza ese CSV, pero conserva las facturas anteriores en la base.
 Puedes cambiar `--count 50` por la cantidad deseada, entre 1 y 1000.
-El script usa por defecto la API `http://localhost:18091` y `admin` / `admin_local_demo_only`;
-configura `RUTA_API`, `RUTA_ADMIN` y `RUTA_PASSWORD` si cambias esos valores.
+El script usa por defecto la API `http://localhost:18091` y `admin` / la contrasena de
+tu `.env` (`ADMIN_PASSWORD`); configura `RUTA_API`, `RUTA_ADMIN` y `RUTA_PASSWORD` si
+cambias esos valores.
 
-### 4. Apagar el entorno conservando los datos
+### 5. Apagar el entorno conservando los datos
 
 ```powershell
-docker compose -f docker-compose.demo.yml down
+docker compose -f docker-compose.seed.yml down
 ```
 
-Para volver a iniciarlo, repite el comando del paso 1. Las facturas, los PIN y las
+Para volver a iniciarlo, repite el comando del paso 2. Las facturas, los PIN y las
 entregas permanecen guardados en el volumen de PostgreSQL.
 
 ## Uso
@@ -195,10 +208,11 @@ El backend usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `D
 `APP_CIRCUIT_BREAKER_ENABLED`, `APP_CIRCUIT_BREAKER_FAILURE_RATE`, `APP_CIRCUIT_BREAKER_WAIT_SECONDS`,
 `APP_RETRY_ENABLED`, `APP_RETRY_MAX_ATTEMPTS`, `APP_RETRY_WAIT_MILLIS`,
 `APP_CACHE_INVOICE_LINES_TTL_SECONDS`, `APP_CACHE_EXPECTED_LOCATION_TTL_SECONDS` y `APP_CACHE_MAX_ENTRIES`.
-`APP_DEMO_ENABLED` es `false` por defecto. Para cargar datos de demostracion,
-habilitalo y configura `APP_DEMO_FILE` con la ruta del JSON.
+`APP_SEED_ENABLED` es `false` por defecto. Para cargar datos de muestra,
+habilitalo y configura `APP_SEED_FILE` con la ruta del JSON.
 
-`docker-compose.demo.yml` (raiz) es solo para la demo local de arriba. El stack de
+`docker-compose.seed.yml` (raiz) es solo para el stack local con datos de muestra de
+arriba. El stack de
 despliegue real (staging/produccion) vive en [`deploy/`](deploy/): un
 `docker-compose.yml` parametrizado con nginx + TLS delante del backend, pensado para
 los dos escenarios que maneja el equipo:
@@ -235,10 +249,10 @@ Notas:
   `deploy/certs/origin-key.pem` (ignorados por git). Pon el dominio en modo **Full
   (strict)**. `deploy/nginx/snippets/cloudflare-realip.conf` restaura la IP real del
   cliente (necesaria para el rate-limit de login en `AuthController`).
-- **Primer arranque con datos de demostracion:** corre una vez
-  `COMPOSE_PROFILES=db,demo deploy/scripts/deploy.sh staging <tag>`. Un servicio `seed`
+- **Primer arranque con datos de muestra:** corre una vez
+  `COMPOSE_PROFILES=db,seed deploy/scripts/deploy.sh staging <tag>`. Un servicio `seed`
   de una sola pasada carga `demo/invoices.json` y termina; el backend real siempre corre
-  con `APP_DEMO_ENABLED=false` (el guard de secretos sigue exigiendo `JWT_SECRET` y
+  con `APP_SEED_ENABLED=false` (el guard de secretos sigue exigiendo `JWT_SECRET` y
   `ADMIN_PASSWORD` propios). Nunca en produccion real.
 - **Robustez en la VM** (`deploy/docker-compose.yml`): rotacion de logs (`LOG_MAX_SIZE`/
   `LOG_MAX_FILE`), limites de memoria (`BACKEND_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`; la JVM
