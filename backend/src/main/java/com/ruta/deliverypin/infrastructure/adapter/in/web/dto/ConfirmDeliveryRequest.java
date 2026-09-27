@@ -6,9 +6,6 @@ import jakarta.validation.constraints.Pattern;
 
 public record ConfirmDeliveryRequest(
         @NotNull Long invoiceId,
-        @NotBlank String invoiceNumber,
-        String partnerName,
-        String deliveryAddress,
         @NotNull @Pattern(regexp = "\\d{6}", message = "El PIN debe tener 6 digitos") String pin,
         @NotNull Double latitude,
         @NotNull Double longitude,
