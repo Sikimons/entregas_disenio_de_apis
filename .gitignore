@@ -7,6 +7,7 @@ backend/.env
 output/
 .playwright-cli/
 /docker-compose.yml
+/demo
 deploy/env/*.env
 deploy/certs/*
 !deploy/certs/.gitkeep
