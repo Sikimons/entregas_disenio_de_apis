@@ -1,6 +1,7 @@
 """Verifica la API local sin restablecer ni modificar las facturas del usuario."""
 import base64
 import csv
+import http.cookiejar
 import json
 import os
 import re
@@ -8,19 +9,54 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.request import Request, urlopen
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
 
 BASE = os.environ.get('RUTA_API', 'http://localhost:8080')
 PHOTO = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII='
 
 
-def request(path, body=None, token=None):
+def _send(opener, path, body, csrf_token):
     headers = {'Content-Type': 'application/json'}
-    if token:
-        headers['Authorization'] = 'Bearer ' + token
+    if csrf_token:
+        # SecurityConfig exige este header en toda escritura desde que el JWT paso de
+        # header Authorization a cookie HttpOnly (Tanda 1, auditoria tecnica): sin el, un
+        # POST/PUT/DELETE autenticado responde 403 aunque la cookie de sesion sea valida.
+        headers['X-XSRF-TOKEN'] = csrf_token
     req = Request(BASE + path, data=None if body is None else json.dumps(body).encode(), headers=headers)
     try:
-        with urlopen(req, timeout=15) as response:
+        with opener.open(req, timeout=15) as response:
+            raw = response.read()
+            return response.status, json.loads(raw) if 'json' in response.headers.get('Content-Type', '') else raw
+    except HTTPError as error:
+        raw = error.read()
+        return error.code, json.loads(raw) if raw else None
+
+
+class Session:
+    """Identidad autenticada: cookie de sesion (HttpOnly, la maneja sola el CookieJar) +
+    token CSRF (Tanda 1, auditoria tecnica -- antes 'login' devolvia el JWT como string y
+    cada llamada lo mandaba a mano en 'Authorization: Bearer'; ahora ese string ya no
+    existe en la respuesta, y las escrituras necesitan reenviar el token CSRF que la
+    propia cookie de sesion trae)."""
+
+    def __init__(self):
+        self._cookiejar = http.cookiejar.CookieJar()
+        self._opener = build_opener(HTTPCookieProcessor(self._cookiejar))
+
+    def request(self, path, body=None):
+        csrf_token = next((c.value for c in self._cookiejar if c.name == 'XSRF-TOKEN'), None)
+        return _send(self._opener, path, body, csrf_token)
+
+
+def request(path, body=None, token=None):
+    """'token' es ahora una Session (ver login()), no un string de JWT -- se mantiene el
+    nombre del parametro para no tener que tocar cada llamada existente en este archivo y
+    en generate_invoices.py/seed_confirmed_deliveries.py, que solo pasan el valor que
+    login() les dio."""
+    if token is not None:
+        return token.request(path, body)
+    try:
+        with urlopen(Request(BASE + path, headers={'Content-Type': 'application/json'}), timeout=15) as response:
             raw = response.read()
             return response.status, json.loads(raw) if 'json' in response.headers.get('Content-Type', '') else raw
     except HTTPError as error:
@@ -29,9 +65,10 @@ def request(path, body=None, token=None):
 
 
 def login(username, password):
-    status, data = request('/api/v1/auth/login', {'username': username, 'password': password})
+    session = Session()
+    status, data = session.request('/api/v1/auth/login', {'username': username, 'password': password, 'remember': True})
     assert status == 200, (status, data)
-    return data['token']
+    return session
 
 
 def fetch_all_invoices(token, q=''):
