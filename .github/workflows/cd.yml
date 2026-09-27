@@ -184,6 +184,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.gate.outputs.sha }}
+      # Checkout de un SHA exacto deja el HEAD "detached" (sin rama); docker/metadata-action
+      # con context: git necesita resolver un ref simbolico y falla con "Cannot infer ref
+      # from detached HEAD" si no lo tiene. Todos nuestros tags son type=raw con valores ya
+      # explicitos (no dependen de este ref), asi que basta una rama local descartable.
+      - run: git checkout -B cd-meta-ref
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
