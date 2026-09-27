@@ -1,0 +1,106 @@
+name: CI
+
+# El "push" se limita a "develop" y "main" (las unicas ramas largas del equipo):
+# una rama de feature con PR abierto ya dispara CI via "pull_request" (synchronize
+# en cada push); si "push" tambien escuchara "**", cada commit a esa rama correria
+# CI dos veces (una por push, otra por pull_request) y gastaria minutos de mas sin
+# necesidad. Push directo a develop/main (p. ej. un merge) si dispara "push" solo.
+# Solo prueba y valida que las imagenes construyan; nunca taguea, publica imagenes ni
+# despliega -- eso es responsabilidad de CD (cd.yml), que se dispara con workflow_run
+# despues de que este workflow termine en verde sobre un push a "develop" (staging) o
+# "main" (produccion). El frontend NO se despliega desde aqui: Cloudflare Pages tiene su
+# propia integracion de Git (build/deploy nativo, incluidos los previews automaticos por
+# PR), y reimplementar eso en Actions solo duplicaria lo que Cloudflare ya hace mejor.
+on:
+  push:
+    branches: ["develop", "main"]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # Decide que jobs de verdad hacen falta segun que carpetas cambiaron: un PR que
+  # solo toca frontend/ no tiene por que gastar minutos corriendo mvn test, y
+  # viceversa. Los jobs con "if" en falso quedan en "skipped", que GitHub trata como
+  # aprobado para checks requeridos (no bloquea el merge).
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  backend-test:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Test
+        working-directory: backend
+        run: mvn -B test
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build image (validacion, sin publicar)
+        # push:false + cache-from/cache-to type=gha con el mismo scope que usa
+        # publish-images en cd.yml: cuando CD corre justo despues sobre el mismo
+        # commit, reutiliza estas capas en vez de reconstruir todo desde cero.
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./backend
+          push: false
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  frontend-build:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: frontend/package.json # lee el campo "packageManager" para fijar la version de pnpm
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: Test
+        working-directory: frontend
+        run: pnpm exec vitest run
+      - name: Build (incluye chequeo de tipos, "tsc -b && vite build")
+        working-directory: frontend
+        run: pnpm run build
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build image (validacion, sin publicar)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./frontend
+          push: false
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend

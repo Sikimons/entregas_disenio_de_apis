@@ -1,5 +1,5 @@
 # --- Etapa de build ---
-FROM maven:3.9.9-eclipse-temurin-17 AS build
+FROM maven:3.9.16-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Cachear dependencias primero
@@ -12,6 +12,10 @@ RUN mvn -q -B clean package -DskipTests
 # --- Etapa de runtime ---
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
+
+# curl solo para el healthcheck de docker-compose (/actuator/health)
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --system --create-home appuser
 USER appuser

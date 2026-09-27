@@ -1,6 +1,6 @@
 package com.ruta.deliverypin.infrastructure.adapter.in.web.dto;
 
-import com.ruta.deliverypin.domain.model.DeliveryAttempt;
+import com.ruta.deliverypin.domain.model.DeliveryAttemptSummary;
 
 import java.time.Instant;
 
@@ -19,21 +19,21 @@ public record DeliveryAttemptResponse(
         Double distanceFromExpectedMeters,
         Instant createdAt
 ) {
-    public static DeliveryAttemptResponse from(DeliveryAttempt attempt) {
+    public static DeliveryAttemptResponse from(DeliveryAttemptSummary attempt) {
         return new DeliveryAttemptResponse(
-                attempt.getId(),
-                attempt.getInvoiceId(),
-                attempt.getInvoiceNumber(),
-                attempt.getPartnerName(),
-                attempt.getDeliveryAddress(),
-                attempt.getDriver().getFullName(),
-                attempt.getOutcome().name(),
-                attempt.getLocation() != null ? attempt.getLocation().latitude() : null,
-                attempt.getLocation() != null ? attempt.getLocation().longitude() : null,
-                attempt.getDetail(),
-                attempt.getPhoto() != null,
-                attempt.getDistanceFromExpectedMeters(),
-                attempt.getCreatedAt()
+                attempt.id(),
+                attempt.invoiceId(),
+                attempt.invoiceNumber(),
+                attempt.partnerName(),
+                attempt.deliveryAddress(),
+                attempt.driverName(),
+                attempt.outcome().name(),
+                attempt.latitude(),
+                attempt.longitude(),
+                attempt.detail(),
+                attempt.hasPhoto(),
+                attempt.distanceFromExpectedMeters(),
+                attempt.createdAt()
         );
     }
 }

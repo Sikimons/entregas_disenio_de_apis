@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["vite/client", "vite-plugin-pwa/client", "@testing-library/jest-dom"],
+
+    /* Bundler mode (Vite resuelve los modulos, no tsc) */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting estricto */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    /* Los .d.ts de terceros (workbox/vite-plugin-pwa, tesseract.js, jest-dom) traen
+       problemas propios que no son responsabilidad de este proyecto (tipos de Service
+       Worker no incluidos, Buffer de Node, declaraciones de Assertion duplicadas). */
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

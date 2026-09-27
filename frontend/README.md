@@ -1,16 +1,48 @@
-# React + Vite
+# Ruta - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+SPA/PWA en React 19 + TypeScript + Vite que sirve tanto la pantalla del conductor como
+el panel administrativo (el rol autenticado determina las rutas visibles). Ver el
+`README.md` de la raiz del repositorio para como levantar el stack completo con Docker.
 
-Currently, two official plugins are available:
+## Desarrollo local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Requiere pnpm (la version exacta queda fijada en `package.json` -> `packageManager`;
+con Corepack habilitado, `pnpm install`/`pnpm run dev` la activan solos):
 
-## React Compiler
+```bash
+corepack enable   # una sola vez por maquina
+pnpm install
+pnpm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Por defecto el proxy de Vite (`vite.config.ts`) redirige `/api` a
+`http://localhost:8080`; ajusta `VITE_API_PROXY_TARGET` si el backend corre en otro
+puerto.
 
-## Expanding the Oxlint configuration
+## Build de produccion
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+pnpm run build
+```
+
+Corre `tsc -b` (chequeo de tipos; el build falla si hay errores) y despues
+`vite build`. Genera `dist/`, servido por Nginx (`Dockerfile`, `nginx.conf`) en el
+contenedor.
+
+## Pruebas y lint
+
+```bash
+pnpm exec vitest run
+pnpm run lint       # oxlint, entiende TypeScript/TSX nativamente
+pnpm run typecheck  # solo el chequeo de tipos, sin generar el build
+```
+
+## Estructura
+
+- `src/pages/driver/*`: pantalla del conductor (buscar factura, OCR, foto, GPS, PIN).
+- `src/pages/admin/*`: panel administrativo (facturas, equipo, entregas, tablero,
+  costo por entrega, circuit breaker + retry).
+- `src/context/AuthContext.tsx`: token JWT y usuario, en `localStorage`/`sessionStorage`.
+- `src/api/client.ts`: cliente HTTP (axios) con el token Bearer.
+- `src/types/domain.ts`: tipos de dominio (Invoice, Driver, DeliveryAttempt, ...),
+  reflejando los DTO reales del backend (`backend/.../infrastructure/adapter/in/web/dto`).

@@ -1,0 +1,33 @@
+# Escenario A: backend en esta VM (EC2), frontend servido aparte en Cloudflare Pages.
+# Solo expone /api; cualquier otra ruta responde 404 (el sitio estatico vive en Pages).
+
+server {
+    listen 80;
+    server_name ${SERVER_NAME};
+    location = /healthz { return 200 "ok"; add_header Content-Type text/plain; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    server_name ${SERVER_NAME};
+
+    include /etc/nginx/snippets/cloudflare-realip.conf;
+    include /etc/nginx/snippets/tls.conf;
+
+    client_max_body_size 15M;
+
+    location = /healthz {
+        return 200 "ok";
+        add_header Content-Type text/plain;
+    }
+
+    location /api/ {
+        include /etc/nginx/snippets/proxy-headers.conf;
+        proxy_pass http://backend:8080/api/;
+    }
+
+    location / {
+        return 404;
+    }
+}

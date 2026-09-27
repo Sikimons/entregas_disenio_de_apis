@@ -1,6 +1,6 @@
 package com.ruta.deliverypin.domain.port.in;
 
-import com.ruta.deliverypin.domain.model.DeliveryAttempt;
+import com.ruta.deliverypin.domain.model.DeliveryAttemptSummary;
 
 import java.time.Instant;
 import java.util.List;
@@ -11,5 +11,5 @@ import java.util.List;
  */
 public interface ListDeliveryAttemptsInRangeUseCase {
 
-    List<DeliveryAttempt> list(Instant from, Instant to);
+    List<DeliveryAttemptSummary> list(Instant from, Instant to);
 }

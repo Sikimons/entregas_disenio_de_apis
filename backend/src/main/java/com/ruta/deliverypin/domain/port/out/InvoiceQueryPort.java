@@ -23,4 +23,10 @@ public interface InvoiceQueryPort {
 
     /** Datos y operaciones de entregas. */
     Optional<GeoLocation> findExpectedLocation(Long invoiceId);
+
+    /**
+     * Datos canonicos de la factura (numero, cliente, direccion), para no confiar en
+     * lo que el cliente HTTP declara al confirmar una entrega o reportar una incidencia.
+     */
+    Optional<Invoice> findById(Long invoiceId);
 }

@@ -1,0 +1,41 @@
+[
+  {
+    "id": 501,
+    "number": "TEST/SEED/0001",
+    "partner_name": "Cliente Fixture Uno",
+    "delivery_address": "Direccion Fixture 1",
+    "expected_latitude": -2.17,
+    "expected_longitude": -79.92,
+    "invoice_date": "2026-09-01",
+    "state": "posted",
+    "requires_pin": true,
+    "pin": "111111",
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": [
+      { "id": 9001, "description": "Producto fixture A", "quantity": 2.0 },
+      { "id": 9002, "description": "Producto fixture B", "quantity": 1.0 }
+    ]
+  },
+  {
+    "id": 502,
+    "number": "TEST/SEED/0002",
+    "partner_name": "Cliente Fixture Dos",
+    "delivery_address": "Direccion Fixture 2",
+    "expected_latitude": null,
+    "expected_longitude": null,
+    "invoice_date": "2026-09-02",
+    "state": "draft",
+    "requires_pin": true,
+    "pin": null,
+    "confirmed": false,
+    "confirmed_at": null,
+    "latitude": null,
+    "longitude": null,
+    "driver_name": null,
+    "lines": []
+  }
+]

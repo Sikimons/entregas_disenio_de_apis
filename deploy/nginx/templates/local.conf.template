@@ -1,0 +1,27 @@
+# Desarrollo local (ver deploy/env/local.env.example): mismo ruteo que full.conf.template
+# (/api -> backend, / -> frontend) pero solo HTTP, sin TLS ni redirect -- evita depender
+# de certificados y evita que un POST se rompa por un 301 -> https como el que si hace
+# falta en produccion (escenario B). No incluye cloudflare-realip.conf: no hay Cloudflare
+# delante en local, $remote_addr ya es la IP real (o la interna del propio Docker).
+
+server {
+    listen 80;
+    server_name ${SERVER_NAME};
+
+    client_max_body_size 15M;
+
+    location = /healthz {
+        return 200 "ok";
+        add_header Content-Type text/plain;
+    }
+
+    location /api/ {
+        include /etc/nginx/snippets/proxy-headers.conf;
+        proxy_pass http://backend:8080/api/;
+    }
+
+    location / {
+        include /etc/nginx/snippets/proxy-headers.conf;
+        proxy_pass http://frontend:80;
+    }
+}

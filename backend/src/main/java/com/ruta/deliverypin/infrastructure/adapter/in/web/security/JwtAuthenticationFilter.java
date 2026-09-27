@@ -3,6 +3,7 @@ package com.ruta.deliverypin.infrastructure.adapter.in.web.security;
 import com.ruta.deliverypin.domain.port.out.TokenProviderPort;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -26,8 +27,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
+    /**
+     * Nombre de la cookie HttpOnly donde viaja el JWT (auditoria tecnica, hallazgo P1):
+     * antes el frontend lo mandaba en el header "Authorization: Bearer ..." tras leerlo
+     * de localStorage/sessionStorage, expuesto a un XSS. AuthController.setAuthCookie()
+     * es quien la emite; este filtro solo la lee. Constante publica (no configurable via
+     * properties a proposito) para que ambas clases usen literalmente el mismo nombre sin
+     * duplicar el string ni forzar una dependencia adicional en los @WebMvcTest existentes.
+     */
+    public static final String ACCESS_TOKEN_COOKIE = "access_token";
+
     private static final List<AntPathRequestMatcher> PUBLIC_PATHS = List.of(
-            new AntPathRequestMatcher("/api/auth/**")
+            new AntPathRequestMatcher("/api/v1/auth/**")
     );
 
     private final TokenProviderPort tokenProvider;
@@ -49,13 +60,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = extractToken(request);
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
         try {
             Optional<String> username = tokenProvider.extractUsername(token);
             if (username.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -76,5 +86,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (ACCESS_TOKEN_COOKIE.equals(cookie.getName()) && !cookie.getValue().isBlank()) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

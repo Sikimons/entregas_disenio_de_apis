@@ -1,6 +1,6 @@
 package com.ruta.deliverypin.application;
 
-import com.ruta.deliverypin.domain.model.DeliveryAttempt;
+import com.ruta.deliverypin.domain.model.DeliveryAttemptSummary;
 import com.ruta.deliverypin.domain.model.DriverMetric;
 import com.ruta.deliverypin.domain.model.PageRequest;
 import com.ruta.deliverypin.domain.model.PageResult;
@@ -15,10 +15,7 @@ import com.ruta.deliverypin.domain.port.out.DeliveryAttemptRepositoryPort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -33,7 +30,7 @@ public class DeliveryHistoryApplicationService implements
     }
 
     @Override
-    public PageResult<DeliveryAttempt> list(PageRequest pageRequest) {
+    public PageResult<DeliveryAttemptSummary> list(PageRequest pageRequest) {
         return deliveryAttemptRepository.findAllOrderByCreatedAtDesc(pageRequest);
     }
 
@@ -43,7 +40,7 @@ public class DeliveryHistoryApplicationService implements
     }
 
     @Override
-    public PageResult<DeliveryAttempt> list(Long driverId, PageRequest pageRequest) {
+    public PageResult<DeliveryAttemptSummary> list(Long driverId, PageRequest pageRequest) {
         return deliveryAttemptRepository.findAllByDriverOrderByCreatedAtDesc(driverId, pageRequest);
     }
 
@@ -53,29 +50,14 @@ public class DeliveryHistoryApplicationService implements
     }
 
     @Override
-    public List<DeliveryAttempt> list(Instant from, Instant to) {
+    public List<DeliveryAttemptSummary> list(Instant from, Instant to) {
         return deliveryAttemptRepository.findAllBetween(from, to);
     }
 
     @Override
     public List<DriverMetric> metrics(Instant from, Instant to) {
-        List<DeliveryAttempt> attempts = deliveryAttemptRepository.findAllBetween(from, to);
-
-        Map<String, long[]> countsByDriver = new LinkedHashMap<>(); // [confirmed, rejected, incident]
-        for (DeliveryAttempt attempt : attempts) {
-            String driverName = attempt.getDriver().getFullName();
-            long[] counts = countsByDriver.computeIfAbsent(driverName, k -> new long[3]);
-            switch (attempt.getOutcome()) {
-                case CONFIRMED -> counts[0]++;
-                case REJECTED -> counts[1]++;
-                case INCIDENT -> counts[2]++;
-            }
-        }
-
-        List<DriverMetric> metrics = new ArrayList<>();
-        countsByDriver.forEach((driverName, counts) ->
-                metrics.add(new DriverMetric(driverName, counts[0], counts[1], counts[2])));
-        metrics.sort((a, b) -> Long.compare(b.total(), a.total()));
-        return metrics;
+        // Agregado en SQL (GROUP BY conductor, resultado) por el adaptador: ya no trae
+        // cada intento (ni su foto) a memoria Java solo para contarlo.
+        return deliveryAttemptRepository.metricsBetween(from, to);
     }
 }

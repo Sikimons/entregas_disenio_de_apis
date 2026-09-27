@@ -9,8 +9,7 @@ public interface ConfirmDeliveryUseCase {
     boolean confirmDelivery(ConfirmDeliveryCommand command, Driver driver);
 
     record ConfirmDeliveryCommand(
-            Long invoiceId, String invoiceNumber, String partnerName, String deliveryAddress,
-            String pin, double latitude, double longitude, DeliveryPhoto photo
+            Long invoiceId, String pin, double latitude, double longitude, DeliveryPhoto photo
     ) {
     }
 }

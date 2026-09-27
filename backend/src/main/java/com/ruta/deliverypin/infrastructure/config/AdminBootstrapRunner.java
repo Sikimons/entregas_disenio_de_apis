@@ -7,13 +7,21 @@ import com.ruta.deliverypin.domain.port.out.PasswordEncoderPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
  * Crea el usuario administrador inicial en el primer arranque, si todavia no existe.
  * Depende unicamente de puertos de salida del dominio (no de detalles de persistencia).
+ *
+ * @Order(0) explicito: sin el, este runner queda "empatado" (sin orden declarado, ambos
+ * caen en Ordered.LOWEST_PRECEDENCE) con infrastructure.seed.Initializer (@Order(1)), y el
+ * orden de desempate real de Spring depende del orden de registro de los bean definitions
+ * durante el escaneo de componentes -- NO es alfabetico de forma garantizada (ver el bug
+ * real que esto causaba, historial en docs/EVALUACION_TECNICA.md §18).
  */
 @Component
+@Order(0)
 public class AdminBootstrapRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AdminBootstrapRunner.class);

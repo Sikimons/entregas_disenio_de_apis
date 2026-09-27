@@ -1,3 +1,4 @@
+data
 **/node_modules/
 **/target/
 **/dist/
@@ -5,5 +6,10 @@
 backend/.env
 output/
 .playwright-cli/
-docker-compose.yml
+/docker-compose.yml
 /demo
+deploy/env/*.env
+deploy/certs/*
+!deploy/certs/.gitkeep
+deploy/state/
+backups/
