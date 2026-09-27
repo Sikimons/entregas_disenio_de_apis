@@ -14,29 +14,29 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Sigue en JdbcTemplate a proposito (Fase8, ver RA4): es una carga masiva de datos de
- * demostracion que debe preservar los ids y el orden exactos de demo/invoices.json (los
- * scripts de demo/pruebas de carga los referencian) y despues resincronizar la secuencia
+ * siembra que debe preservar los ids y el orden exactos de demo/invoices.json (los
+ * scripts de siembra/pruebas de carga los referencian) y despues resincronizar la secuencia
  * de Postgres. Con GenerationType.IDENTITY, JPA nunca permite fijar el id al insertar
  * (siempre pide a la base que lo genere), asi que este caso concreto de "insert masivo
  * con id explicito" no tiene equivalente JPA razonable. LocalInvoiceAdapter y
  * OperationalCostInputAdapter -el camino real de negocio- ya usan JPA.
  *
- * @Order(2) explicito: debe correr antes que DemoSeedExitRunner (ver su Javadoc).
+ * @Order(2) explicito: debe correr antes que SeedExitRunner (ver su Javadoc).
  */
 @Component
-@ConditionalOnProperty(name = "app.demo.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 @Order(2)
-public class DemoInvoiceLoader implements ApplicationRunner {
+public class SeedInvoiceLoader implements ApplicationRunner {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
     private final TransactionTemplate transactions;
     private final ResourceLoader resources;
 
-    @Value("${app.demo.file:file:/app/demo/invoices.json}")
+    @Value("${app.seed.file:file:/app/demo/invoices.json}")
     private String file;
 
-    public DemoInvoiceLoader(JdbcTemplate jdbc, ObjectMapper mapper, TransactionTemplate transactions, ResourceLoader resources) {
+    public SeedInvoiceLoader(JdbcTemplate jdbc, ObjectMapper mapper, TransactionTemplate transactions, ResourceLoader resources) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.transactions = transactions;

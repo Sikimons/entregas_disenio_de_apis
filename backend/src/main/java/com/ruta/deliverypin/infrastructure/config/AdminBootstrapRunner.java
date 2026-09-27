@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
  * Depende unicamente de puertos de salida del dominio (no de detalles de persistencia).
  *
  * @Order(0) explicito: sin el, este runner queda "empatado" (sin orden declarado, ambos
- * caen en Ordered.LOWEST_PRECEDENCE) con DemoSeedExitRunner, y el orden de desempate real
+ * caen en Ordered.LOWEST_PRECEDENCE) con SeedExitRunner, y el orden de desempate real
  * de Spring depende del orden de registro de los bean definitions durante el escaneo de
  * componentes -- NO es alfabetico de forma garantizada (ver el bug real que esto causaba,
- * corregido junto con DemoDriverBootstrapRunner/DemoInvoiceLoader/DemoSeedExitRunner).
+ * corregido junto con SeedDriverBootstrapRunner/SeedInvoiceLoader/SeedExitRunner).
  */
 @Component
 @Order(0)

@@ -45,12 +45,12 @@ spring:
     open-in-view: false
 
 app:
-  demo:
-    enabled: ${APP_DEMO_ENABLED:false}
-    file: ${APP_DEMO_FILE:file:/app/demo/invoices.json}
-    # Solo para el servicio "seed" del compose (ver DemoSeedExitRunner): siembra los datos
-    # de demostracion y termina, en vez de dejar el backend real corriendo en modo demo.
-    seed-only: ${APP_DEMO_SEED_ONLY:false}
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+    file: ${APP_SEED_FILE:file:/app/demo/invoices.json}
+    # Solo para el servicio "seed" del compose (ver SeedExitRunner): siembra los datos
+    # de muestra y termina, en vez de dejar el backend real corriendo en modo siembra.
+    one-shot: ${APP_SEED_ONE_SHOT:false}
   jwt:
     secret: ${JWT_SECRET:CHANGE_ME_super_secret_key_min_32_chars_long_please}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}

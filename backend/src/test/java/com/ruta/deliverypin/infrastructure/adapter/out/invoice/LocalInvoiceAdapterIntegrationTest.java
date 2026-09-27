@@ -52,8 +52,8 @@ class LocalInvoiceAdapterIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
-        // SecretsGuardRunner exige un secreto real (o APP_DEMO_ENABLED=true, que arrastraria
-        // el DemoInvoiceLoader y un archivo que este test no necesita): se le da un secreto
+        // SecretsGuardRunner exige un secreto real (o APP_SEED_ENABLED=true, que arrastraria
+        // el SeedInvoiceLoader y un archivo que este test no necesita): se le da un secreto
         // de prueba propio, sin tocar el arranque normal de la app.
         registry.add("app.jwt.secret", () -> "test_secret_for_testcontainers_integration_min_32_chars_long");
         registry.add("app.admin.bootstrap-password", () -> "testcontainers_admin_password");

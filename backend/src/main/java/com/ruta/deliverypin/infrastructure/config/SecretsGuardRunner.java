@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Falla el arranque si JWT_SECRET o ADMIN_PASSWORD siguen siendo el valor por defecto y
- * no se esta en modo demo explicito (APP_DEMO_ENABLED=false). En docker-compose.demo.yml
- * solo el servicio "seed" corre con APP_DEMO_ENABLED=true (una sola pasada, ver
- * DemoSeedExitRunner); el "backend" que queda sirviendo siempre arranca en false, asi que
+ * no se esta en modo de siembra explicito (APP_SEED_ENABLED=false). En docker-compose.seed.yml
+ * solo el servicio "seed" corre con APP_SEED_ENABLED=true (una sola pasada, ver
+ * SeedExitRunner); el "backend" que queda sirviendo siempre arranca en false, asi que
  * este guard sigue exigiendole un JWT_SECRET y un ADMIN_PASSWORD propios (no son valores
  * de ejemplo en ese compose).
  */
@@ -21,28 +21,28 @@ public class SecretsGuardRunner implements ApplicationRunner {
 
     private final JwtProperties jwtProperties;
     private final AppProperties appProperties;
-    private final boolean demoEnabled;
+    private final boolean seedEnabled;
 
-    public SecretsGuardRunner(JwtProperties jwtProperties, AppProperties appProperties, @Value("${app.demo.enabled:false}") boolean demoEnabled) {
+    public SecretsGuardRunner(JwtProperties jwtProperties, AppProperties appProperties, @Value("${app.seed.enabled:false}") boolean seedEnabled) {
         this.jwtProperties = jwtProperties;
         this.appProperties = appProperties;
-        this.demoEnabled = demoEnabled;
+        this.seedEnabled = seedEnabled;
     }
 
     @Override
     public void run(ApplicationArguments args) {
-        if (demoEnabled) {
+        if (seedEnabled) {
             return;
         }
         if (PLACEHOLDER_SECRET.equals(jwtProperties.getSecret())) {
             throw new IllegalStateException(
                     "JWT_SECRET no fue configurado (sigue siendo el valor de ejemplo). "
-                            + "Define un secreto propio de al menos 32 caracteres, o habilita APP_DEMO_ENABLED=true si es un entorno de demostracion.");
+                            + "Define un secreto propio de al menos 32 caracteres, o habilita APP_SEED_ENABLED=true si es un entorno de siembra de datos de muestra.");
         }
         if (PLACEHOLDER_ADMIN_PASSWORD.equals(appProperties.getAdmin().getBootstrapPassword())) {
             throw new IllegalStateException(
                     "ADMIN_PASSWORD no fue configurado (sigue siendo el valor de ejemplo 'admin123'). "
-                            + "Define una contrasena propia, o habilita APP_DEMO_ENABLED=true si es un entorno de demostracion.");
+                            + "Define una contrasena propia, o habilita APP_SEED_ENABLED=true si es un entorno de siembra de datos de muestra.");
         }
     }
 }
