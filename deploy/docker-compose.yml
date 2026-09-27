@@ -20,7 +20,9 @@ name: ${COMPOSE_PROJECT_NAME:-ruta-delivery}
 # declaran "build:" ademas de "image:" para esto, ver mas abajo).
 #   COMPOSE_PROFILES=db,frontend,seed NGINX_SITE=local
 #   docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env up -d --build --wait
-# Primer arranque con datos de muestra en cualquier entorno (nunca en produccion real):
+# Primer arranque con datos iniciales en cualquier entorno, incluida produccion real (solo
+# UNA VEZ, nunca de forma continua -- sin ERP externo que alimente facturas nuevas, esas se
+# crean desde el panel admin o scripts/generate_invoices.py, no reactivando este profile):
 #   agregar "seed" al COMPOSE_PROFILES de arriba
 #
 # En la VM no se corre "up" a mano: deploy/scripts/deploy.sh (lo invoca CD) fija el tag

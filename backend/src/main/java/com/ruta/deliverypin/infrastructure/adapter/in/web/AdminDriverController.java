@@ -60,8 +60,12 @@ public class AdminDriverController {
     })
     @GetMapping
     public PageResponse<DriverResponse> list(
+            // Default unificado a 20 (auditoria tecnica, hallazgo P1): antes este endpoint
+            // era el unico de los listados paginados con default 100 en vez de 20
+            // (AdminInvoiceController, DriverDeliveryController.history), una inconsistencia
+            // de contrato sin justificacion de negocio. El maximo sigue en 100.
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size
+            @RequestParam(defaultValue = "20") int size
     ) {
         var result = listDriversUseCase.listAll(new PageRequest(page, size));
         return PageResponse.from(result, DriverResponse::from);

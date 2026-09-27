@@ -18,14 +18,18 @@ import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.InvoiceResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.PageResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.ReportIncidentRequest;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.ReportIncidentResponse;
+import com.ruta.deliverypin.infrastructure.adapter.in.web.security.ConfirmRateLimiter;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.security.CurrentDriverResolver;
+import com.ruta.deliverypin.infrastructure.adapter.in.web.security.IdempotencyKeyStore;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,6 +50,8 @@ public class DriverDeliveryController {
     private final ListDriverDeliveryHistoryUseCase listDriverDeliveryHistoryUseCase;
     private final GetDriverDeliveryPhotoUseCase getDriverDeliveryPhotoUseCase;
     private final CurrentDriverResolver currentDriverResolver;
+    private final ConfirmRateLimiter confirmRateLimiter;
+    private final IdempotencyKeyStore idempotencyKeyStore;
 
     public DriverDeliveryController(
             SearchPendingInvoicesUseCase searchPendingInvoicesUseCase,
@@ -54,7 +60,9 @@ public class DriverDeliveryController {
             ReportIncidentUseCase reportIncidentUseCase,
             ListDriverDeliveryHistoryUseCase listDriverDeliveryHistoryUseCase,
             GetDriverDeliveryPhotoUseCase getDriverDeliveryPhotoUseCase,
-            CurrentDriverResolver currentDriverResolver
+            CurrentDriverResolver currentDriverResolver,
+            ConfirmRateLimiter confirmRateLimiter,
+            IdempotencyKeyStore idempotencyKeyStore
     ) {
         this.searchPendingInvoicesUseCase = searchPendingInvoicesUseCase;
         this.listInvoiceLinesUseCase = listInvoiceLinesUseCase;
@@ -63,6 +71,13 @@ public class DriverDeliveryController {
         this.listDriverDeliveryHistoryUseCase = listDriverDeliveryHistoryUseCase;
         this.getDriverDeliveryPhotoUseCase = getDriverDeliveryPhotoUseCase;
         this.currentDriverResolver = currentDriverResolver;
+        this.confirmRateLimiter = confirmRateLimiter;
+        this.idempotencyKeyStore = idempotencyKeyStore;
+    }
+
+    /** Namespace por endpoint: la misma clave no debe colisionar entre /confirm e /incident. */
+    private String idempotencyCacheKey(String endpoint, Long driverId, String idempotencyKey) {
+        return endpoint + ":" + driverId + ":" + idempotencyKey;
     }
 
     @Operation(summary = "Buscar facturas pendientes de entrega", description = "Facturas publicadas, con PIN habilitado y aun no confirmadas, filtradas por numero o cliente.")
@@ -80,40 +95,86 @@ public class DriverDeliveryController {
     }
 
     @Operation(summary = "Confirmar una entrega", description = "Bloquea la factura, valida el PIN y guarda la evidencia (foto, GPS) en una sola transaccion. "
-            + "Los datos de la factura (numero, cliente, direccion) se resuelven desde la base por invoiceId, no desde este cuerpo.")
+            + "Los datos de la factura (numero, cliente, direccion) se resuelven desde la base por invoiceId, no desde este cuerpo. "
+            + "Acepta un header opcional \"Idempotency-Key\": un reintento con la misma clave devuelve la respuesta ya dada, sin volver "
+            + "a validar el PIN ni tocar la base (util ante mala conectividad, cuando el cliente no supo si la primera peticion llego).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Entrega confirmada; se guarda la evidencia"),
             @ApiResponse(responseCode = "400", description = "Foto invalida (tamano, formato) o factura no encontrada/no publicada"),
             @ApiResponse(responseCode = "409", description = "La entrega ya habia sido confirmada"),
             @ApiResponse(responseCode = "422", description = "PIN incorrecto"),
+            @ApiResponse(responseCode = "429", description = "Demasiados intentos de confirmacion en poco tiempo para este conductor"),
             @ApiResponse(responseCode = "503", description = "Circuito abierto: el ERP simulado no esta disponible")
     })
     @PostMapping("/deliveries/confirm")
-    public ConfirmDeliveryResponse confirmDelivery(@Valid @RequestBody ConfirmDeliveryRequest request) {
+    public ConfirmDeliveryResponse confirmDelivery(
+            @Valid @RequestBody ConfirmDeliveryRequest request,
+            @Parameter(description = "Clave de idempotencia generada por el cliente (p. ej. un UUID por intento de confirmacion).")
+            @RequestHeader(value = "Idempotency-Key", required = false) @Nullable String idempotencyKey
+    ) {
         Driver driver = currentDriverResolver.resolve();
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            String cacheKey = idempotencyCacheKey("confirm", driver.getId(), idempotencyKey);
+            ConfirmDeliveryResponse cached = idempotencyKeyStore.getCached(cacheKey);
+            if (cached != null) {
+                return cached;
+            }
+        }
+
+        // Acota, por conductor, cuantas facturas DISTINTAS se pueden intentar confirmar en
+        // poco tiempo (Tanda 2, auditoria tecnica) -- el bloqueo de 5 intentos de PIN por
+        // FACTURA (LocalInvoiceAdapter) ya frena adivinar el PIN de una en particular, esto
+        // frena adivinar el PIN probando muchas facturas seguidas.
+        confirmRateLimiter.checkAllowed(driver.getId());
         DeliveryPhoto photo = new DeliveryPhoto(request.photoBase64(), request.photoFilename(), request.photoContentType());
         var command = new ConfirmDeliveryUseCase.ConfirmDeliveryCommand(
                 request.invoiceId(), request.pin(), request.latitude(), request.longitude(), photo
         );
         boolean photoUploaded = confirmDeliveryUseCase.confirmDelivery(command, driver);
         String message = "Entrega confirmada correctamente. Evidencia guardada.";
-        return new ConfirmDeliveryResponse(true, message, photoUploaded);
+        ConfirmDeliveryResponse response = new ConfirmDeliveryResponse(true, message, photoUploaded);
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            idempotencyKeyStore.put(idempotencyCacheKey("confirm", driver.getId(), idempotencyKey), response);
+        }
+        return response;
     }
 
-    @Operation(summary = "Reportar una incidencia", description = "Registra que la entrega no se pudo completar (motivo y ubicacion), sin bloquear ni cancelar la factura.")
+    @Operation(summary = "Reportar una incidencia", description = "Registra que la entrega no se pudo completar (motivo y ubicacion), sin bloquear ni cancelar la factura. "
+            + "Acepta un header opcional \"Idempotency-Key\": a diferencia de /confirm, aqui NO hay ninguna regla de negocio que impida "
+            + "crear dos incidencias iguales ante un reintento de red, asi que esta clave es la unica proteccion real contra ese duplicado.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Incidencia registrada"),
             @ApiResponse(responseCode = "400", description = "La factura indicada no existe")
     })
     @PostMapping("/deliveries/incident")
-    public ReportIncidentResponse reportIncident(@Valid @RequestBody ReportIncidentRequest request) {
+    public ReportIncidentResponse reportIncident(
+            @Valid @RequestBody ReportIncidentRequest request,
+            @Parameter(description = "Clave de idempotencia generada por el cliente (p. ej. un UUID por intento de reporte).")
+            @RequestHeader(value = "Idempotency-Key", required = false) @Nullable String idempotencyKey
+    ) {
         Driver driver = currentDriverResolver.resolve();
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            String cacheKey = idempotencyCacheKey("incident", driver.getId(), idempotencyKey);
+            ReportIncidentResponse cached = idempotencyKeyStore.getCached(cacheKey);
+            if (cached != null) {
+                return cached;
+            }
+        }
+
         var command = new ReportIncidentUseCase.ReportIncidentCommand(
                 request.invoiceId(), request.invoiceNumber(), request.partnerName(), request.deliveryAddress(),
                 request.reason(), request.notes(), request.latitude(), request.longitude()
         );
         reportIncidentUseCase.reportIncident(command, driver);
-        return new ReportIncidentResponse(true, "Incidencia reportada correctamente.");
+        ReportIncidentResponse response = new ReportIncidentResponse(true, "Incidencia reportada correctamente.");
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            idempotencyKeyStore.put(idempotencyCacheKey("incident", driver.getId(), idempotencyKey), response);
+        }
+        return response;
     }
 
     @Operation(summary = "Historial propio de entregas", description = "Entregas e incidencias del conductor autenticado, paginado (tamano maximo 100).")

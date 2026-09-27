@@ -40,14 +40,25 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void invalidCredentials_returns401() throws Exception {
+        // Contrato unico de error (ErrorResponse, Tanda 2): "path" y "timestamp" presentes
+        // en cualquier error, no solo en el de validacion.
         mockMvc.perform(get("/test/throw/invalid-credentials"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Usuario o contrasena incorrectos."));
+                .andExpect(jsonPath("$.message").value("Usuario o contrasena incorrectos."))
+                .andExpect(jsonPath("$.path").value("/test/throw/invalid-credentials"))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.errors").doesNotExist());
     }
 
     @Test
     void tooManyLoginAttempts_returns429() throws Exception {
         mockMvc.perform(get("/test/throw/too-many-login-attempts"))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void tooManyConfirmAttempts_returns429() throws Exception {
+        mockMvc.perform(get("/test/throw/too-many-confirm-attempts"))
                 .andExpect(status().isTooManyRequests());
     }
 
@@ -135,6 +146,13 @@ class GlobalExceptionHandlerTest {
     void illegalArgument_returns400() throws Exception {
         mockMvc.perform(get("/test/throw/illegal-argument"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void unexpectedException_returns500WithGenericMessage() throws Exception {
+        mockMvc.perform(get("/test/throw/unexpected"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Error interno. Intenta nuevamente."));
     }
 
     @Test

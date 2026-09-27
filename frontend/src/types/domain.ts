@@ -40,6 +40,9 @@ export interface AdminInvoice extends Invoice {
   requiresPin: boolean
   pin: string | null
   confirmed: boolean
+  /** Username de quien creo/publico la factura (Tanda 2, auditoria tecnica); null en facturas anteriores a esta columna. */
+  createdBy: string | null
+  publishedBy: string | null
 }
 
 /** Ver InvoiceLineResponse.java. */

@@ -44,6 +44,26 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Vendors estables en su propio chunk: cambian mucho menos que el codigo de la
+        // app, asi que el navegador los reutiliza de cache entre despliegues en vez de
+        // volver a descargarlos. Leaflet aparte porque solo lo usan dos paginas admin
+        // (ver App.tsx, ya con lazy() por ruta) y pesa ~150 kB por si solo.
+        manualChunks(id) {
+          if (id.includes('node_modules/leaflet')) return 'vendor-leaflet'
+          if (
+            id.includes('node_modules/react-dom') ||
+            id.includes('node_modules/react-router') ||
+            id.includes('node_modules/react/')
+          ) {
+            return 'vendor-react'
+          }
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

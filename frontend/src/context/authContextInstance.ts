@@ -4,7 +4,7 @@ import type { User } from '../types/domain'
 export interface AuthContextValue {
   user: User | null
   login: (username: string, password: string, remember?: boolean) => Promise<User>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 /**

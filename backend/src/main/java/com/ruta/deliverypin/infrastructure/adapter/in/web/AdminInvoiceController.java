@@ -5,7 +5,9 @@ import com.ruta.deliverypin.domain.model.PageRequest;
 import com.ruta.deliverypin.domain.port.in.ManageInvoicesUseCase;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.AdminInvoiceResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.PageResponse;
+import com.ruta.deliverypin.infrastructure.adapter.in.web.security.CurrentDriverResolver;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,17 +30,26 @@ import java.util.List;
 public class AdminInvoiceController {
 
     private final ManageInvoicesUseCase manageInvoicesUseCase;
+    private final CurrentDriverResolver currentDriverResolver;
 
-    public AdminInvoiceController(ManageInvoicesUseCase manageInvoicesUseCase) {
+    public AdminInvoiceController(ManageInvoicesUseCase manageInvoicesUseCase, CurrentDriverResolver currentDriverResolver) {
         this.manageInvoicesUseCase = manageInvoicesUseCase;
+        this.currentDriverResolver = currentDriverResolver;
     }
 
-    public record Product(@NotBlank String description, @NotNull @Positive Double quantity) {}
+    public record Product(
+            @Schema(example = "Arroz blanco - funda 1 kg") @NotBlank String description,
+            @Schema(example = "2") @NotNull @Positive Double quantity
+    ) {}
 
-    public record CreateInvoice(@NotBlank @Size(max = 60) String number, @NotBlank @Size(max = 255) String partnerName,
-        @Size(max = 255) String deliveryAddress, @DecimalMin("-90") @DecimalMax("90") Double latitude,
-        @DecimalMin("-180") @DecimalMax("180") Double longitude, boolean requiresPin,
-        @NotEmpty List<@Valid Product> products) {}
+    public record CreateInvoice(
+            @Schema(example = "001-104-0000001234") @NotBlank @Size(max = 60) String number,
+            @Schema(example = "Cliente de prueba") @NotBlank @Size(max = 255) String partnerName,
+            @Schema(example = "Calle de prueba, Guayaquil") @Size(max = 255) String deliveryAddress,
+            @Schema(example = "-2.170998") @DecimalMin("-90") @DecimalMax("90") Double latitude,
+            @Schema(example = "-79.922359") @DecimalMin("-180") @DecimalMax("180") Double longitude,
+            @Schema(description = "Si es true, publicar() genera un PIN de 6 digitos.", defaultValue = "true") boolean requiresPin,
+            @NotEmpty List<@Valid Product> products) {}
 
     @Operation(summary = "Listar facturas", description = "Facturas filtradas por numero o cliente, paginado (tamano maximo 100), incluido su estado y PIN vigente.")
     @ApiResponses({
@@ -66,7 +77,7 @@ public class AdminInvoiceController {
         var created = manageInvoicesUseCase.create(new ManageInvoicesUseCase.CreateInvoiceCommand(
                 request.number(), request.partnerName(), request.deliveryAddress(), request.latitude(), request.longitude(),
                 request.requiresPin(), request.products().stream().map(p -> new InvoiceLine(null, p.description(), p.quantity())).toList()
-        ));
+        ), currentDriverResolver.resolve().getUsername());
         var location = uriBuilder.path("/api/v1/admin/invoices/{id}").buildAndExpand(created.id()).toUri();
         return ResponseEntity.created(location).body(AdminInvoiceResponse.from(created));
     }
@@ -79,6 +90,6 @@ public class AdminInvoiceController {
     })
     @PostMapping("/{id}/publish")
     public AdminInvoiceResponse publish(@PathVariable Long id) {
-        return AdminInvoiceResponse.from(manageInvoicesUseCase.publish(id));
+        return AdminInvoiceResponse.from(manageInvoicesUseCase.publish(id, currentDriverResolver.resolve().getUsername()));
     }
 }

@@ -13,12 +13,15 @@ public record AdminInvoiceResponse(
         String pin,
         boolean confirmed,
         Double expectedLatitude,
-        Double expectedLongitude
+        Double expectedLongitude,
+        String createdBy,
+        String publishedBy
 ) {
     public static AdminInvoiceResponse from(AdminInvoiceView view) {
         return new AdminInvoiceResponse(
                 view.id(), view.number(), view.partnerName(), view.deliveryAddress(), view.invoiceDate(),
-                view.state(), view.requiresPin(), view.pin(), view.confirmed(), view.expectedLatitude(), view.expectedLongitude()
+                view.state(), view.requiresPin(), view.pin(), view.confirmed(), view.expectedLatitude(), view.expectedLongitude(),
+                view.createdBy(), view.publishedBy()
         );
     }
 }

@@ -81,7 +81,7 @@ export function ConfirmDeliveryForm({
       </p>
 
       {linesLoading && <p className="hint-text">Cargando productos...</p>}
-      {linesError && <p className="error-text">{linesError}</p>}
+      {linesError && <p role="alert" className="error-text">{linesError}</p>}
 
       {!linesLoading && !linesError && (
         <ul className="checklist">
@@ -129,7 +129,7 @@ export function ConfirmDeliveryForm({
           </button>
         </div>
       )}
-      {photoError && <p className="error-text">{photoError}</p>}
+      {photoError && <p role="alert" className="error-text">{photoError}</p>}
 
       <p className="pin-section-label">PIN de entrega</p>
       <PinBoxes value={pin} onChange={onPinChange} disabled={confirming} />
@@ -140,7 +140,7 @@ export function ConfirmDeliveryForm({
         <p className="hint-text">Toma la foto de evidencia antes de confirmar.</p>
       )}
 
-      <div className={`location-status ${locationState}`}>
+      <div className={`location-status ${locationState}`} role="status">
         <span className="location-dot" />
         {locationState === 'locating' && 'Obteniendo tu ubicacion...'}
         {locationState === 'ready' && 'Ubicacion lista'}
@@ -148,7 +148,7 @@ export function ConfirmDeliveryForm({
         {locationState === 'idle' && 'Ubicacion'}
       </div>
 
-      {feedback?.type === 'error' && <p className="error-text">{feedback.message}</p>}
+      {feedback?.type === 'error' && <p role="alert" className="error-text">{feedback.message}</p>}
 
       <button type="submit" disabled={confirming || !canConfirm}>
         {confirming ? 'Confirmando...' : 'Confirmar entrega'}

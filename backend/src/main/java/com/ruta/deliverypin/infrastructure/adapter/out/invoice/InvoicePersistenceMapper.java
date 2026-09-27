@@ -24,7 +24,7 @@ final class InvoicePersistenceMapper {
     static AdminInvoiceView toAdminView(InvoiceJpaEntity entity) {
         return new AdminInvoiceView(entity.getId(), entity.getNumber(), entity.getPartnerName(), entity.getDeliveryAddress(),
                 entity.getInvoiceDate().toString(), entity.getState(), entity.isRequiresPin(), entity.getPin(), entity.isConfirmed(),
-                entity.getExpectedLatitude(), entity.getExpectedLongitude());
+                entity.getExpectedLatitude(), entity.getExpectedLongitude(), entity.getCreatedBy(), entity.getPublishedBy());
     }
 
     static InvoiceLine toLine(InvoiceLineJpaEntity entity) {

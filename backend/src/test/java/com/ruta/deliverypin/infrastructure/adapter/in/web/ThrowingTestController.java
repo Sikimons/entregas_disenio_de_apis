@@ -8,6 +8,7 @@ import com.ruta.deliverypin.domain.exception.ErpUnavailableException;
 import com.ruta.deliverypin.domain.exception.InvalidCredentialsException;
 import com.ruta.deliverypin.domain.exception.InvalidPinException;
 import com.ruta.deliverypin.domain.exception.SelfAccountModificationException;
+import com.ruta.deliverypin.domain.exception.TooManyConfirmAttemptsException;
 import com.ruta.deliverypin.domain.exception.TooManyLoginAttemptsException;
 import com.ruta.deliverypin.infrastructure.adapter.out.invoice.SimulatedErpFailureToggle;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
@@ -39,6 +40,11 @@ public class ThrowingTestController {
     @GetMapping("/test/throw/too-many-login-attempts")
     public void tooManyLoginAttempts() {
         throw new TooManyLoginAttemptsException();
+    }
+
+    @GetMapping("/test/throw/too-many-confirm-attempts")
+    public void tooManyConfirmAttempts() {
+        throw new TooManyConfirmAttemptsException();
     }
 
     @GetMapping("/test/throw/already-confirmed")
@@ -105,6 +111,11 @@ public class ThrowingTestController {
     @GetMapping("/test/throw/illegal-argument")
     public void illegalArgument() {
         throw new IllegalArgumentException("argumento invalido");
+    }
+
+    @GetMapping("/test/throw/unexpected")
+    public void unexpected() {
+        throw new IllegalStateException("bug no previsto");
     }
 
     @PostMapping("/test/throw/validate")

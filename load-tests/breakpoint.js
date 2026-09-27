@@ -5,6 +5,7 @@
 // breakpoint real del sistema para esta mezcla de trafico, no un numero elegido a mano.
 import http from 'k6/http'
 import { check } from 'k6'
+import { login } from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:18091'
 
@@ -36,19 +37,11 @@ export const options = {
 }
 
 export function setup() {
-  const res = http.post(
-    `${BASE_URL}/api/v1/auth/login`,
-    JSON.stringify({ username: 'admin', password: 'admin123' }),
-    { headers: { 'Content-Type': 'application/json' } }
-  )
-  if (res.status !== 200) {
-    throw new Error(`No se pudo autenticar en setup(): HTTP ${res.status} ${res.body}`)
-  }
-  return { token: res.json('token') }
+  return { headers: login(BASE_URL, http) }
 }
 
 export default function (data) {
-  const headers = { Authorization: `Bearer ${data.token}` }
+  const headers = data.headers
   const now = new Date()
   const from = new Date(now.getTime() - 30 * 86400000).toISOString()
   const to = now.toISOString()

@@ -22,13 +22,13 @@ public class InvoiceManagementApplicationService implements ManageInvoicesUseCas
     }
 
     @Override
-    public AdminInvoiceView create(CreateInvoiceCommand command) {
+    public AdminInvoiceView create(CreateInvoiceCommand command, String createdBy) {
         return invoiceAdminPort.create(command.number(), command.partnerName(), command.deliveryAddress(),
-                command.latitude(), command.longitude(), command.requiresPin(), command.lines());
+                command.latitude(), command.longitude(), command.requiresPin(), command.lines(), createdBy);
     }
 
     @Override
-    public AdminInvoiceView publish(Long id) {
-        return invoiceAdminPort.publish(id);
+    public AdminInvoiceView publish(Long id, String publishedBy) {
+        return invoiceAdminPort.publish(id, publishedBy);
     }
 }

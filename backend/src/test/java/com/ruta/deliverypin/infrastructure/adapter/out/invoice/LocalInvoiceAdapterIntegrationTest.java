@@ -82,9 +82,20 @@ class LocalInvoiceAdapterIntegrationTest {
 
     private AdminInvoiceView createAndPublish(String number) {
         adapter.create(number, "Cliente Testcontainers", "Direccion X", null, null, true,
-                List.of(new InvoiceLine(null, "item", 1.0)));
+                List.of(new InvoiceLine(null, "item", 1.0)), "admin");
         AdminInvoiceView draft = adapter.list(number, new PageRequest(0, 20)).content().get(0);
-        return adapter.publish(draft.id());
+        return adapter.publish(draft.id(), "admin");
+    }
+
+    @Test
+    void createAndPublish_recordCreatedByAndPublishedBy() {
+        // Tanda 2 (auditoria tecnica, Fase2 §6: "no se registra quien creo o publico cada
+        // factura"). createAndPublish() usa el mismo username ("admin") para ambos pasos a
+        // proposito de la fixture; este test verifica que cada llamada persiste el suyo.
+        AdminInvoiceView published = createAndPublish("F-IT-009");
+
+        assertThat(published.createdBy()).isEqualTo("admin");
+        assertThat(published.publishedBy()).isEqualTo("admin");
     }
 
     @Test
@@ -157,7 +168,7 @@ class LocalInvoiceAdapterIntegrationTest {
         // la segunda llamada no debe volver a golpear el repositorio (@Cacheable en
         // LocalInvoiceAdapter.findInvoiceLines).
         adapter.create("F-IT-004", "Cliente Cache", "Direccion Y", null, null, true,
-                List.of(new InvoiceLine(null, "item cacheado", 3.0)));
+                List.of(new InvoiceLine(null, "item cacheado", 3.0)), "admin");
         Long invoiceId = adapter.list("F-IT-004", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(lineRepository);
 
@@ -175,7 +186,7 @@ class LocalInvoiceAdapterIntegrationTest {
         // vacia (cache "negativa"); con "unless" en la anotacion, un resultado vacio no se
         // guarda, asi que la siguiente consulta vuelve a tocar la base en vez de arrastrar
         // el vacio hasta que expire el TTL.
-        adapter.create("F-IT-005", "Cliente Sin Lineas", "Direccion W", null, null, true, List.of());
+        adapter.create("F-IT-005", "Cliente Sin Lineas", "Direccion W", null, null, true, List.of(), "admin");
         Long invoiceId = adapter.list("F-IT-005", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(lineRepository);
 
@@ -194,7 +205,7 @@ class LocalInvoiceAdapterIntegrationTest {
         // "unless" mal escrito ("#result.isEmpty()" sobre un Optional, que Spring desenvuelve
         // antes de evaluar la SpEL) rompia esta llamada con SpelEvaluationException cada vez
         // que la ubicacion SI estaba presente -- es decir, en el caso mas comun.
-        adapter.create("F-IT-007", "Cliente Con Ubicacion", "Direccion U", -2.171, -79.922, true, List.of());
+        adapter.create("F-IT-007", "Cliente Con Ubicacion", "Direccion U", -2.171, -79.922, true, List.of(), "admin");
         Long invoiceId = adapter.list("F-IT-007", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(invoiceRepository);
 
@@ -208,7 +219,7 @@ class LocalInvoiceAdapterIntegrationTest {
 
     @Test
     void findExpectedLocation_emptyResult_isNotCached_repositoryQueriedEachTime() {
-        adapter.create("F-IT-008", "Cliente Sin Ubicacion", "Direccion T", null, null, true, List.of());
+        adapter.create("F-IT-008", "Cliente Sin Ubicacion", "Direccion T", null, null, true, List.of(), "admin");
         Long invoiceId = adapter.list("F-IT-008", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(invoiceRepository);
 
@@ -224,8 +235,8 @@ class LocalInvoiceAdapterIntegrationTest {
     void list_withUnderscoreInQuery_treatsItAsLiteralNotAsWildcard() {
         // N3/N7 (docs/EVALUACION_TECNICA.md §18): sin escapar "_" (comodin de un solo
         // caracter en LIKE), buscar "F-IT-A_1" tambien traia "F-IT-AB1".
-        adapter.create("F-IT-A_1", "Cliente Escape", "Direccion Z", null, null, true, List.of());
-        adapter.create("F-IT-AB1", "Cliente Escape", "Direccion Z", null, null, true, List.of());
+        adapter.create("F-IT-A_1", "Cliente Escape", "Direccion Z", null, null, true, List.of(), "admin");
+        adapter.create("F-IT-AB1", "Cliente Escape", "Direccion Z", null, null, true, List.of(), "admin");
 
         List<AdminInvoiceView> matches = adapter.list("F-IT-A_1", new PageRequest(0, 20)).content();
 

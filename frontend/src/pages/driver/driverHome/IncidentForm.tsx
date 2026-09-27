@@ -53,7 +53,7 @@ export function IncidentForm({
         placeholder="Detalle adicional para el administrador..."
       />
 
-      {incidentError && <p className="error-text">{incidentError}</p>}
+      {incidentError && <p role="alert" className="error-text">{incidentError}</p>}
 
       <button type="submit" disabled={reportingIncident}>
         {reportingIncident ? 'Enviando...' : 'Enviar reporte'}

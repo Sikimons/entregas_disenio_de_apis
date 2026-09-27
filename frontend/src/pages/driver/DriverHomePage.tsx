@@ -189,15 +189,24 @@ export default function DriverHomePage() {
         }
       }
 
-      const { data } = await apiClient.post<ConfirmDeliveryResponse>('/driver/deliveries/confirm', {
-        invoiceId: selectedInvoice.id,
-        pin,
-        latitude,
-        longitude,
-        photoBase64: photo.dataUrl,
-        photoFilename: photo.filename,
-        photoContentType: 'image/jpeg',
-      })
+      // Idempotency-Key (auditoria tecnica, Tanda 2): una sola clave por intento de submit,
+      // no por request HTTP -- si esta misma llamada se reintentara (p. ej. un futuro retry
+      // automatico ante timeout), reenviar la MISMA clave es lo que le permite al backend
+      // devolver la respuesta ya dada en vez de repetir la confirmacion.
+      const idempotencyKey = crypto.randomUUID()
+      const { data } = await apiClient.post<ConfirmDeliveryResponse>(
+        '/driver/deliveries/confirm',
+        {
+          invoiceId: selectedInvoice.id,
+          pin,
+          latitude,
+          longitude,
+          photoBase64: photo.dataUrl,
+          photoFilename: photo.filename,
+          photoContentType: 'image/jpeg',
+        },
+        { headers: { 'Idempotency-Key': idempotencyKey } }
+      )
 
       setShowStamp(true)
       setInvoices((prev) => prev.filter((inv) => inv.id !== selectedInvoice.id))
@@ -232,16 +241,24 @@ export default function DriverHomePage() {
         // Se reporta igual sin ubicacion si el GPS no esta disponible.
       }
 
-      await apiClient.post('/driver/deliveries/incident', {
-        invoiceId: selectedInvoice.id,
-        invoiceNumber: selectedInvoice.number,
-        partnerName: selectedInvoice.partnerName,
-        deliveryAddress: selectedInvoice.deliveryAddress,
-        reason: incidentReason,
-        notes: incidentNotes,
-        latitude,
-        longitude,
-      })
+      // Idempotency-Key (auditoria tecnica, Tanda 2): a diferencia de /confirm, aqui no hay
+      // ninguna regla de negocio que impida crear dos incidencias iguales ante un reintento
+      // de red -- esta clave es la unica proteccion real contra ese duplicado.
+      const idempotencyKey = crypto.randomUUID()
+      await apiClient.post(
+        '/driver/deliveries/incident',
+        {
+          invoiceId: selectedInvoice.id,
+          invoiceNumber: selectedInvoice.number,
+          partnerName: selectedInvoice.partnerName,
+          deliveryAddress: selectedInvoice.deliveryAddress,
+          reason: incidentReason,
+          notes: incidentNotes,
+          latitude,
+          longitude,
+        },
+        { headers: { 'Idempotency-Key': idempotencyKey } }
+      )
 
       const invoiceNumber = selectedInvoice.number
       resetSelection()

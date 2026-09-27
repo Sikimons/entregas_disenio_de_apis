@@ -13,7 +13,7 @@ public interface InvoiceAdminPort {
     PageResult<AdminInvoiceView> list(String query, PageRequest pageRequest);
 
     AdminInvoiceView create(String number, String partnerName, String address, Double latitude, Double longitude,
-                             boolean requiresPin, List<InvoiceLine> lines);
+                             boolean requiresPin, List<InvoiceLine> lines, String createdBy);
 
-    AdminInvoiceView publish(Long id);
+    AdminInvoiceView publish(Long id, String publishedBy);
 }
