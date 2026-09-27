@@ -16,6 +16,8 @@ public record AdminInvoiceView(
         String pin,
         boolean confirmed,
         Double expectedLatitude,
-        Double expectedLongitude
+        Double expectedLongitude,
+        String createdBy,
+        String publishedBy
 ) {
 }

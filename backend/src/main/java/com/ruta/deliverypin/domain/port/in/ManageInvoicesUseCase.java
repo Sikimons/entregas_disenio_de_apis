@@ -12,9 +12,9 @@ public interface ManageInvoicesUseCase {
 
     PageResult<AdminInvoiceView> list(String query, PageRequest pageRequest);
 
-    AdminInvoiceView create(CreateInvoiceCommand command);
+    AdminInvoiceView create(CreateInvoiceCommand command, String createdBy);
 
-    AdminInvoiceView publish(Long id);
+    AdminInvoiceView publish(Long id, String publishedBy);
 
     record CreateInvoiceCommand(
             String number, String partnerName, String deliveryAddress,

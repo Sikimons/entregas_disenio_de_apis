@@ -68,6 +68,16 @@ public class InvoiceJpaEntity {
     @Column(name = "pin_locked_until")
     private Instant pinLockedUntil;
 
+    // Auditoria (Tanda 2, Fase2 §6): fuera del constructor a proposito, para no agregar un
+    // 18vo/19vo parametro posicional a uno que ya tiene 17 y que varios tests construyen
+    // directamente. Se completan con setters, igual que "confirmed"/"pin" en publish()/
+    // confirmDelivery() de LocalInvoiceAdapter -- nunca viajan en el alta inicial de la fila.
+    @Column(name = "created_by", length = 80)
+    private String createdBy;
+
+    @Column(name = "published_by", length = 80)
+    private String publishedBy;
+
     protected InvoiceJpaEntity() {
         // requerido por JPA
     }
@@ -197,5 +207,21 @@ public class InvoiceJpaEntity {
 
     public void setPinLockedUntil(Instant pinLockedUntil) {
         this.pinLockedUntil = pinLockedUntil;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getPublishedBy() {
+        return publishedBy;
+    }
+
+    public void setPublishedBy(String publishedBy) {
+        this.publishedBy = publishedBy;
     }
 }

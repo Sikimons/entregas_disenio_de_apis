@@ -214,7 +214,7 @@ public class LocalInvoiceAdapter implements InvoiceQueryPort, DeliveryConfirmati
 
     @Override
     @Transactional
-    public AdminInvoiceView publish(Long id) {
+    public AdminInvoiceView publish(Long id, String publishedBy) {
         return protectedCall(() -> {
             InvoiceJpaEntity invoice = locked(id);
             if ("cancel".equals(invoice.getState())) throw new DeliveryRejectedException("No se puede publicar una factura cancelada.");
@@ -224,6 +224,7 @@ public class LocalInvoiceAdapter implements InvoiceQueryPort, DeliveryConfirmati
             }
             invoice.setState("posted");
             invoice.setPin(pin);
+            invoice.setPublishedBy(publishedBy);
             return InvoicePersistenceMapper.toAdminView(invoice);
         });
     }
@@ -231,10 +232,11 @@ public class LocalInvoiceAdapter implements InvoiceQueryPort, DeliveryConfirmati
     @Override
     @Transactional
     public AdminInvoiceView create(String number, String partnerName, String address, Double latitude, Double longitude,
-                                      boolean requiresPin, List<InvoiceLine> requestedLines) {
+                                      boolean requiresPin, List<InvoiceLine> requestedLines, String createdBy) {
         return protectedCall(() -> {
             InvoiceJpaEntity invoice = new InvoiceJpaEntity(null, number, partnerName, address, latitude, longitude,
                     LocalDate.now(), "draft", requiresPin, null, false, null, null, null, null, 0, null);
+            invoice.setCreatedBy(createdBy);
             invoice = invoices.save(invoice);
             for (InvoiceLine line : requestedLines) {
                 lines.save(new InvoiceLineJpaEntity(null, invoice, line.description(), line.quantity()));
