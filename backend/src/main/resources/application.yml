@@ -1,5 +1,16 @@
 server:
   port: 8080
+  # Defensa en profundidad (auditoria tecnica, hallazgo P1): AuthController.clientIp()
+  # antes leia X-Forwarded-For "a ciegas", confiando en el primer valor sin verificar
+  # quien lo envio -- si el backend fuera alcanzable sin pasar por el nginx/Cloudflare
+  # que lo reescribe (deploy/nginx/snippets/proxy-headers.conf), un atacante podia
+  # falsificarlo y evadir LoginRateLimiter por completo. "native" activa el RemoteIpValve
+  # de Tomcat: solo confia en X-Forwarded-For cuando la conexion ENTRANTE viene de un
+  # rango privado/interno (server.tomcat.remoteip.internal-proxies, que por defecto ya
+  # cubre 10.x/172.16-31.x/192.168.x/loopback -- las redes de Docker Compose y localhost).
+  # Si alguien conecta directo desde una IP publica, el header se ignora y
+  # request.getRemoteAddr() devuelve la IP real de quien conecto, no la falsificada.
+  forward-headers-strategy: native
   # Al recibir SIGTERM (docker compose up con imagen nueva / down), deja de aceptar
   # conexiones y termina las peticiones en curso antes de apagarse (p. ej. una
   # confirmacion de entrega con foto a medio subir). Debe ser menor que el

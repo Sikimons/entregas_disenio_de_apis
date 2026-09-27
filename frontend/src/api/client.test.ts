@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import type { AxiosError } from 'axios'
 import apiClient from './client'
 
 // axios expone los interceptores registrados en .interceptors.<tipo>.handlers[i], pero
@@ -10,13 +10,6 @@ interface InterceptorHandlers<V> {
     fulfilled: (value: V) => V | Promise<V>
     rejected: (error: AxiosError) => unknown
   } | null>
-}
-
-function requestFulfilled(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-  const handlers = (apiClient.interceptors.request as unknown as InterceptorHandlers<InternalAxiosRequestConfig>).handlers
-  // El interceptor real es sincrono (nunca devuelve una Promise); el cast solo
-  // refleja eso, no cambia el comportamiento probado.
-  return handlers[0]!.fulfilled(config) as InternalAxiosRequestConfig
 }
 
 function responseRejected(error: AxiosError): unknown {
@@ -38,35 +31,23 @@ describe('apiClient', () => {
     setLocation('/admin/dashboard')
   })
 
-  it('adjunta el token Bearer cuando hay uno en localStorage', () => {
-    localStorage.setItem('token', 'abc123')
-
-    const config = requestFulfilled({ headers: {} } as InternalAxiosRequestConfig)
-
-    expect(config.headers.Authorization).toBe('Bearer abc123')
+  // El JWT ya no viaja por localStorage/sessionStorage ni por un header manual (auditoria
+  // tecnica, hallazgo P1): el navegador adjunta la cookie HttpOnly solo, por eso ya no hay
+  // interceptor de request que probar. "withCredentials"/"withXSRFToken" son configuracion
+  // estatica de axios.create(), no comportamiento dinamico -- se verifican leyendo la
+  // instancia en vez de simulando una peticion.
+  it('esta configurado para enviar la cookie de sesion y el header CSRF', () => {
+    expect(apiClient.defaults.withCredentials).toBe(true)
+    expect(apiClient.defaults.withXSRFToken).toBe(true)
+    expect(apiClient.defaults.xsrfCookieName).toBe('XSRF-TOKEN')
+    expect(apiClient.defaults.xsrfHeaderName).toBe('X-XSRF-TOKEN')
   })
 
-  it('adjunta el token Bearer cuando hay uno en sessionStorage', () => {
-    sessionStorage.setItem('token', 'xyz789')
-
-    const config = requestFulfilled({ headers: {} } as InternalAxiosRequestConfig)
-
-    expect(config.headers.Authorization).toBe('Bearer xyz789')
-  })
-
-  it('no agrega Authorization si no hay token guardado', () => {
-    const config = requestFulfilled({ headers: {} } as InternalAxiosRequestConfig)
-
-    expect(config.headers.Authorization).toBeUndefined()
-  })
-
-  it('ante un 401 limpia la sesion y redirige a /login', async () => {
-    localStorage.setItem('token', 'abc123')
+  it('ante un 401 limpia el perfil cacheado y redirige a /login', async () => {
     localStorage.setItem('user', '{"username":"admin"}')
 
     await expect(responseRejected({ response: { status: 401 } } as AxiosError)).rejects.toBeDefined()
 
-    expect(localStorage.getItem('token')).toBeNull()
     expect(localStorage.getItem('user')).toBeNull()
     expect(window.location.href).toBe('/login')
   })
@@ -79,12 +60,12 @@ describe('apiClient', () => {
     expect(window.location.href).toBe('')
   })
 
-  it('ante otros codigos de error no toca la sesion', async () => {
-    localStorage.setItem('token', 'abc123')
+  it('ante otros codigos de error no toca el perfil cacheado', async () => {
+    localStorage.setItem('user', '{"username":"admin"}')
 
     await expect(responseRejected({ response: { status: 500 } } as AxiosError)).rejects.toBeDefined()
 
-    expect(localStorage.getItem('token')).toBe('abc123')
+    expect(localStorage.getItem('user')).toBe('{"username":"admin"}')
     expect(window.location.href).toBe('')
   })
 })

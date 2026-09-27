@@ -2,9 +2,15 @@ package com.ruta.deliverypin.infrastructure.adapter.in.web.dto;
 
 import com.ruta.deliverypin.domain.port.in.LoginUseCase;
 
-public record LoginResponse(String token, String username, String fullName, String role) {
+/**
+ * Ya no incluye el JWT (auditoria tecnica, hallazgo P1): viaja solo en la cookie
+ * HttpOnly que AuthController establece con Set-Cookie, nunca en el cuerpo de la
+ * respuesta, para que el JavaScript del frontend no pueda leerlo (mitiga robo de
+ * sesion por XSS).
+ */
+public record LoginResponse(String username, String fullName, String role) {
 
     public static LoginResponse from(LoginUseCase.AuthResult result) {
-        return new LoginResponse(result.token(), result.username(), result.fullName(), result.role().name());
+        return new LoginResponse(result.username(), result.fullName(), result.role().name());
     }
 }
