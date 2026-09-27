@@ -1,0 +1,81 @@
+name: delivery-pin-demo
+
+# Variables comunes a "seed" y "backend": antes cada servicio las repetia a mano y se
+# desincronizaron ("seed" no recibia JWT_SECRET/ADMIN_*, asi que el admin quedaba creado
+# con el valor de ejemplo en vez de la contrasena real de esta demo -- hallazgo N1,
+# docs/EVALUACION_TECNICA.md §18). Con el ancla, los dos servicios comparten una sola
+# fuente y no pueden volver a divergir.
+x-backend-env: &backend-env
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: delivery_pin_middleware
+  DB_USERNAME: delivery_pin
+  DB_PASSWORD: demo_local_only
+  JWT_SECRET: local_demo_only_secret_at_least_32_characters_long
+  ADMIN_USERNAME: admin
+  ADMIN_PASSWORD: admin_local_demo_only
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: delivery_pin_middleware
+      POSTGRES_USER: delivery_pin
+      POSTGRES_PASSWORD: demo_local_only
+    volumes:
+      - middleware_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U delivery_pin -d delivery_pin_middleware"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  # Job de una sola pasada: corre Flyway y siembra las facturas/PIN y el conductor de
+  # demostracion (demo/invoices.json), y termina (DemoSeedExitRunner). El backend "real"
+  # de abajo arranca siempre con APP_DEMO_ENABLED=false, para que el guard de secretos
+  # (SecretsGuardRunner) siga activo incluso en este compose de demostracion.
+  seed:
+    image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-local}
+    build: ./backend
+    environment:
+      <<: *backend-env
+      APP_DEMO_ENABLED: "true"
+      APP_DEMO_SEED_ONLY: "true"
+      APP_DEMO_FILE: file:/app/demo/invoices.json
+    volumes:
+      - ./demo:/app/demo:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+  backend:
+    image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-local}
+    build: ./backend
+    environment:
+      <<: *backend-env
+      APP_DEMO_ENABLED: "false"
+      CORS_ALLOWED_ORIGINS: http://localhost:15180,http://127.0.0.1:15180
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+        required: false
+    ports:
+      - "127.0.0.1:18091:8080"
+    healthcheck:
+      test: [CMD-SHELL, "curl -sf http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+  frontend:
+    image: ${FRONTEND_IMAGE:-ruta-frontend}:${FRONTEND_TAG:-local}
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:15180:80"
+volumes:
+  middleware_data:

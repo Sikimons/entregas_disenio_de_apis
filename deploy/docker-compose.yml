@@ -1,0 +1,157 @@
+name: ${COMPOSE_PROJECT_NAME:-ruta-delivery}
+
+# Stack de despliegue (staging/produccion), separado del docker-compose.demo.yml de la
+# raiz (ese es solo para demos locales). Los tres ejes de variacion se resuelven cada
+# uno con la herramienta que le corresponde:
+#   - staging vs produccion (URLs, secretos, tags)  -> --env-file deploy/env/<entorno>.env
+#   - topologia (¿postgres local? ¿frontend aqui?)  -> profiles ("db", "frontend", "demo")
+#   - config de nginx segun topologia               -> NGINX_SITE=api|full (envsubst)
+#
+# Uso tipico:
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/env/production.env up -d
+#
+# Escenario A (hoy): backend en EC2, frontend en Cloudflare Pages.
+#   COMPOSE_PROFILES=db          NGINX_SITE=api
+# Escenario B: todo en la misma VM detras del mismo nginx.
+#   COMPOSE_PROFILES=db,frontend NGINX_SITE=full
+# Primer arranque con datos de demostracion (nunca en produccion real):
+#   COMPOSE_PROFILES=db,demo (o db,frontend,demo)
+#
+# En la VM no se corre "up" a mano: deploy/scripts/deploy.sh (lo invoca CD) fija el tag
+# de imagen, respalda la BD, espera los healthchecks y hace rollback si algo falla.
+
+# Rotacion de logs: el driver json-file por defecto no tiene limite y termina llenando
+# el disco de la VM. 5 archivos x 10 MB por contenedor.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: ${LOG_MAX_SIZE:-10m}
+    max-file: "${LOG_MAX_FILE:-5}"
+
+services:
+  nginx:
+    image: nginx:1.30-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      SERVER_NAME: ${SERVER_NAME:?define SERVER_NAME en el .env del entorno}
+    volumes:
+      - ./nginx/templates/${NGINX_SITE:-api}.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ${CERTS_DIR:-./certs}:/etc/nginx/certs:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+        required: false
+    healthcheck:
+      # 127.0.0.1 y no "localhost": en alpine localhost resuelve primero a ::1 y los
+      # templates solo escuchan en IPv4 ("listen 80"), asi que el check fallaba siempre.
+      test: [CMD-SHELL, "wget -qO- http://127.0.0.1/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # Job de una sola pasada: siembra demo/invoices.json (facturas, PIN y el conductor de
+  # demostracion) y termina. Solo se activa con el profile "demo" (ver README); el
+  # servicio "backend" de abajo siempre arranca con APP_DEMO_ENABLED=false, para que el
+  # guard de secretos (SecretsGuardRunner) este activo tambien en el primer arranque.
+  seed:
+    profiles: [demo]
+    image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-latest}
+    env_file:
+      - ${APP_ENV_FILE:?define APP_ENV_FILE en el .env del entorno (ruta al mismo archivo pasado en --env-file)}
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      APP_DEMO_ENABLED: "true"
+      APP_DEMO_SEED_ONLY: "true"
+      APP_DEMO_FILE: file:/app/demo/invoices.json
+    volumes:
+      - ../demo:/app/demo:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    restart: "no"
+    logging: *logging
+
+  backend:
+    image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-latest}
+    restart: unless-stopped
+    logging: *logging
+    env_file:
+      - ${APP_ENV_FILE:?define APP_ENV_FILE en el .env del entorno (ruta al mismo archivo pasado en --env-file)}
+    environment:
+      # DB_HOST/DB_PORT se interpolan desde el mismo .env del entorno (--env-file), asi
+      # que valen lo que diga ese archivo: "postgres" (servicio del profile "db") o el
+      # host de una BD externa (p. ej. RDS). El valor por defecto solo aplica si el .env
+      # no los define.
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      APP_DEMO_ENABLED: "false"
+      # La JVM dimensiona el heap segun el limite de memoria del contenedor (mem_limit)
+      # en vez de la RAM de toda la VM, y ante un OutOfMemoryError termina (restart lo
+      # levanta de nuevo) en vez de quedar vivo en un estado inconsistente.
+      JAVA_TOOL_OPTIONS: ${BACKEND_JAVA_OPTS:--XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError}
+    mem_limit: ${BACKEND_MEM_LIMIT:-1g}
+    # Mayor que spring.lifecycle.timeout-per-shutdown-phase (20s, application.yml) para
+    # que el apagado ordenado termine las peticiones en curso antes del SIGKILL.
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      seed:
+        condition: service_completed_successfully
+        required: false
+    healthcheck:
+      # readiness (no /actuator/health a secas): solo reporta UP cuando la app termino
+      # de arrancar (Flyway incluido) y puede recibir trafico; durante el apagado
+      # ordenado pasa a OUT_OF_SERVICE.
+      test: [CMD-SHELL, "curl -sf http://localhost:8080/actuator/health/readiness | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  postgres:
+    profiles: [db]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: ${POSTGRES_MEM_LIMIT:-512m}
+    # Da tiempo a postgres de hacer checkpoint y cerrar limpio (el default de 10s puede
+    # cortar un checkpoint grande y forzar recovery en el siguiente arranque).
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: ${DB_NAME:-delivery_pin_middleware}
+      POSTGRES_USER: ${DB_USERNAME:-delivery_pin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?define DB_PASSWORD en el .env del entorno}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Solo loopback de la VM (para psql/tuneles SSM de mantenimiento); nunca 0.0.0.0.
+    ports:
+      - "${DB_PUBLIC_PORT:-127.0.0.1:5432}:5432"
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ${DB_USERNAME:-delivery_pin} -d ${DB_NAME:-delivery_pin_middleware}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Solo para el escenario B (todo en la misma VM detras de este nginx). En el
+  # escenario A el frontend vive en Cloudflare Pages y este servicio no se activa.
+  frontend:
+    profiles: [frontend]
+    image: ${FRONTEND_IMAGE:-ruta-frontend}:${FRONTEND_TAG:-latest}
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  pgdata:
+    name: ${COMPOSE_PROJECT_NAME:-ruta-delivery}_pgdata
