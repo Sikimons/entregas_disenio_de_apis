@@ -13,7 +13,7 @@ import argparse
 import base64
 import os
 import random
-from verify_delivery import request, login
+from verify_delivery import request, login, fetch_all_invoices
 
 PNG_SIGNATURE = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
 
@@ -39,8 +39,7 @@ if __name__ == '__main__':
         raise RuntimeError(('no se pudo crear el conductor de carga', status))
     driver = login(conductor_username, 'loadtest123')
 
-    status, invoices = request('/api/v1/admin/invoices?q=', token=admin)
-    assert status == 200, (status, invoices)
+    invoices = fetch_all_invoices(admin)
     pending = [i for i in invoices if i['state'] == 'posted' and not i['confirmed'] and i['requiresPin']]
     random.shuffle(pending)
     targets = pending[:args.count]

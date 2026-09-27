@@ -34,13 +34,26 @@ def login(username, password):
     return data['token']
 
 
+def fetch_all_invoices(token, q=''):
+    """GET /api/v1/admin/invoices ahora pagina (tamano maximo 100, N2/RA3,
+    docs/EVALUACION_TECNICA.md §21/§22): recorre todas las paginas del resultado."""
+    page, rows = 0, []
+    while True:
+        status, body = request('/api/v1/admin/invoices?q=%s&page=%d&size=100' % (q, page), token=token)
+        assert status == 200, (status, body)
+        rows.extend(body['content'])
+        if page + 1 >= body['totalPages']:
+            return rows
+        page += 1
+
+
 if __name__ == '__main__':
     admin = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'admin_local_demo_only'))
     driver = login('conductor', 'conductor123')
     assert request('/api/v1/admin/invoices', token=driver)[0] == 403
     assert request('/api/v1/driver/invoices?q=001-104-')[0] == 401
     print('OK: autenticacion y permisos por rol')
-    rows = request('/api/v1/admin/invoices', token=admin)[1]
+    rows = fetch_all_invoices(admin)
     indexed = {row['number']: row for row in rows}
     csv_path = Path(__file__).resolve().parents[1] / 'demo/facturas_y_pines.csv'
     exported = list(csv.DictReader(csv_path.open(encoding='utf-8-sig'), delimiter=';'))
