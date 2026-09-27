@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
-        @Schema(example = "admin") @NotBlank String username,
-        @Schema(example = "admin123") @NotBlank String password,
+        @NotBlank @Schema(example = "admin") String username,
+        @NotBlank @Schema(example = "admin123", format = "password", accessMode = Schema.AccessMode.WRITE_ONLY) String password,
         // "Mantener mi sesion" (LoginPage.tsx): decide si la cookie de sesion (AuthController)
         // se emite con expiracion (sobrevive a cerrar el navegador) o como cookie de sesion
         // pura (se borra sola al cerrarlo). Por defecto false si el cliente no lo manda.
