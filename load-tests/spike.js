@@ -1,0 +1,60 @@
+// Spike test: 0 -> 750 VUs (~10x los 75 VUs de meseta habitual en un dia normal) en 30s,
+// meseta corta de 1 min, bajada rapida a 0 en 30s. Mismos endpoints de lectura que
+// sustained.js. El estado del Circuit Breaker (/api/v1/admin/resilience/status) se consulta
+// al final para ver si el pico dejo evidencia real de saturacion (no se fuerza a que se
+// abra: si no hay evidencia, se reporta como tal).
+import http from 'k6/http'
+import { check, sleep } from 'k6'
+
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:18091'
+
+export const options = {
+  scenarios: {
+    spike: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '30s', target: 750 },
+        { duration: '1m', target: 750 },
+        { duration: '30s', target: 0 },
+      ],
+    },
+  },
+  thresholds: {
+    http_req_duration: ['p(95)<1000'],
+  },
+}
+
+export function setup() {
+  const res = http.post(
+    `${BASE_URL}/api/v1/auth/login`,
+    JSON.stringify({ username: 'admin', password: 'admin123' }),
+    { headers: { 'Content-Type': 'application/json' } }
+  )
+  if (res.status !== 200) {
+    throw new Error(`No se pudo autenticar en setup(): HTTP ${res.status} ${res.body}`)
+  }
+  return { token: res.json('token') }
+}
+
+export default function (data) {
+  const headers = { Authorization: `Bearer ${data.token}` }
+  const now = new Date()
+  const from = new Date(now.getTime() - 30 * 86400000).toISOString()
+  const to = now.toISOString()
+
+  const responses = http.batch([
+    ['GET', `${BASE_URL}/api/v1/driver/invoices?q=001`, null, { headers }],
+    ['GET', `${BASE_URL}/api/v1/admin/deliveries?page=0&size=20`, null, { headers }],
+    ['GET', `${BASE_URL}/api/v1/admin/dashboard/map?from=${from}&to=${to}`, null, { headers }],
+  ])
+
+  responses.forEach((res) => check(res, { 'status is 200 or 503': (r) => r.status === 200 || r.status === 503 }))
+  sleep(0.5)
+}
+
+export function teardown(data) {
+  const headers = { Authorization: `Bearer ${data.token}` }
+  const status = http.get(`${BASE_URL}/api/v1/admin/resilience/status`, { headers })
+  console.log(`Estado del circuit breaker tras el spike: ${status.body}`)
+}
