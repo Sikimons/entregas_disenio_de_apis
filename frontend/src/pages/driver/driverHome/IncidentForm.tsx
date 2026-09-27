@@ -1,15 +1,6 @@
 import type { FormEvent } from 'react'
 import type { Invoice } from '../../../types/domain'
-
-export const INCIDENT_REASONS = [
-  'Cliente ausente',
-  'Direccion incorrecta',
-  'Producto danado',
-  'Cliente rechazo la entrega',
-  'Otro',
-] as const
-
-export type IncidentReason = (typeof INCIDENT_REASONS)[number]
+import { INCIDENT_REASONS } from './incidentReasons'
 
 interface IncidentFormProps {
   selectedInvoice: Invoice

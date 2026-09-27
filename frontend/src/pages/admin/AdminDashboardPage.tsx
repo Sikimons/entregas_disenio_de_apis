@@ -4,7 +4,20 @@ import 'leaflet/dist/leaflet.css'
 import apiClient from '../../api/client'
 import TableSkeleton from '../../components/TableSkeleton'
 import { PageIntro, Stat } from '../../components/Workspace'
+import { useAsyncData } from '../../hooks/useAsyncData'
+import { getErrorMessage } from '../../utils/errors'
 import type { CircuitBreakerStatus, DeliveryAttempt, DriverMetric, OperationalCost } from '../../types/domain'
+
+interface MapAndMetrics {
+  points: DeliveryAttempt[]
+  metrics: DriverMetric[]
+}
+
+// Referencias estables para el fallback antes de la primera carga: un array `[]` literal
+// inline en cada render cambiaria de identidad en cada render, y el useEffect que redibuja
+// los marcadores del mapa depende de `points` (react-hooks/exhaustive-deps).
+const EMPTY_POINTS: DeliveryAttempt[] = []
+const EMPTY_METRICS: DriverMetric[] = []
 
 interface RangePreset {
   key: string
@@ -69,21 +82,9 @@ function buildPopupContent(point: DeliveryAttempt): HTMLElement {
 
 export default function AdminDashboardPage() {
   const [presetKey, setPresetKey] = useState('today')
-  const [points, setPoints] = useState<DeliveryAttempt[]>([])
-  const [metrics, setMetrics] = useState<DriverMetric[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
   const [costMonth, setCostMonth] = useState(currentMonth)
-  const [cost, setCost] = useState<OperationalCost | null>(null)
-  const [costLoading, setCostLoading] = useState(true)
-  const [costError, setCostError] = useState('')
   const [supportHoursInput, setSupportHoursInput] = useState('')
   const [savingHours, setSavingHours] = useState(false)
-
-  const [breaker, setBreaker] = useState<CircuitBreakerStatus | null>(null)
-  const [breakerError, setBreakerError] = useState('')
-  const [breakerLoading, setBreakerLoading] = useState(true)
   const [simulating, setSimulating] = useState(false)
 
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -92,55 +93,49 @@ export default function AdminDashboardPage() {
 
   const preset = useMemo(() => RANGE_PRESETS.find((p) => p.key === presetKey)!, [presetKey])
 
-  useEffect(() => {
+  const { data: mapAndMetrics, loading, error } = useAsyncData<MapAndMetrics>(() => {
     const { from, to } = rangeFor(preset)
-    setLoading(true)
-    setError('')
-    Promise.all([
+    return Promise.all([
       apiClient.get<DeliveryAttempt[]>('/admin/dashboard/map', { params: { from, to } }),
       apiClient.get<DriverMetric[]>('/admin/dashboard/metrics', { params: { from, to } }),
-    ])
-      .then(([mapRes, metricsRes]) => {
-        setPoints(mapRes.data)
-        setMetrics(metricsRes.data)
-      })
-      .catch((err) => setError(err.response?.data?.message || 'No se pudo cargar el tablero.'))
-      .finally(() => setLoading(false))
+    ]).then(([mapRes, metricsRes]) => ({ points: mapRes.data, metrics: metricsRes.data }))
   }, [preset])
+  const points = mapAndMetrics?.points ?? EMPTY_POINTS
+  const metrics = mapAndMetrics?.metrics ?? EMPTY_METRICS
 
-  const loadCost = () => {
-    setCostLoading(true)
-    setCostError('')
-    apiClient.get<OperationalCost>('/admin/cost', { params: { month: costMonth } })
-      .then((res) => {
-        setCost(res.data)
-        setSupportHoursInput(String(res.data.supportHours))
-      })
-      .catch((err) => setCostError(err.response?.data?.message || 'No se pudo cargar el costo por entrega.'))
-      .finally(() => setCostLoading(false))
-  }
+  const {
+    data: cost = null,
+    loading: costLoading,
+    error: costError,
+    setData: setCost,
+  } = useAsyncData<OperationalCost | null>(() =>
+    apiClient.get<OperationalCost>('/admin/cost', { params: { month: costMonth } }).then((res) => {
+      setSupportHoursInput(String(res.data.supportHours))
+      return res.data
+    }), [costMonth])
 
-  useEffect(loadCost, [costMonth])
+  const {
+    data: breaker = null,
+    loading: breakerLoading,
+    error: breakerError,
+    setData: setBreaker,
+    reload: reloadBreaker,
+  } = useAsyncData<CircuitBreakerStatus | null>(
+    () => apiClient.get<CircuitBreakerStatus>('/admin/resilience/status').then((res) => res.data),
+    []
+  )
 
-  const loadBreakerStatus = () => {
-    setBreakerLoading(true)
-    setBreakerError('')
-    apiClient.get<CircuitBreakerStatus>('/admin/resilience/status')
-      .then((res) => setBreaker(res.data))
-      .catch((err) => setBreakerError(err.response?.data?.message || 'No se pudo consultar el circuit breaker.'))
-      .finally(() => setBreakerLoading(false))
-  }
-
-  useEffect(loadBreakerStatus, [])
+  const [manualCostError, setManualCostError] = useState('')
+  const [manualBreakerError, setManualBreakerError] = useState('')
 
   const simulateFailures = async (count: number) => {
     setSimulating(true)
-    setBreakerError('')
+    setManualBreakerError('')
     try {
       const { data } = await apiClient.post<CircuitBreakerStatus>('/admin/resilience/simulate-failures', { count })
       setBreaker(data)
-    } catch (err: any) {
-      setBreakerError(err.response?.data?.message || 'No se pudieron simular los fallos.')
+    } catch (err: unknown) {
+      setManualBreakerError(getErrorMessage(err, 'No se pudieron simular los fallos.'))
     } finally {
       setSimulating(false)
     }
@@ -149,15 +144,15 @@ export default function AdminDashboardPage() {
   const saveSupportHours = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSavingHours(true)
-    setCostError('')
+    setManualCostError('')
     try {
       const { data } = await apiClient.put<OperationalCost>('/admin/cost/support-hours', {
         month: costMonth,
         hours: Number(supportHoursInput),
       })
       setCost(data)
-    } catch (err: any) {
-      setCostError(err.response?.data?.message || 'No se pudieron guardar las horas de soporte.')
+    } catch (err: unknown) {
+      setManualCostError(getErrorMessage(err, 'No se pudieron guardar las horas de soporte.'))
     } finally {
       setSavingHours(false)
     }
@@ -286,7 +281,7 @@ export default function AdminDashboardPage() {
         <label>Mes<input type="month" value={costMonth} onChange={(e) => setCostMonth(e.target.value)} /></label>
       </div>
 
-      {costError && <p className="error-text">{costError}</p>}
+      {(costError || manualCostError) && <p className="error-text">{costError || manualCostError}</p>}
 
       {costLoading ? (
         <TableSkeleton rows={2} columns={4} />
@@ -346,7 +341,7 @@ export default function AdminDashboardPage() {
         <span>Protegen la simulación del ERP (Fase1 §3/§5.1)</span>
       </div>
 
-      {breakerError && <p className="error-text">{breakerError}</p>}
+      {(breakerError || manualBreakerError) && <p className="error-text">{breakerError || manualBreakerError}</p>}
 
       {breakerLoading ? (
         <TableSkeleton rows={1} columns={4} />
@@ -378,7 +373,7 @@ export default function AdminDashboardPage() {
             <button type="button" disabled={simulating} onClick={() => simulateFailures(6)}>
               {simulating ? 'Simulando…' : 'Simular 6 fallos (abre el Circuit Breaker)'}
             </button>
-            <button type="button" disabled={breakerLoading} onClick={loadBreakerStatus}>Actualizar estado</button>
+            <button type="button" disabled={breakerLoading} onClick={reloadBreaker}>Actualizar estado</button>
           </div>
 
           <p className="hint-text">

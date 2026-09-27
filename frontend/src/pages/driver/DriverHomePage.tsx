@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import axios from 'axios'
 import { DriverShell, Icon, PageIntro } from '../../components/Workspace'
 import apiClient from '../../api/client'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/useAuth'
+import { useAsyncData } from '../../hooks/useAsyncData'
+import { getErrorMessage } from '../../utils/errors'
 import { distanceMeters } from '../../utils/geo'
 import { getCurrentPosition } from './driverHome/geolocation'
 import { compressImage } from './driverHome/imageUtils'
@@ -9,7 +12,8 @@ import { scanInvoiceNumber } from './driverHome/invoiceOcr'
 import { PIN_LENGTH } from './driverHome/PinBoxes'
 import { InvoiceSearchPanel, type DeliveryFeedback } from './driverHome/InvoiceSearchPanel'
 import { ConfirmDeliveryForm, type CapturedPhoto, type LocationState } from './driverHome/ConfirmDeliveryForm'
-import { IncidentForm, INCIDENT_REASONS } from './driverHome/IncidentForm'
+import { IncidentForm } from './driverHome/IncidentForm'
+import { INCIDENT_REASONS } from './driverHome/incidentReasons'
 import type { Invoice, InvoiceLine } from '../../types/domain'
 
 interface ConfirmDeliveryResponse {
@@ -33,9 +37,6 @@ export default function DriverHomePage() {
   const [scanning, setScanning] = useState(false)
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-  const [lines, setLines] = useState<InvoiceLine[]>([])
-  const [linesLoading, setLinesLoading] = useState(false)
-  const [linesError, setLinesError] = useState('')
   const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set())
 
   const [pin, setPin] = useState('')
@@ -52,22 +53,24 @@ export default function DriverHomePage() {
   const [reportingIncident, setReportingIncident] = useState(false)
   const [incidentError, setIncidentError] = useState('')
 
+  // GPS: un solo estado enum (LocationState), no un triple loading/error/data -- no
+  // justifica forzarlo al hook useAsyncData (esa parte del efecto combinado si se separo
+  // en la busqueda de lineas, mas abajo).
   useEffect(() => {
     if (!selectedInvoice) return
-
+    // oxlint-disable-next-line react/set-state-in-effect -- ver comentario de arriba
     setLocationState('locating')
     getCurrentPosition()
       .then(() => setLocationState('ready'))
       .catch(() => setLocationState('error'))
-
-    setLinesLoading(true)
-    setLinesError('')
-    apiClient
-      .get<InvoiceLine[]>(`/driver/invoices/${selectedInvoice.id}/lines`)
-      .then(({ data }) => setLines(data))
-      .catch((err) => setLinesError(err.response?.data?.message || 'No se pudo cargar el detalle de productos.'))
-      .finally(() => setLinesLoading(false))
   }, [selectedInvoice])
+
+  const { data: lines = [], loading: linesLoading, error: linesError } = useAsyncData<InvoiceLine[]>(
+    () => selectedInvoice
+      ? apiClient.get<InvoiceLine[]>(`/driver/invoices/${selectedInvoice.id}/lines`).then((res) => res.data)
+      : Promise.resolve([]),
+    [selectedInvoice]
+  )
 
   const runSearch = async (rawQuery: string) => {
     const q = rawQuery.trim()
@@ -79,12 +82,12 @@ export default function DriverHomePage() {
     try {
       const { data } = await apiClient.get<Invoice[]>('/driver/invoices', { params: { q } })
       setInvoices(data)
-    } catch (err: any) {
-      if (err.response?.status === 401) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
         setSearchError('Tu sesion expiro. Iniciando sesion de nuevo...')
         return
       }
-      setSearchError(err.response?.data?.message || 'Error buscando la factura.')
+      setSearchError(getErrorMessage(err, 'Error buscando la factura.'))
     } finally {
       setSearching(false)
     }
@@ -109,8 +112,8 @@ export default function DriverHomePage() {
       }
       setQuery(candidate)
       await runSearch(candidate)
-    } catch (err: any) {
-      setSearchError(err.message || 'No se pudo escanear la factura.')
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, 'No se pudo escanear la factura.'))
     } finally {
       setScanning(false)
     }
@@ -118,7 +121,6 @@ export default function DriverHomePage() {
 
   const resetSelection = () => {
     setSelectedInvoice(null)
-    setLines([])
     setCheckedIds(new Set())
     setPin('')
     setPhoto(null)
@@ -156,8 +158,8 @@ export default function DriverHomePage() {
     try {
       const dataUrl = await compressImage(file)
       setPhoto({ dataUrl, filename: file.name || 'evidencia.jpg' })
-    } catch (err: any) {
-      setPhotoError(err.message || 'No se pudo procesar la foto.')
+    } catch (err: unknown) {
+      setPhotoError(getErrorMessage(err, 'No se pudo procesar la foto.'))
     }
   }
 
@@ -204,11 +206,11 @@ export default function DriverHomePage() {
         resetSelection()
         setFeedback({ type: data.photoUploaded ? 'success' : 'warning', message: data.message })
       }, 1300)
-    } catch (err: any) {
-      const message = err.message?.includes('geolocaliz')
-        ? err.message
-        : err.response?.data?.message || 'No se pudo confirmar la entrega.'
-      setFeedback({ type: 'error', message })
+    } catch (err: unknown) {
+      // getErrorMessage ya prioriza el mensaje del backend para errores de axios y cae al
+      // .message propio para cualquier otro (incluido el GeolocationPositionError que
+      // lanza getCurrentPosition), sin necesidad de adivinar por contenido del texto.
+      setFeedback({ type: 'error', message: getErrorMessage(err, 'No se pudo confirmar la entrega.') })
     } finally {
       setConfirming(false)
     }
@@ -244,8 +246,8 @@ export default function DriverHomePage() {
       const invoiceNumber = selectedInvoice.number
       resetSelection()
       setFeedback({ type: 'success', message: `Incidencia reportada para ${invoiceNumber}.` })
-    } catch (err: any) {
-      setIncidentError(err.response?.data?.message || 'No se pudo reportar la incidencia.')
+    } catch (err: unknown) {
+      setIncidentError(getErrorMessage(err, 'No se pudo reportar la incidencia.'))
     } finally {
       setReportingIncident(false)
     }

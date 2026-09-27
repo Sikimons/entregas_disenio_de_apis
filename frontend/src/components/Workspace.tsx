@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect, useRef, type ReactNode, type SVGProps } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 const paths = {
   arrow: 'M5 12h14m-6-6 6 6-6 6',

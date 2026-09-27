@@ -3,7 +3,10 @@ import { DriverShell, PageIntro, Modal } from '../../components/Workspace'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import apiClient from '../../api/client'
+import { useAsyncData } from '../../hooks/useAsyncData'
 import type { DeliveryAttempt, PageResponse } from '../../types/domain'
+
+const EMPTY_PAGE: PageResponse<DeliveryAttempt> = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
 
 const OUTCOME_LABELS: Record<string, string> = {
   CONFIRMED: 'Entregado',
@@ -27,9 +30,10 @@ type DetailTabKey = (typeof DETAIL_TABS)[number]['key']
 
 export default function DriverHistoryPage() {
   const [page, setPage] = useState(0)
-  const [data, setData] = useState<PageResponse<DeliveryAttempt>>({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { data = EMPTY_PAGE, loading, error } = useAsyncData(
+    () => apiClient.get<PageResponse<DeliveryAttempt>>('/driver/deliveries/history', { params: { page, size: 20 } }).then((res) => res.data),
+    [page]
+  )
 
   const [selected, setSelected] = useState<DeliveryAttempt | null>(null)
   const [activeTab, setActiveTab] = useState<DetailTabKey>('datos')
@@ -37,16 +41,6 @@ export default function DriverHistoryPage() {
   const [photoLoading, setPhotoLoading] = useState(false)
 
   const mapContainerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setLoading(true)
-    setError('')
-    apiClient
-      .get<PageResponse<DeliveryAttempt>>('/driver/deliveries/history', { params: { page, size: 20 } })
-      .then((res) => setData(res.data))
-      .catch((err) => setError(err.response?.data?.message || 'No se pudo cargar el historial.'))
-      .finally(() => setLoading(false))
-  }, [page])
 
   const openDetail = async (item: DeliveryAttempt) => {
     setSelected(item)

@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { AxiosError } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import apiClient from '../../api/client'
 import AdminDriversPage from './AdminDriversPage'
-import type { Driver } from '../../types/domain'
+import type { Driver, PageResponse } from '../../types/domain'
 
 vi.mock('../../api/client', () => ({
   default: {
@@ -17,6 +18,7 @@ vi.mock('../../api/client', () => ({
 const mockedApiClient = vi.mocked(apiClient, { deep: true })
 
 const activeUser: Driver = { id: 1, username: 'conductor1', fullName: 'Conductor Uno', role: 'CONDUCTOR', active: true }
+const onePage = (content: Driver[]): PageResponse<Driver> => ({ content, page: 0, size: 100, totalElements: content.length, totalPages: 1 })
 
 describe('AdminDriversPage', () => {
   beforeEach(() => {
@@ -24,7 +26,9 @@ describe('AdminDriversPage', () => {
   })
 
   it('muestra un mensaje de error si falla la carga del equipo', async () => {
-    mockedApiClient.get.mockRejectedValueOnce({ response: { data: { message: 'Sesion expirada' } } })
+    mockedApiClient.get.mockRejectedValueOnce(
+      new AxiosError('Sesion expirada', undefined, undefined, undefined, { data: { message: 'Sesion expirada' } } as any)
+    )
 
     render(<AdminDriversPage />)
 
@@ -32,7 +36,7 @@ describe('AdminDriversPage', () => {
   })
 
   it('muestra el equipo cuando la carga es exitosa', async () => {
-    mockedApiClient.get.mockResolvedValueOnce({ data: [activeUser] } as any)
+    mockedApiClient.get.mockResolvedValueOnce({ data: onePage([activeUser]) } as any)
 
     render(<AdminDriversPage />)
 
@@ -40,8 +44,16 @@ describe('AdminDriversPage', () => {
   })
 
   it('muestra un error si falla desactivar un usuario, sin romper la pagina', async () => {
-    mockedApiClient.get.mockResolvedValue({ data: [activeUser] } as any)
-    mockedApiClient.put.mockRejectedValueOnce({ response: { data: { message: 'No puedes desactivar o eliminar tu propia cuenta.' } } })
+    mockedApiClient.get.mockResolvedValue({ data: onePage([activeUser]) } as any)
+    mockedApiClient.put.mockRejectedValueOnce(
+      new AxiosError(
+        'No puedes desactivar o eliminar tu propia cuenta.',
+        undefined,
+        undefined,
+        undefined,
+        { data: { message: 'No puedes desactivar o eliminar tu propia cuenta.' } } as any
+      )
+    )
 
     render(<AdminDriversPage />)
     await screen.findByText('conductor1')
