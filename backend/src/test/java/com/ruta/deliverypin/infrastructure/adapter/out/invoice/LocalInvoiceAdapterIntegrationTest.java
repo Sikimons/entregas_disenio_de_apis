@@ -5,6 +5,7 @@ import com.ruta.deliverypin.domain.exception.InvalidPinException;
 import com.ruta.deliverypin.domain.model.AdminInvoiceView;
 import com.ruta.deliverypin.domain.model.GeoLocation;
 import com.ruta.deliverypin.domain.model.InvoiceLine;
+import com.ruta.deliverypin.domain.model.PageRequest;
 import com.ruta.deliverypin.infrastructure.adapter.out.persistence.repository.SpringDataInvoiceJpaRepository;
 import com.ruta.deliverypin.infrastructure.adapter.out.persistence.repository.SpringDataInvoiceLineJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +83,7 @@ class LocalInvoiceAdapterIntegrationTest {
     private AdminInvoiceView createAndPublish(String number) {
         adapter.create(number, "Cliente Testcontainers", "Direccion X", null, null, true,
                 List.of(new InvoiceLine(null, "item", 1.0)));
-        AdminInvoiceView draft = adapter.list(number).get(0);
+        AdminInvoiceView draft = adapter.list(number, new PageRequest(0, 20)).content().get(0);
         return adapter.publish(draft.id());
     }
 
@@ -94,7 +95,7 @@ class LocalInvoiceAdapterIntegrationTest {
 
         adapter.confirmDelivery(published.id(), published.pin(), new GeoLocation(-2.17, -79.92), "Conductor IT");
 
-        AdminInvoiceView confirmed = adapter.list("F-IT-001").get(0);
+        AdminInvoiceView confirmed = adapter.list("F-IT-001", new PageRequest(0, 20)).content().get(0);
         assertThat(confirmed.confirmed()).isTrue();
     }
 
@@ -146,7 +147,7 @@ class LocalInvoiceAdapterIntegrationTest {
         assertThat(succeeded.get()).isEqualTo(1);
         assertThat(rejected.get()).isEqualTo(attempts - 1);
 
-        AdminInvoiceView finalState = adapter.list("F-IT-003").get(0);
+        AdminInvoiceView finalState = adapter.list("F-IT-003", new PageRequest(0, 20)).content().get(0);
         assertThat(finalState.confirmed()).isTrue();
     }
 
@@ -157,7 +158,7 @@ class LocalInvoiceAdapterIntegrationTest {
         // LocalInvoiceAdapter.findInvoiceLines).
         adapter.create("F-IT-004", "Cliente Cache", "Direccion Y", null, null, true,
                 List.of(new InvoiceLine(null, "item cacheado", 3.0)));
-        Long invoiceId = adapter.list("F-IT-004").get(0).id();
+        Long invoiceId = adapter.list("F-IT-004", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(lineRepository);
 
         List<InvoiceLine> first = adapter.findInvoiceLines(invoiceId);
@@ -175,7 +176,7 @@ class LocalInvoiceAdapterIntegrationTest {
         // guarda, asi que la siguiente consulta vuelve a tocar la base en vez de arrastrar
         // el vacio hasta que expire el TTL.
         adapter.create("F-IT-005", "Cliente Sin Lineas", "Direccion W", null, null, true, List.of());
-        Long invoiceId = adapter.list("F-IT-005").get(0).id();
+        Long invoiceId = adapter.list("F-IT-005", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(lineRepository);
 
         List<InvoiceLine> first = adapter.findInvoiceLines(invoiceId);
@@ -194,7 +195,7 @@ class LocalInvoiceAdapterIntegrationTest {
         // antes de evaluar la SpEL) rompia esta llamada con SpelEvaluationException cada vez
         // que la ubicacion SI estaba presente -- es decir, en el caso mas comun.
         adapter.create("F-IT-007", "Cliente Con Ubicacion", "Direccion U", -2.171, -79.922, true, List.of());
-        Long invoiceId = adapter.list("F-IT-007").get(0).id();
+        Long invoiceId = adapter.list("F-IT-007", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(invoiceRepository);
 
         Optional<GeoLocation> first = adapter.findExpectedLocation(invoiceId);
@@ -208,7 +209,7 @@ class LocalInvoiceAdapterIntegrationTest {
     @Test
     void findExpectedLocation_emptyResult_isNotCached_repositoryQueriedEachTime() {
         adapter.create("F-IT-008", "Cliente Sin Ubicacion", "Direccion T", null, null, true, List.of());
-        Long invoiceId = adapter.list("F-IT-008").get(0).id();
+        Long invoiceId = adapter.list("F-IT-008", new PageRequest(0, 20)).content().get(0).id();
         Mockito.clearInvocations(invoiceRepository);
 
         Optional<GeoLocation> first = adapter.findExpectedLocation(invoiceId);
@@ -226,7 +227,7 @@ class LocalInvoiceAdapterIntegrationTest {
         adapter.create("F-IT-A_1", "Cliente Escape", "Direccion Z", null, null, true, List.of());
         adapter.create("F-IT-AB1", "Cliente Escape", "Direccion Z", null, null, true, List.of());
 
-        List<AdminInvoiceView> matches = adapter.list("F-IT-A_1");
+        List<AdminInvoiceView> matches = adapter.list("F-IT-A_1", new PageRequest(0, 20)).content();
 
         assertThat(matches).extracting(AdminInvoiceView::number).containsExactly("F-IT-A_1");
     }

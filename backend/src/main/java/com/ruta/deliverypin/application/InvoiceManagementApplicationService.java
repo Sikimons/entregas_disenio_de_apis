@@ -1,11 +1,11 @@
 package com.ruta.deliverypin.application;
 
 import com.ruta.deliverypin.domain.model.AdminInvoiceView;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 import com.ruta.deliverypin.domain.port.in.ManageInvoicesUseCase;
 import com.ruta.deliverypin.domain.port.out.InvoiceAdminPort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class InvoiceManagementApplicationService implements ManageInvoicesUseCase {
@@ -17,8 +17,8 @@ public class InvoiceManagementApplicationService implements ManageInvoicesUseCas
     }
 
     @Override
-    public List<AdminInvoiceView> list(String query) {
-        return invoiceAdminPort.list(query);
+    public PageResult<AdminInvoiceView> list(String query, PageRequest pageRequest) {
+        return invoiceAdminPort.list(query, pageRequest);
     }
 
     @Override

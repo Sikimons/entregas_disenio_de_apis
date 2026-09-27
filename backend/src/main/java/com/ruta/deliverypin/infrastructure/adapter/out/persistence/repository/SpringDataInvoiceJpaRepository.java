@@ -2,6 +2,7 @@ package com.ruta.deliverypin.infrastructure.adapter.out.persistence.repository;
 
 import com.ruta.deliverypin.infrastructure.adapter.out.persistence.entity.InvoiceJpaEntity;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -30,13 +31,18 @@ public interface SpringDataInvoiceJpaRepository extends JpaRepository<InvoiceJpa
             """)
     List<InvoiceJpaEntity> searchPendingDeliveryInvoices(@Param("q") String query, Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             select i from InvoiceJpaEntity i
             where lower(i.number) like lower(concat('%', :q, '%')) escape '\\'
                or lower(i.partnerName) like lower(concat('%', :q, '%')) escape '\\'
             order by i.id desc
+            """,
+            countQuery = """
+            select count(i) from InvoiceJpaEntity i
+            where lower(i.number) like lower(concat('%', :q, '%')) escape '\\'
+               or lower(i.partnerName) like lower(concat('%', :q, '%')) escape '\\'
             """)
-    List<InvoiceJpaEntity> search(@Param("q") String query, Pageable pageable);
+    Page<InvoiceJpaEntity> search(@Param("q") String query, Pageable pageable);
 
     /**
      * Escapa "\", "%" y "_" (en ese orden) para que un termino de busqueda con esos

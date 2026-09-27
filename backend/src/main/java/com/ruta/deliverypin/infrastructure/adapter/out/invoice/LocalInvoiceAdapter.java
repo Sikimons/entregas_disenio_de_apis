@@ -8,6 +8,8 @@ import com.ruta.deliverypin.domain.model.AdminInvoiceView;
 import com.ruta.deliverypin.domain.model.GeoLocation;
 import com.ruta.deliverypin.domain.model.Invoice;
 import com.ruta.deliverypin.domain.model.InvoiceLine;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 import com.ruta.deliverypin.domain.port.out.DeliveryConfirmationGatewayPort;
 import com.ruta.deliverypin.domain.port.out.InvoiceAdminPort;
 import com.ruta.deliverypin.domain.port.out.InvoiceQueryPort;
@@ -20,7 +22,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -108,7 +110,7 @@ public class LocalInvoiceAdapter implements InvoiceQueryPort, DeliveryConfirmati
     @Override
     public List<Invoice> searchPendingDeliveryInvoices(String query) {
         String escaped = SpringDataInvoiceJpaRepository.escapeLike(query);
-        return protectedRead(() -> invoices.searchPendingDeliveryInvoices(escaped, PageRequest.of(0, 20))
+        return protectedRead(() -> invoices.searchPendingDeliveryInvoices(escaped, org.springframework.data.domain.PageRequest.of(0, 20))
                 .stream().map(InvoicePersistenceMapper::toInvoice).toList());
     }
 
@@ -200,10 +202,14 @@ public class LocalInvoiceAdapter implements InvoiceQueryPort, DeliveryConfirmati
     }
 
     @Override
-    public List<AdminInvoiceView> list(String query) {
+    public PageResult<AdminInvoiceView> list(String query, PageRequest pageRequest) {
         String escaped = SpringDataInvoiceJpaRepository.escapeLike(query);
-        return protectedRead(() -> invoices.search(escaped, PageRequest.of(0, 1000))
-                .stream().map(InvoicePersistenceMapper::toAdminView).toList());
+        Page<InvoiceJpaEntity> page = protectedRead(() -> invoices.search(escaped,
+                org.springframework.data.domain.PageRequest.of(pageRequest.page(), pageRequest.size())));
+        return new PageResult<>(
+                page.getContent().stream().map(InvoicePersistenceMapper::toAdminView).toList(),
+                page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages()
+        );
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.ruta.deliverypin.infrastructure.adapter.in.web;
 
 import com.ruta.deliverypin.domain.model.InvoiceLine;
+import com.ruta.deliverypin.domain.model.PageRequest;
 import com.ruta.deliverypin.domain.port.in.ManageInvoicesUseCase;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.AdminInvoiceResponse;
+import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -38,11 +40,19 @@ public class AdminInvoiceController {
         @DecimalMin("-180") @DecimalMax("180") Double longitude, boolean requiresPin,
         @NotEmpty List<@Valid Product> products) {}
 
-    @Operation(summary = "Listar facturas", description = "Facturas filtradas por numero o cliente (hasta 1000), incluido su estado y PIN vigente.")
-    @ApiResponse(responseCode = "200", description = "Listado de facturas")
+    @Operation(summary = "Listar facturas", description = "Facturas filtradas por numero o cliente, paginado (tamano maximo 100), incluido su estado y PIN vigente.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pagina de facturas"),
+            @ApiResponse(responseCode = "400", description = "'size' supera el maximo permitido")
+    })
     @GetMapping
-    public List<AdminInvoiceResponse> list(@RequestParam(defaultValue = "") String q) {
-        return manageInvoicesUseCase.list(q).stream().map(AdminInvoiceResponse::from).toList();
+    public PageResponse<AdminInvoiceResponse> list(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        var result = manageInvoicesUseCase.list(q, new PageRequest(page, size));
+        return PageResponse.from(result, AdminInvoiceResponse::from);
     }
 
     @Operation(summary = "Crear una factura", description = "Crea la factura en borrador, con sus lineas de producto. No genera PIN todavia: eso ocurre al publicarla.")
