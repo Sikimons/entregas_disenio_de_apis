@@ -8,6 +8,7 @@ public class AppProperties {
     private Cors cors = new Cors();
     private Admin admin = new Admin();
     private LoginRateLimit loginRateLimit = new LoginRateLimit();
+    private Seed seed = new Seed();
 
     public Cors getCors() {
         return cors;
@@ -31,6 +32,14 @@ public class AppProperties {
 
     public void setLoginRateLimit(LoginRateLimit loginRateLimit) {
         this.loginRateLimit = loginRateLimit;
+    }
+
+    public Seed getSeed() {
+        return seed;
+    }
+
+    public void setSeed(Seed seed) {
+        this.seed = seed;
     }
 
     public static class Cors {
@@ -84,6 +93,37 @@ public class AppProperties {
 
         public void setWindowSeconds(int windowSeconds) {
             this.windowSeconds = windowSeconds;
+        }
+    }
+
+    /** Carga de datos de muestra en el arranque (ver infrastructure.seed.Initializer). */
+    public static class Seed {
+        private boolean enabled = false;
+        private String file = "file:/app/demo/invoices.json";
+        private boolean oneShot = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getFile() {
+            return file;
+        }
+
+        public void setFile(String file) {
+            this.file = file;
+        }
+
+        public boolean isOneShot() {
+            return oneShot;
+        }
+
+        public void setOneShot(boolean oneShot) {
+            this.oneShot = oneShot;
         }
     }
 }

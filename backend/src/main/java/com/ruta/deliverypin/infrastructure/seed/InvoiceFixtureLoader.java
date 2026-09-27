@@ -1,12 +1,7 @@
-package com.ruta.deliverypin.infrastructure.config;
+package com.ruta.deliverypin.infrastructure.seed;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -14,29 +9,25 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Sigue en JdbcTemplate a proposito (Fase8, ver RA4): es una carga masiva de datos de
- * siembra que debe preservar los ids y el orden exactos de demo/invoices.json (los
+ * muestra que debe preservar los ids y el orden exactos de demo/invoices.json (los
  * scripts de siembra/pruebas de carga los referencian) y despues resincronizar la secuencia
  * de Postgres. Con GenerationType.IDENTITY, JPA nunca permite fijar el id al insertar
  * (siempre pide a la base que lo genere), asi que este caso concreto de "insert masivo
  * con id explicito" no tiene equivalente JPA razonable. LocalInvoiceAdapter y
  * OperationalCostInputAdapter -el camino real de negocio- ya usan JPA.
  *
- * @Order(2) explicito: debe correr antes que SeedExitRunner (ver su Javadoc).
+ * Colaborador de Initializer, no un ApplicationRunner propio: no necesita su propia
+ * condicion ni orden de arranque, los hereda de quien lo invoca.
  */
 @Component
-@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
-@Order(2)
-public class SeedInvoiceLoader implements ApplicationRunner {
+public class InvoiceFixtureLoader {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
     private final TransactionTemplate transactions;
     private final ResourceLoader resources;
 
-    @Value("${app.seed.file:file:/app/demo/invoices.json}")
-    private String file;
-
-    public SeedInvoiceLoader(JdbcTemplate jdbc, ObjectMapper mapper, TransactionTemplate transactions, ResourceLoader resources) {
+    public InvoiceFixtureLoader(JdbcTemplate jdbc, ObjectMapper mapper, TransactionTemplate transactions, ResourceLoader resources) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.transactions = transactions;
@@ -47,8 +38,7 @@ public class SeedInvoiceLoader implements ApplicationRunner {
         return mapper.convertValue(row.get(key), Object.class);
     }
 
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void load(String file) throws Exception {
         JsonNode data;
         try (var input = resources.getResource(file).getInputStream()) {
             data = mapper.readTree(input);
