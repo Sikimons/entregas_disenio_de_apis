@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode, type SVGProps } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 const paths = {
@@ -16,32 +16,40 @@ const paths = {
   shield: 'm12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
 }
-export function Icon({ name = 'box', size = 20, ...props }) {
+
+export type IconName = keyof typeof paths
+
+interface IconProps extends SVGProps<SVGSVGElement> {
+  name?: IconName
+  size?: number
+}
+
+export function Icon({ name = 'box', size = 20, ...props }: IconProps) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d={paths[name] || paths.box} /></svg>
 }
 export function Brand() {
   return <div className="brand"><span className="brand-symbol"><Icon name="box" size={25} /></span><span className="brand-word">ruta<span className="brand-period">.</span><small>GESTIÓN DE ENTREGAS</small></span></div>
 }
-export function PageIntro({ eyebrow, title, description, children }) {
+export function PageIntro({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children?: ReactNode }) {
   return <header className="page-intro"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="page-description">{description}</p></div>{children}</header>
 }
-export function Stat({ label, value, icon = 'box', tone = '' }) {
+export function Stat({ label, value, icon = 'box', tone = '' }: { label: string; value: ReactNode; icon?: IconName; tone?: string }) {
   return <div className={`stat-card ${tone}`}><span className="stat-icon"><Icon name={icon} /></span><div><span className="stat-label">{label}</span><strong>{value}</strong></div></div>
 }
-export function Modal({ children, onClose, label }) {
-  const ref = useRef(null)
+export function Modal({ children, onClose, label }: { children: ReactNode; onClose: () => void; label: string }) {
+  const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const dialog = ref.current
-    dialog.showModal()
-    return () => dialog.close()
+    dialog?.showModal()
+    return () => dialog?.close()
   }, [])
   return <dialog ref={ref} className="photo-modal" aria-label={label} onCancel={event => { event.preventDefault(); onClose() }} onClick={event => {
     if (event.target !== ref.current) return
-    const bounds = ref.current.getBoundingClientRect()
+    const bounds = ref.current!.getBoundingClientRect()
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose()
   }}>{children}</dialog>
 }
-export function DriverShell({ children }) {
+export function DriverShell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   return <div className="driver-workspace">
     <aside className="driver-rail"><Brand /><p className="rail-caption">TU ESPACIO DE TRABAJO</p>

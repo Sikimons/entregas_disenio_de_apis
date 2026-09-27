@@ -1,21 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import apiClient from '../../api/client'
 import TableSkeleton from '../../components/TableSkeleton'
 import { PageIntro, Stat } from '../../components/Workspace'
+import type { Driver, Role } from '../../types/domain'
 
-const emptyForm = { username: '', password: '', fullName: '', role: 'CONDUCTOR' }
+interface DriverForm {
+  username: string
+  password: string
+  fullName: string
+  role: Role
+}
+
+const emptyForm: DriverForm = { username: '', password: '', fullName: '', role: 'CONDUCTOR' }
 
 export default function AdminDriversPage() {
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<Driver[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState<DriverForm>(emptyForm)
   const [error, setError] = useState('')
 
   const loadUsers = async () => {
     setLoading(true)
+    setError('')
     try {
-      const { data } = await apiClient.get('/admin/users')
+      const { data } = await apiClient.get<Driver[]>('/admin/users')
       setUsers(data)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'No se pudo cargar el equipo.')
     } finally {
       setLoading(false)
     }
@@ -25,31 +36,41 @@ export default function AdminDriversPage() {
     loadUsers()
   }, [])
 
-  const handleCreate = async (e) => {
+  const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     try {
       await apiClient.post('/admin/users', form)
       setForm(emptyForm)
       loadUsers()
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'No se pudo crear el usuario.')
     }
   }
 
-  const toggleActive = async (user) => {
-    await apiClient.put(`/admin/users/${user.id}`, {
-      fullName: user.fullName,
-      active: !user.active,
-      password: null,
-    })
-    loadUsers()
+  const toggleActive = async (user: Driver) => {
+    setError('')
+    try {
+      await apiClient.put(`/admin/users/${user.id}`, {
+        fullName: user.fullName,
+        active: !user.active,
+        password: null,
+      })
+      loadUsers()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'No se pudo actualizar el estado del usuario.')
+    }
   }
 
-  const removeUser = async (user) => {
+  const removeUser = async (user: Driver) => {
     if (!window.confirm(`¿Eliminar al usuario ${user.username}?`)) return
-    await apiClient.delete(`/admin/users/${user.id}`)
-    loadUsers()
+    setError('')
+    try {
+      await apiClient.delete(`/admin/users/${user.id}`)
+      loadUsers()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'No se pudo eliminar el usuario.')
+    }
   }
 
   return (
@@ -80,7 +101,7 @@ export default function AdminDriversPage() {
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
         /></label>
-        <label>Rol<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+        <label>Rol<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
           <option value="CONDUCTOR">Conductor</option>
           <option value="ADMIN">Admin</option>
         </select></label>

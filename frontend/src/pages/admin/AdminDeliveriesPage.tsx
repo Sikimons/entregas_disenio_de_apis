@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react'
 import apiClient from '../../api/client'
 import TableSkeleton from '../../components/TableSkeleton'
 import { PageIntro, Modal } from '../../components/Workspace'
+import type { DeliveryAttempt, PageResponse } from '../../types/domain'
 
-const OUTCOME_LABELS = {
+const OUTCOME_LABELS: Record<string, string> = {
   CONFIRMED: 'Entregado',
   REJECTED: 'Rechazado',
   INCIDENT: 'Incidencia',
 }
 
-const OUTCOME_CLASSES = {
+const OUTCOME_CLASSES: Record<string, string> = {
   CONFIRMED: 'success',
   REJECTED: 'error',
   INCIDENT: 'warning',
@@ -19,24 +20,30 @@ const SUSPICIOUS_DISTANCE_METERS = 2000
 
 export default function AdminDeliveriesPage() {
   const [page, setPage] = useState(0)
-  const [data, setData] = useState({ content: [], totalPages: 0 })
+  const [data, setData] = useState<PageResponse<DeliveryAttempt>>({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
-  const [photoUrl, setPhotoUrl] = useState(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoLoading, setPhotoLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     setLoading(true)
+    setError('')
     apiClient
-      .get('/admin/deliveries', { params: { page, size: 20 } })
+      .get<PageResponse<DeliveryAttempt>>('/admin/deliveries', { params: { page, size: 20 } })
       .then((res) => setData(res.data))
+      .catch((err) => setError(err.response?.data?.message || 'No se pudo cargar el registro de entregas.'))
       .finally(() => setLoading(false))
   }, [page])
 
-  const viewPhoto = async (log) => {
+  const viewPhoto = async (log: DeliveryAttempt) => {
     setPhotoLoading(true)
+    setError('')
     try {
       const res = await apiClient.get(`/admin/deliveries/${log.id}/photo`, { responseType: 'blob' })
       setPhotoUrl(URL.createObjectURL(res.data))
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'No se pudo cargar la foto de evidencia.')
     } finally {
       setPhotoLoading(false)
     }
@@ -51,6 +58,7 @@ export default function AdminDeliveriesPage() {
     <div>
       <PageIntro eyebrow="TRAZABILIDAD DE PRINCIPIO A FIN" title="Cada entrega, en detalle." description="Revisa los resultados, las ubicaciones y la evidencia de tu equipo." />
       <div className="section-heading"><h2>Registro de actividad</h2><span>Página {page + 1} de {Math.max(data.totalPages, 1)}</span></div>
+      {error && <p role="alert" className="error-text">{error}</p>}
 
       {loading ? (
         <TableSkeleton

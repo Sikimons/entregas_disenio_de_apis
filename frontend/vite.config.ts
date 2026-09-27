@@ -1,5 +1,7 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+// `defineConfig` de 'vitest/config' reexporta el de Vite y ademas tipa el bloque
+// `test`, sin necesitar una referencia triple-slash aparte.
+import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
@@ -8,7 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // Registro manual en main.jsx (virtual:pwa-register) para forzar recarga
+      // Registro manual en main.tsx (virtual:pwa-register) para forzar recarga
       // automatica de la pagina cuando se detecta una version nueva desplegada.
       injectRegister: false,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
@@ -41,5 +43,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    css: false,
   },
 })

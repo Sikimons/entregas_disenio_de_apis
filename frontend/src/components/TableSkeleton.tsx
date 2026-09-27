@@ -1,9 +1,15 @@
+interface TableSkeletonProps {
+  rows?: number
+  columns?: number
+  widths?: string[]
+}
+
 /**
  * Placeholder animado para tablas del admin mientras cargan datos, en vez de
  * un simple texto "Cargando...". `widths` permite variar el ancho de cada
  * columna para que el skeleton se parezca a la forma real de los datos.
  */
-export default function TableSkeleton({ rows = 5, columns = 4, widths }) {
+export default function TableSkeleton({ rows = 5, columns = 4, widths }: TableSkeletonProps) {
   return (
     <table className="data-table skeleton-table">
       <tbody>

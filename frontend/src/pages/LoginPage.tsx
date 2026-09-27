@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Brand, Icon } from '../components/Workspace'
@@ -13,14 +13,14 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       const loggedUser = await login(username, password, remember)
       navigate(loggedUser.role === 'ADMIN' ? '/admin' : '/driver', { replace: true })
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'No se pudo iniciar sesion.')
     } finally {
       setLoading(false)

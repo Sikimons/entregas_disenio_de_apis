@@ -1,7 +1,7 @@
-import axios from 'axios'
+import axios, { type AxiosError } from 'axios'
 
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
 })
 
 apiClient.interceptors.request.use((config) => {
@@ -14,7 +14,7 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')

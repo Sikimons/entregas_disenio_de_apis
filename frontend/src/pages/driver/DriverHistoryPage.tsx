@@ -3,14 +3,15 @@ import { DriverShell, PageIntro, Modal } from '../../components/Workspace'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import apiClient from '../../api/client'
+import type { DeliveryAttempt, PageResponse } from '../../types/domain'
 
-const OUTCOME_LABELS = {
+const OUTCOME_LABELS: Record<string, string> = {
   CONFIRMED: 'Entregado',
   REJECTED: 'Rechazado',
   INCIDENT: 'Incidencia',
 }
 
-const OUTCOME_CLASSES = {
+const OUTCOME_CLASSES: Record<string, string> = {
   CONFIRMED: 'success',
   REJECTED: 'error',
   INCIDENT: 'warning',
@@ -20,32 +21,34 @@ const DETAIL_TABS = [
   { key: 'datos', label: 'Datos' },
   { key: 'foto', label: 'Foto' },
   { key: 'mapa', label: 'Mapa' },
-]
+] as const
+
+type DetailTabKey = (typeof DETAIL_TABS)[number]['key']
 
 export default function DriverHistoryPage() {
   const [page, setPage] = useState(0)
-  const [data, setData] = useState({ content: [], totalPages: 0 })
+  const [data, setData] = useState<PageResponse<DeliveryAttempt>>({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [selected, setSelected] = useState(null)
-  const [activeTab, setActiveTab] = useState('datos')
-  const [photoUrl, setPhotoUrl] = useState(null)
+  const [selected, setSelected] = useState<DeliveryAttempt | null>(null)
+  const [activeTab, setActiveTab] = useState<DetailTabKey>('datos')
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoLoading, setPhotoLoading] = useState(false)
 
-  const mapContainerRef = useRef(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setLoading(true)
     setError('')
     apiClient
-      .get('/driver/deliveries/history', { params: { page, size: 20 } })
+      .get<PageResponse<DeliveryAttempt>>('/driver/deliveries/history', { params: { page, size: 20 } })
       .then((res) => setData(res.data))
       .catch((err) => setError(err.response?.data?.message || 'No se pudo cargar el historial.'))
       .finally(() => setLoading(false))
   }, [page])
 
-  const openDetail = async (item) => {
+  const openDetail = async (item: DeliveryAttempt) => {
     setSelected(item)
     setActiveTab('datos')
     setPhotoUrl(null)
@@ -72,9 +75,10 @@ export default function DriverHistoryPage() {
     if (activeTab !== 'mapa' || !selected || selected.latitude == null || selected.longitude == null || !mapContainerRef.current) return
 
     const map = L.map(mapContainerRef.current).setView([selected.latitude, selected.longitude], 16)
-    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx): algunas redes
-    // moviles/corporativas del conductor bloquean CDNs de terceros directo.
-    L.tileLayer('/map-tiles/{z}/{x}/{y}.png', {
+    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx) por defecto: algunas
+    // redes moviles/corporativas del conductor bloquean CDNs de terceros directo. En
+    // despliegues sin ese proxy, VITE_MAP_TILES_URL apunta directo al proveedor.
+    L.tileLayer(import.meta.env.VITE_MAP_TILES_URL || '/map-tiles/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map)

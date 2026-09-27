@@ -1,44 +1,61 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import apiClient from '../../api/client'
 import { Icon, PageIntro } from '../../components/Workspace'
 import TableSkeleton from '../../components/TableSkeleton'
+import type { AdminInvoice } from '../../types/domain'
 
-const empty = () => ({ number: '', partnerName: '', deliveryAddress: '', latitude: '', longitude: '', requiresPin: true, products: [{ description: '', quantity: 1 }] })
+interface ProductForm {
+  description: string
+  quantity: number | string
+}
+
+interface InvoiceForm {
+  number: string
+  partnerName: string
+  deliveryAddress: string
+  latitude: number | string
+  longitude: number | string
+  requiresPin: boolean
+  products: ProductForm[]
+}
+
+const empty = (): InvoiceForm => ({ number: '', partnerName: '', deliveryAddress: '', latitude: '', longitude: '', requiresPin: true, products: [{ description: '', quantity: 1 }] })
+
 export default function AdminInvoicesPage() {
-  const [invoices, setInvoices] = useState([])
+  const [invoices, setInvoices] = useState<AdminInvoice[]>([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState(empty)
+  const [form, setForm] = useState<InvoiceForm>(empty)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const load = async (search = '') => {
     setLoading(true)
     setError('')
-    try { setInvoices((await apiClient.get('/admin/invoices', { params: { q: search } })).data) }
-    catch (err) { setError(err.response?.data?.message || 'No se pudieron cargar las facturas.') }
+    try { setInvoices((await apiClient.get<AdminInvoice[]>('/admin/invoices', { params: { q: search } })).data) }
+    catch (err: any) { setError(err.response?.data?.message || 'No se pudieron cargar las facturas.') }
     finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
-  const field = (name, value) => setForm(prev => ({ ...prev, [name]: value }))
-  const create = async (event) => {
+  const field = <K extends keyof InvoiceForm>(name: K, value: InvoiceForm[K]) => setForm(prev => ({ ...prev, [name]: value }))
+  const create = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setSaving(true)
     setError('')
     try {
       await apiClient.post('/admin/invoices', { ...form, latitude: form.latitude === '' ? null : Number(form.latitude), longitude: form.longitude === '' ? null : Number(form.longitude), products: form.products.map(p => ({ ...p, quantity: Number(p.quantity) })) })
       setForm(empty()); setEditing(false); await load(query)
-    } catch (err) { setError(err.response?.data?.message || 'Revisa los datos de la factura e intenta nuevamente.') }
+    } catch (err: any) { setError(err.response?.data?.message || 'Revisa los datos de la factura e intenta nuevamente.') }
     finally { setSaving(false) }
   }
-  const publish = async (id) => {
+  const publish = async (id: number) => {
     setSaving(true); setError('')
     try { await apiClient.post(`/admin/invoices/${id}/publish`); await load(query) }
-    catch (err) { setError(err.response?.data?.message || 'No se pudo publicar la factura.') }
+    catch (err: any) { setError(err.response?.data?.message || 'No se pudo publicar la factura.') }
     finally { setSaving(false) }
   }
   const exportCsv = () => {
-    const csv = '\uFEFFfactura;pin\r\n' + invoices.map(i => `"${String(i.number).replaceAll('"', '""')}";"${i.pin || ''}"`).join('\r\n')
+    const csv = '﻿factura;pin\r\n' + invoices.map(i => `"${String(i.number).replaceAll('"', '""')}";"${i.pin || ''}"`).join('\r\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const link = document.createElement('a'); link.href = url; link.download = 'facturas_y_pines.csv'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
@@ -64,7 +81,7 @@ export default function AdminInvoicesPage() {
       <div className="invoice-form-actions"><button className="link-button" type="button" onClick={() => field('products', [...form.products, { description: '', quantity: 1 }])}>+ Agregar producto</button><button type="submit" disabled={saving}>{saving ? 'Guardando…' : 'Guardar borrador'}</button></div>
     </form>}
     <div className="invoice-toolbar"><form className="search-form" onSubmit={e => { e.preventDefault(); load(query) }}><input aria-label="Buscar facturas" placeholder="Número de factura o cliente" value={query} onChange={e => setQuery(e.target.value)} /><button type="submit" disabled={loading}><Icon name="search" /> Buscar</button></form><button className="link-button" disabled={loading || !invoices.length} onClick={exportCsv}>Exportar facturas y PIN</button></div>
-    {loading ? <TableSkeleton rows={6} columns={5} /> : <table className="data-table"><thead><tr><th>Factura</th><th>Cliente</th><th>Estado</th><th>PIN</th><th>Acción</th></tr></thead><tbody>{invoices.map(i => <tr key={i.id}><td className="mono">{i.number}</td><td>{i.partner_name}<div className="status-detail">{i.delivery_address}</div></td><td><span className={`status-pill ${i.confirmed ? 'success' : i.state === 'draft' ? 'warning' : ''}`}>{i.confirmed ? 'Entregada' : i.state === 'posted' ? 'Publicada' : i.state === 'draft' ? 'Borrador' : 'Cancelada'}</span></td><td className="mono">{i.pin || '—'}</td><td>{i.state === 'draft' ? <button className="link-button" disabled={saving} onClick={() => publish(i.id)}>Publicar</button> : <span className="hint-text">{i.requires_pin ? 'Entrega con PIN' : 'Sin PIN'}</span>}</td></tr>)}{!invoices.length && <tr><td colSpan={5}>No hay facturas que coincidan con la búsqueda.</td></tr>}</tbody></table>}
+    {loading ? <TableSkeleton rows={6} columns={5} /> : <table className="data-table"><thead><tr><th>Factura</th><th>Cliente</th><th>Estado</th><th>PIN</th><th>Acción</th></tr></thead><tbody>{invoices.map(i => <tr key={i.id}><td className="mono">{i.number}</td><td>{i.partnerName}<div className="status-detail">{i.deliveryAddress}</div></td><td><span className={`status-pill ${i.confirmed ? 'success' : i.state === 'draft' ? 'warning' : ''}`}>{i.confirmed ? 'Entregada' : i.state === 'posted' ? 'Publicada' : i.state === 'draft' ? 'Borrador' : 'Cancelada'}</span></td><td className="mono">{i.pin || '—'}</td><td>{i.state === 'draft' ? <button className="link-button" disabled={saving} onClick={() => publish(i.id)}>Publicar</button> : <span className="hint-text">{i.requiresPin ? 'Entrega con PIN' : 'Sin PIN'}</span>}</td></tr>)}{!invoices.length && <tr><td colSpan={5}>No hay facturas que coincidan con la búsqueda.</td></tr>}</tbody></table>}
     <p className="hint-text">{invoices.length} facturas · Hasta 1.000 resultados por búsqueda. Los PIN solo están disponibles para administradores.</p>
   </div>
 }

@@ -1,21 +1,32 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import apiClient from '../api/client'
+import type { User } from '../types/domain'
 
-const AuthContext = createContext(null)
+interface LoginResponse extends User {
+  token: string
+}
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
+interface AuthContextValue {
+  user: User | null
+  login: (username: string, password: string, remember?: boolean) => Promise<User>
+  logout: () => void
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('user') || sessionStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
+    return stored ? (JSON.parse(stored) as User) : null
   })
 
   // "Recuerdame" marcado -> localStorage (sobrevive a cerrar el navegador).
   // Sin marcar -> sessionStorage (se olvida al cerrar la pestana/navegador).
-  const login = async (username, password, remember = true) => {
-    const { data } = await apiClient.post('/auth/login', { username, password })
+  const login = async (username: string, password: string, remember = true): Promise<User> => {
+    const { data } = await apiClient.post<LoginResponse>('/auth/login', { username, password })
     const storage = remember ? localStorage : sessionStorage
     storage.setItem('token', data.token)
-    const loggedUser = { username: data.username, fullName: data.fullName, role: data.role }
+    const loggedUser: User = { username: data.username, fullName: data.fullName, role: data.role }
     storage.setItem('user', JSON.stringify(loggedUser))
     setUser(loggedUser)
     return loggedUser
@@ -34,7 +45,7 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext)
   if (!ctx) {
     throw new Error('useAuth debe usarse dentro de AuthProvider')
