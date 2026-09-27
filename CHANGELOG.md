@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/ups-master/ruta-delivery/compare/v1.0.0...v1.0.1) (2026-09-27)
+
+### Bug Fixes
+
+* **cd:** resolver 'Cannot infer ref from detached HEAD' en publish-images ([17e3ee1](https://github.com/ups-master/ruta-delivery/commit/17e3ee1c944ef5006334e4d96ed8ebe59b15868a))
+
 ## 1.0.0 (2026-09-27)
 
 ### Features
