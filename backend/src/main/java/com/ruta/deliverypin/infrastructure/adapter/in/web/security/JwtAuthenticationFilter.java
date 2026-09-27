@@ -27,7 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private static final List<AntPathRequestMatcher> PUBLIC_PATHS = List.of(
-            new AntPathRequestMatcher("/api/auth/**")
+            new AntPathRequestMatcher("/api/v1/auth/**")
     );
 
     private final TokenProviderPort tokenProvider;

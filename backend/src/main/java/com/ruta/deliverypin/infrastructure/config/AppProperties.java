@@ -7,6 +7,7 @@ public class AppProperties {
 
     private Cors cors = new Cors();
     private Admin admin = new Admin();
+    private LoginRateLimit loginRateLimit = new LoginRateLimit();
 
     public Cors getCors() {
         return cors;
@@ -22,6 +23,14 @@ public class AppProperties {
 
     public void setAdmin(Admin admin) {
         this.admin = admin;
+    }
+
+    public LoginRateLimit getLoginRateLimit() {
+        return loginRateLimit;
+    }
+
+    public void setLoginRateLimit(LoginRateLimit loginRateLimit) {
+        this.loginRateLimit = loginRateLimit;
     }
 
     public static class Cors {
@@ -54,6 +63,27 @@ public class AppProperties {
 
         public void setBootstrapPassword(String bootstrapPassword) {
             this.bootstrapPassword = bootstrapPassword;
+        }
+    }
+
+    public static class LoginRateLimit {
+        private int maxAttempts = 5;
+        private int windowSeconds = 60;
+
+        public int getMaxAttempts() {
+            return maxAttempts;
+        }
+
+        public void setMaxAttempts(int maxAttempts) {
+            this.maxAttempts = maxAttempts;
+        }
+
+        public int getWindowSeconds() {
+            return windowSeconds;
+        }
+
+        public void setWindowSeconds(int windowSeconds) {
+            this.windowSeconds = windowSeconds;
         }
     }
 }
