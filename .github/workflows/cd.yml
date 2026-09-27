@@ -87,6 +87,16 @@ jobs:
         with:
           ref: ${{ needs.gate.outputs.sha }}
           fetch-depth: 0
+          # RELEASE_TOKEN (PAT de un admin del repo) en vez del GITHUB_TOKEN por defecto:
+          # el commit "chore(release)" que deja @semantic-release/git se empuja directo a
+          # main, y el ruleset de proteccion exige 2 checks ya en verde sobre ese commit
+          # exacto -- imposible en un push directo. GITHUB_TOKEN actua como el usuario-bot
+          # "github-actions[bot]" (verificado via GET rulesets/rule-suites: actor_id
+          # 41898282, no la app/integracion 15368), que no tiene rol de colaborador y no
+          # califica para ningun bypass del ruleset. Un PAT de un admin real si califica
+          # (bypass_actors: RepositoryRole=admin), y no ata la excepcion a una persona en
+          # particular: cualquier admin del repo que regenere este secreto sigue pasando.
+          token: ${{ secrets.RELEASE_TOKEN }}
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -97,7 +107,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: semantic-release
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: pnpm exec semantic-release
       - name: Leer version publicada
         id: read_version
@@ -115,9 +125,11 @@ jobs:
 
   # semantic-release deja en main un commit "chore(release): X.Y.Z [skip ci]" con el
   # CHANGELOG.md; sin este paso develop diverge de main en cada release y el siguiente
-  # merge develop -> main arrastra conflictos en CHANGELOG.md. Un push hecho con
-  # GITHUB_TOKEN no dispara otros workflows, asi que esto no provoca un despliegue a
-  # staging. Si el merge no es limpio, el job falla y hay que resolverlo a mano.
+  # merge develop -> main arrastra conflictos en CHANGELOG.md. A diferencia de ese commit
+  # (su "[skip ci]" evita que retrigger CI en main con cualquier token), este merge commit
+  # no lo tiene: al pushearlo con RELEASE_TOKEN (un PAT real, no GITHUB_TOKEN) si dispara
+  # CI -> CD sobre develop, lo cual esta bien -- valida y despliega a staging el contenido
+  # que main ya libero. Si el merge no es limpio, el job falla y hay que resolverlo a mano.
   back-merge:
     needs: release
     if: needs.release.outputs.released == 'true'
@@ -129,6 +141,7 @@ jobs:
         with:
           ref: develop
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }} # mismo motivo que en el job "release": el push directo a develop necesita un admin real para pasar el ruleset
       - name: Merge main -> develop
         run: |
           git config user.name "github-actions[bot]"

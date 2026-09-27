@@ -417,8 +417,20 @@ ese usuario (o con `sudo`, como arriba).
 | `staging` / `production` | `AWS_REGION`, `AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`, opcional `DEPLOY_DIR` | -- | `production`: *Required reviewers* y *deployment branches* = `main` |
 
 Ademas: Settings -> Actions -> General -> Workflow permissions -> **Read and write**
-(semantic-release, back-merge y GHCR). Si `main`/`develop` tienen branch protection,
-permitir que `github-actions[bot]` haga push (commit del changelog y back-merge).
+(GHCR). Si `main`/`develop` tienen un ruleset con `required_status_checks`, el
+`GITHUB_TOKEN` por defecto NO puede pushear el commit del changelog ni el back-merge:
+GitHub evalua ese push bajo el usuario-bot `github-actions[bot]` (verificable con
+`GET /repos/{owner}/{repo}/rulesets/rule-suites`), que no tiene rol de colaborador y no
+califica para ningun bypass del ruleset -- ni siquiera agregando la app "GitHub Actions"
+como bypass actor (esa via solo aplica a operaciones hechas via una instalacion de la
+app, no a un `git push` con el token efimero del workflow).
+Solucion: crear un *Personal Access Token* (fine-grained) de un admin del repo, con
+permiso *Contents: Read and write* sobre `ups-master/ruta-delivery`, guardarlo como
+secreto de repo (`gh secret set RELEASE_TOKEN`), y agregar al ruleset un
+`bypass_actors` de tipo `RepositoryRole` (`admin`). `cd.yml` ya usa
+`secrets.RELEASE_TOKEN` en los jobs `release` y `back-merge` en vez del token por
+defecto. La excepcion queda atada al rol, no a la persona: cualquier admin del repo
+que regenere ese secreto sigue pasando el ruleset.
 
 **Cloudflare Pages (fuera de GitHub Actions, configuracion nativa):**
 
