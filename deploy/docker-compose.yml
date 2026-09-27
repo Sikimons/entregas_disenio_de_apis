@@ -1,24 +1,32 @@
 name: ${COMPOSE_PROJECT_NAME:-ruta-delivery}
 
-# Stack de despliegue (staging/produccion), separado del docker-compose.seed.yml de la
-# raiz (ese es solo para el stack local con datos de muestra). Los tres ejes de variacion
-# se resuelven cada uno con la herramienta que le corresponde:
-#   - staging vs produccion (URLs, secretos, tags)  -> --env-file deploy/env/<entorno>.env
-#   - topologia (¿postgres local? ¿frontend aqui?)  -> profiles ("db", "frontend", "seed")
-#   - config de nginx segun topologia               -> NGINX_SITE=api|full (envsubst)
+# Unico compose del proyecto: sirve local, staging y produccion (antes habia un
+# docker-compose.seed.yml aparte en la raiz, solo para desarrollo local, que duplicaba
+# el servicio "seed" y buena parte del backend -- se unifico todo aqui). Los tres ejes de
+# variacion se resuelven cada uno con la herramienta que le corresponde:
+#   - entorno (local/staging/produccion): URLs, secretos, tags -> --env-file deploy/env/<entorno>.env
+#   - topologia (¿postgres local? ¿frontend aqui?)             -> profiles ("db", "frontend", "seed")
+#   - config de nginx segun topologia                          -> NGINX_SITE=api|full|local (envsubst)
 #
-# Uso tipico:
+# Uso tipico (staging/produccion):
 #   docker compose -f deploy/docker-compose.yml --env-file deploy/env/production.env up -d
 #
-# Escenario A (hoy): backend en EC2, frontend en Cloudflare Pages.
+# Escenario A (hoy, staging/produccion): backend en EC2, frontend en Cloudflare Pages.
 #   COMPOSE_PROFILES=db          NGINX_SITE=api
 # Escenario B: todo en la misma VM detras del mismo nginx.
 #   COMPOSE_PROFILES=db,frontend NGINX_SITE=full
-# Primer arranque con datos de muestra (nunca en produccion real):
-#   COMPOSE_PROFILES=db,seed (o db,frontend,seed)
+# Local (desarrollo, ver deploy/env/local.env.example): todo en un solo host, sin TLS,
+# construyendo las imagenes en vez de bajarlas de GHCR (backend/frontend/seed ya
+# declaran "build:" ademas de "image:" para esto, ver mas abajo).
+#   COMPOSE_PROFILES=db,frontend,seed NGINX_SITE=local
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env up -d --build --wait
+# Primer arranque con datos de muestra en cualquier entorno (nunca en produccion real):
+#   agregar "seed" al COMPOSE_PROFILES de arriba
 #
 # En la VM no se corre "up" a mano: deploy/scripts/deploy.sh (lo invoca CD) fija el tag
-# de imagen, respalda la BD, espera los healthchecks y hace rollback si algo falla.
+# de imagen, respalda la BD, espera los healthchecks y hace rollback si algo falla. El
+# "build:" de mas abajo no lo usa ese flujo (siempre hace pull de una imagen ya publicada
+# en GHCR), solo lo usa quien corre "up --build" a mano para desarrollo local.
 
 # Rotacion de logs: el driver json-file por defecto no tiene limite y termina llenando
 # el disco de la VM. 5 archivos x 10 MB por contenedor.
@@ -64,6 +72,7 @@ services:
   seed:
     profiles: [seed]
     image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-latest}
+    build: ../backend
     env_file:
       - ${APP_ENV_FILE:?define APP_ENV_FILE en el .env del entorno (ruta al mismo archivo pasado en --env-file)}
     environment:
@@ -83,6 +92,7 @@ services:
 
   backend:
     image: ${BACKEND_IMAGE:-ruta-backend}:${BACKEND_TAG:-latest}
+    build: ../backend
     restart: unless-stopped
     logging: *logging
     env_file:
@@ -149,6 +159,7 @@ services:
   frontend:
     profiles: [frontend]
     image: ${FRONTEND_IMAGE:-ruta-frontend}:${FRONTEND_TAG:-latest}
+    build: ../frontend
     restart: unless-stopped
     logging: *logging
 

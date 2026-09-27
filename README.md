@@ -6,8 +6,11 @@ conductores e historial. El paquete Java es `com.ruta.deliverypin`.
 
 ## Desplegar con datos de muestra
 
-Necesitas Docker Desktop abierto. Para generar lotes adicionales tambien necesitas
-Python 3; la carga inicial no requiere Python ni ejecutar un script manualmente.
+Todo el tema de `docker-compose` vive en un solo lugar, [`deploy/`](deploy/) — el mismo
+archivo (`deploy/docker-compose.yml`) sirve para desarrollo local, staging y produccion,
+solo cambia el `--env-file` y los `profiles` activos. Necesitas Docker Desktop abierto.
+Para generar lotes adicionales tambien necesitas Python 3; la carga inicial no requiere
+Python ni ejecutar un script manualmente.
 
 ### 1. Configurar los secretos
 
@@ -15,44 +18,40 @@ Copia el archivo de ejemplo y define tus propios valores (contrasena de la base 
 datos, `JWT_SECRET` y la contrasena del administrador):
 
 ```bash
-cp .env.example .env
+cp deploy/env/local.env.example deploy/env/local.env
 ```
 
-`.env` no se comitea (ver `.gitignore`); `docker compose` lo carga automaticamente
-para las variables de `docker-compose.seed.yml`.
+`deploy/env/local.env` no se comitea (ver `.gitignore`).
 
 ### 2. Levantar los servicios
 
-Desde la carpeta del proyecto (PowerShell, bash o cualquier shell con Docker):
+Desde la raiz del proyecto (PowerShell, bash o cualquier shell con Docker):
 
 ```bash
-docker compose -f docker-compose.seed.yml up -d --build
+docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env up -d --build --wait
 ```
 
-> Si ya habias levantado un stack local con una version anterior de este archivo
-> (`docker-compose.mock.yml` o `docker-compose.demo.yml`), esos contenedores y su
-> volumen quedaron con el nombre de proyecto viejo (`delivery-pin-demo`) y no
-> interfieren con este; puedes eliminarlos con `docker compose -p delivery-pin-demo down -v`
-> si ya no los necesitas.
-
 Este comando levanta PostgreSQL, un job `seed` que carga `demo/invoices.json` (facturas,
-PIN y un conductor de muestra) y termina, y despues el backend y el frontend. El
-backend real siempre arranca con `APP_SEED_ENABLED=false` -el guard de secretos
-(`SecretsGuardRunner`) sigue activo incluso en este stack de muestra-; solo el job `seed`
-usa `APP_SEED_ENABLED=true` momentaneamente. El backend expone un healthcheck real en
-`/actuator/health`; el frontend espera a que el backend este `healthy` antes de
-arrancar. Puedes consultar el estado y los logs:
+PIN y un conductor de muestra) y termina, y despues el backend, el frontend y un nginx
+local (sin TLS, ver `deploy/nginx/templates/local.conf.template`) que sirve todo por un
+solo puerto. El backend real siempre arranca con `APP_SEED_ENABLED=false` -el guard de
+secretos (`SecretsGuardRunner`) sigue activo incluso en este stack de muestra-; solo el
+job `seed` usa `APP_SEED_ENABLED=true` momentaneamente. `--build` construye las imagenes
+desde `./backend`/`./frontend` en vez de bajarlas de GHCR. `--wait` no retorna hasta que
+todos los servicios con healthcheck esten `healthy`. Puedes consultar el estado y los
+logs:
 
 ```powershell
-docker compose -f docker-compose.seed.yml ps
-docker compose -f docker-compose.seed.yml logs --tail 50 backend
+docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env ps
+docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env logs --tail 50 backend
 ```
 
 ### 3. Consultar las facturas y los PIN
 
-- Aplicacion: http://localhost:15180
-- API: http://localhost:18091
-- Administrador: `admin` / la contrasena que definiste en `ADMIN_PASSWORD` (tu `.env`)
+- Aplicacion y API: http://localhost:8080 (la app en `/`, la API en `/api/`, detras del
+  mismo nginx)
+- Administrador: `admin` / la contrasena que definiste en `ADMIN_PASSWORD` (tu
+  `deploy/env/local.env`)
 - Conductor existente: `conductor` / `conductor123`
 
 Entra como administrador y abre **Facturas** para consultar los datos y los PIN.
@@ -61,7 +60,7 @@ se crea automaticamente. `demo/invoices.json` carga las 59 facturas originales
 solo si no hay facturas en la base. El conjunto contiene 314 lineas de productos
 e incluye las 50 facturas aleatorias de supermercado. Sus numeros y PIN estan en
 [`demo/facturas_y_pines.csv`](demo/facturas_y_pines.csv).
-El volumen `middleware_data` conserva usuarios, entregas, fotos y facturas.
+El volumen de PostgreSQL conserva usuarios, entregas, fotos y facturas.
 Si ya tienes facturas cargadas, volver a levantar los servicios no las reemplaza
 ni vuelve a importar el JSON.
 
@@ -80,18 +79,19 @@ facturas existentes. Actualiza la pantalla **Facturas** para verlas.
 El CSV del nuevo lote se guarda en `demo/nuevo_lote_facturas_y_pines.csv`.
 Cada ejecucion reemplaza ese CSV, pero conserva las facturas anteriores en la base.
 Puedes cambiar `--count 50` por la cantidad deseada, entre 1 y 1000.
-El script usa por defecto la API `http://localhost:18091` y `admin` / la contrasena de
-tu `.env` (`ADMIN_PASSWORD`); configura `RUTA_API`, `RUTA_ADMIN` y `RUTA_PASSWORD` si
-cambias esos valores.
+El script usa por defecto la API `http://localhost:8080` y `admin` / la contrasena de
+tu `deploy/env/local.env` (`ADMIN_PASSWORD`); configura `RUTA_API`, `RUTA_ADMIN` y
+`RUTA_PASSWORD` si cambias esos valores.
 
 ### 5. Apagar el entorno conservando los datos
 
 ```powershell
-docker compose -f docker-compose.seed.yml down
+docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env down
 ```
 
-Para volver a iniciarlo, repite el comando del paso 2. Las facturas, los PIN y las
-entregas permanecen guardados en el volumen de PostgreSQL.
+Para volver a iniciarlo, quita `seed` de `COMPOSE_PROFILES` (ya no hace falta resembrar)
+y repite el comando del paso 2 sin `--build` si no cambiaste codigo. Las facturas, los
+PIN y las entregas permanecen guardados en el volumen de PostgreSQL.
 
 ## Uso
 
@@ -211,14 +211,15 @@ El backend usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `D
 `APP_SEED_ENABLED` es `false` por defecto. Para cargar datos de muestra,
 habilitalo y configura `APP_SEED_FILE` con la ruta del JSON.
 
-`docker-compose.seed.yml` (raiz) es solo para el stack local con datos de muestra de
-arriba. El stack de
-despliegue real (staging/produccion) vive en [`deploy/`](deploy/): un
-`docker-compose.yml` parametrizado con nginx + TLS delante del backend, pensado para
-los dos escenarios que maneja el equipo:
+Todo el `docker-compose` del proyecto vive en un solo archivo, [`deploy/docker-compose.yml`](deploy/docker-compose.yml)
+(antes habia un `docker-compose.seed.yml` aparte en la raiz solo para el stack local de
+arriba, que duplicaba el servicio `seed` y buena parte del backend; se unifico todo aqui).
+El mismo archivo sirve para los tres entornos:
 
-- **Escenario A (actual):** backend + Postgres + nginx en una VM (EC2); el frontend se
-  publica aparte en **Cloudflare Pages**.
+- **Local (desarrollo):** todo en un host, sin TLS, construyendo las imagenes en vez de
+  bajarlas de GHCR (ver arriba, `deploy/env/local.env.example`).
+- **Escenario A (staging/produccion actual):** backend + Postgres + nginx en una VM
+  (EC2); el frontend se publica aparte en **Cloudflare Pages**.
 - **Escenario B:** backend, Postgres, nginx y frontend en la misma VM, detras del mismo
   nginx.
 
@@ -226,9 +227,9 @@ Los tres ejes de variacion se resuelven cada uno con la herramienta que le corre
 
 | Eje | Mecanismo |
 |---|---|
-| Staging vs produccion (URLs, secretos, tags de imagen) | `--env-file deploy/env/<entorno>.env` |
-| Topologia (¿Postgres local? ¿frontend en esta VM?) | `profiles` de Compose (`db`, `frontend`) |
-| Config de nginx segun topologia | `NGINX_SITE=api` (solo backend) o `full` (backend + frontend) |
+| Entorno (local/staging/produccion): URLs, secretos, tags de imagen | `--env-file deploy/env/<entorno>.env` |
+| Topologia (¿Postgres local? ¿frontend en esta VM?) | `profiles` de Compose (`db`, `frontend`, `seed`) |
+| Config de nginx segun topologia | `NGINX_SITE=api` (solo backend), `full` (backend + frontend, con TLS) o `local` (backend + frontend, sin TLS) |
 
 Uso (el mismo script que ejecuta CD en la VM, ver abajo):
 
