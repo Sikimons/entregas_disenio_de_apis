@@ -11,7 +11,9 @@
 
 **Nota de esta revisión:** el equipo confirmó `docs/Fase1_Vision_Producto_Modelo_Negocio_API_Final.md` (v1.1) como la versión final aprobada del documento de negocio; no se modifica. En esta revisión se incorpora además `docs/sistema-pruebas-entrega-1.2.dsl` como la versión **vigente** del modelo de arquitectura C4, reescrita para reflejar fielmente el código real (`-1.0.dsl` y `-1.1.dsl` se conservan como historial de diseño, ya superadas).
 
-**Actualización 2026-09-27 (tercera recalificación formal): el puntaje vigente es el del §21 (96/100).** Verifica con ejecución real (no solo lectura) que las seis correcciones de §19 (N1, N3, N4, N5, N6) y la de §20 (N7) se sostienen sobre el estado actual del árbol de trabajo: `mvn test` en contenedor Maven limpio con Testcontainers (**81/81 pruebas**, JaCoCo 56% de instrucciones / 67% de líneas), `pnpm exec vitest run`/`lint`/`build` en el frontend, un `docker compose -p ruta-eval -f docker-compose.demo.yml down -v && up --build --wait` completo en un proyecto Docker aislado seguido de `scripts/verify_delivery.py` de punta a punta, y pruebas en vivo con `curl` del rate limiter (a través de nginx, con `X-Forwarded-For` falsificado) y de las cabeceras de seguridad. Al cierre del §21, solo **N2** (historial de git) seguía sin resolver, con más entradas sin commitear (148) que en el §18 (143); una nota posterior al §21 (más abajo) documenta que N2 quedó resuelto sobre una rama `develop` nueva, sin reasignar el puntaje total. Las secciones 1–20 se conservan como historial; donde contradigan al §21 (nombre `docker-compose.mock.yml`, cobertura o conteo de pruebas anteriores a 81, "N1/N3/N4/N5/N6/N7 sin resolver"), prevalece el §21.
+**Actualización 2026-09-27 (tercera recalificación formal): el puntaje vigente era el del §21 (96/100), superado por el §22.** Verifica con ejecución real (no solo lectura) que las seis correcciones de §19 (N1, N3, N4, N5, N6) y la de §20 (N7) se sostienen sobre el estado actual del árbol de trabajo: `mvn test` en contenedor Maven limpio con Testcontainers (**81/81 pruebas**, JaCoCo 56% de instrucciones / 67% de líneas), `pnpm exec vitest run`/`lint`/`build` en el frontend, un `docker compose -p ruta-eval -f docker-compose.demo.yml down -v && up --build --wait` completo en un proyecto Docker aislado seguido de `scripts/verify_delivery.py` de punta a punta, y pruebas en vivo con `curl` del rate limiter (a través de nginx, con `X-Forwarded-For` falsificado) y de las cabeceras de seguridad. Al cierre del §21, solo **N2** (historial de git) seguía sin resolver, con más entradas sin commitear (148) que en el §18 (143); una nota posterior al §21 documenta que N2 quedó resuelto sobre una rama `develop` nueva, sin reasignar el puntaje total. Las secciones 1–20 se conservan como historial; donde contradigan al §21, prevalece primero el §21 y, en lo tocante a N2, el §22.
+
+**Actualización 2026-09-27 (cuarta recalificación formal): el puntaje vigente es el del §22 (97/100).** Verifica, sobre un clon nuevo y aislado de la rama `develop` (no el árbol de trabajo ya probado), que N2 (historial de git) quedó resuelto: el backend compila y pasa sus 81 pruebas, el frontend instala/construye/prueba igual, y `docker compose up --build --wait` + `scripts/verify_delivery.py` reproducen el sistema completo de punta a punta. Solo la ejecución real en GitHub Actions/AWS/Cloudflare Pages sigue sin verificarse (requiere `git push`, no autorizado en esta sesión). Las secciones 1–21 se conservan como historial; donde contradigan al §22 (N2 sin resolver, puntaje 96), prevalece el §22.
 
 ---
 
@@ -732,3 +734,49 @@ Lo que mantiene la nota por debajo de la perfección son, en su mayoría, los mi
 Este cambio **no reasigna un nuevo puntaje total**: igual que en las notas de §17, §19 y §20, recalcular la tabla de calificación con este hallazgo cerrado le corresponde a una revisión formal, no a quien aplicó la corrección. A título orientativo, y sin que cuente como puntaje vigente: de los dos motivos por los que §21 mantuvo DevOps en 4/5 (N1 y N2), ambos quedarían cerrados, lo que en una futura recalificación formal llevaría ese criterio a 5/5 y el total a unos 97/100 — siempre que una revisión posterior confirme, ejecutando sobre `develop`, que el CI/CD (`.github/workflows/ci.yml`/`cd.yml`) corre de verdad contra este historial ahora que existe algo real sobre lo que ejecutarlo.
 
 **Lo que sigue sin resolver, sin cambios respecto de §21.3:** el PIN en texto plano y la ejecución real de CI en GitHub Actions (decisiones de alcance de siempre, aunque esta última ya no está bloqueada por N2); `timestamptz` a medias y la paginación HTTP ausente en `admin/invoices`/`admin/users` (RA3); `catch (err: any)` sin tipar y los warnings de lint del frontend (RA4); y `figuras/`, que sigue sin existir.
+
+---
+
+## 22. Cuarta recalificación formal (2026-09-27)
+
+Esta sección es la revisión formal que la nota posterior al §21 dejaba pendiente: recalcula la tabla de calificación una vez cerrado N2, con evidencia de ejecución más fuerte que la de cualquier ronda anterior — no sobre el árbol de trabajo ya probado, sino sobre un **clon nuevo y aislado de `develop`** (`git clone` a un directorio temporal), que es precisamente la prueba que N2 no podía pasar ("un clon limpio no compila ni tiene pruebas", §18.4).
+
+### 22.1 Verificación sobre un clon limpio de `develop`
+
+| Qué | Cómo | Resultado |
+|---|---|---|
+| El clon reproduce el árbol ya evaluado | `git diff --name-status HEAD` dentro del clon | Sin diferencias — el contenido es el mismo que ya se había probado en el §21, ahora alcanzable únicamente desde los commits, no desde un árbol de trabajo con cambios sueltos |
+| Backend: compila y prueba desde el historial | `mvn -B test` en un contenedor Maven limpio (Testcontainers), apuntando al `backend/` del clon | **BUILD SUCCESS, 81/81 pruebas**, mismas 16 clases que en el §21 |
+| Frontend: instala, construye y prueba desde el historial | `pnpm install --frozen-lockfile` (sin reusar `node_modules` del árbol original) + `pnpm run build` + `pnpm exec vitest run` + `pnpm run lint`, todo dentro del clon | Instalación desde `pnpm-lock.yaml` sin errores; build OK (PWA generada, `_headers` reescrito); **9/9 pruebas**; lint 0 errores / 9 warnings — idéntico al §21 |
+| CI/CD: los workflows son sintácticamente válidos | Parseo YAML de `.github/workflows/ci.yml` y `cd.yml` dentro del clon (no se repitió `actionlint`, ya validado en §18/§19 sobre el mismo contenido) | Ambos archivos parsean sin error |
+| Reproducibilidad de punta a punta desde el historial | `docker compose -p ruta-clone-check -f docker-compose.demo.yml up -d --build --wait` dentro del clon (proyecto y volumen aislados) + `scripts/verify_delivery.py` del propio clon | Arranque limpio (`postgres`/`backend`/`frontend` Healthy, `seed` Exited 0) y **las 5 comprobaciones de `verify_delivery.py` pasan**, incluida la de N7.1 (facturas en borrador/canceladas sin exponer líneas) |
+
+**No verificado en esta ronda, sin cambios respecto de §21/§18:** la ejecución real del pipeline en GitHub Actions y del despliegue en AWS/Cloudflare Pages, porque requieren `git push` a un remoto y credenciales reales — sigue siendo, explícitamente, una decisión de alcance, no una limitación técnica encontrada. `develop` es una rama local; no se hizo push a `origin` en ningún momento de esta recalificación.
+
+### 22.2 Tabla de calificación (cuarta recalificación)
+
+| Criterio | Máx. | §21 (96) | **§22** | Nivel | Justificación |
+|---|---:|---:|---:|---|---|
+| RA1 – Negocio y propuesta de valor | 15 | 14 | **14** | Excelente | Sin cambios |
+| RA2 – Arquitectura, patrones y frontend | 20 | 20 | **20** | Excelente | Sin cambios |
+| RA3 – Datos y especificación API | 20 | 19 | **19** | Excelente | Sin cambios: `timestamptz` a medias y paginación HTTP ausente en `admin/invoices`/`admin/users` no fueron tocados por la reorganización de git |
+| RA4 – Desarrollo y calidad | 15 | 14 | **14** | Excelente | Sin cambios: `catch (err: any)` y los warnings de lint tampoco fueron tocados |
+| Seguridad | 10 | 10 | **10** | Excelente | Sin cambios |
+| Pruebas unitarias | 5 | 5 | **5** | Excelente | Sin cambios: 81/81 pruebas y la misma cobertura, ahora reverificadas desde un clon limpio en vez del árbol de trabajo |
+| Rendimiento y pruebas de carga | 10 | 10 | **10** | Excelente | Sin cambios |
+| DevOps, despliegue y reproducibilidad | 5 | 4 | **5** | Excelente | Sube 1: se cierra N2, la única reserva que quedaba. Un clon nuevo y aislado de `develop` — sin ningún archivo del árbol de trabajo original, sin `node_modules` ni caché de Maven propios del entorno de desarrollo — compila el backend (81/81 pruebas), construye y prueba el frontend, y levanta el stack de demo de punta a punta con `scripts/verify_delivery.py` pasando completo. El pipeline de CI/CD ya tiene sobre qué correr; solo falta ejecutarlo de verdad en GitHub Actions, lo que sigue siendo una decisión de alcance (requiere `git push`), no una limitación técnica |
+| **TOTAL** | **100** | **96** | **97** | **Excelente** | |
+
+### 22.3 Lo que sigue sin resolver
+
+1. **CI en GitHub Actions y despliegue en AWS/Cloudflare Pages sin ejecutarse de verdad** — ya no bloqueado por N2 (el historial existe y es reproducible), pero requiere `git push` a un remoto con credenciales reales; sigue siendo una decisión de alcance explícita.
+2. **PIN en texto plano** — decisión deliberada y documentada (Fase1 §3).
+3. **`timestamptz` a medias** y **paginación HTTP ausente en `admin/invoices`/`admin/users`** (RA3).
+4. **`catch (err: any)` sin tipar (16 casos) y ~9 warnings de lint** (RA4).
+5. **`figuras/` sigue sin existir** (cosmético).
+
+## CALIFICACIÓN FINAL (cuarta recalificación, 2026-09-27): 97/100 (Excelente)
+
+Sube de 96 a 97 porque la única reserva que quedaba abierta en el §21 — N2, el historial de git — se verificó resuelta con la evidencia más fuerte posible: no el árbol de trabajo ya probado, sino un clon nuevo y aislado de `develop`, que compila el backend (81/81 pruebas), construye y prueba el frontend, y reproduce el stack completo de punta a punta con el script E2E pasando sin intervención manual. Esto es exactamente la prueba que un clon limpio no pasaba cuando N2 se detectó (§18.4): "un clon limpio no compila ni tiene pruebas; el CI/CD no puede correr sobre lo que este informe evalúa". ya no es cierto.
+
+Lo único que falta para acercarse a la perfección son decisiones de alcance explícitas (ejecutar el CI/CD de verdad en GitHub Actions, lo que requiere un `git push` que no se ha autorizado en esta sesión; el PIN en texto plano, exigido por el propio negocio) y reservas menores y puntuales, ninguna nueva, que ninguna ronda desde el §18 llegó a tocar: `timestamptz` parcial y paginación HTTP ausente en dos endpoints administrativos (RA3), y tipado débil en el manejo de errores del frontend con sus warnings de lint (RA4).
