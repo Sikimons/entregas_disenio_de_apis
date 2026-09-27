@@ -250,11 +250,15 @@ Notas:
   `deploy/certs/origin-key.pem` (ignorados por git). Pon el dominio en modo **Full
   (strict)**. `deploy/nginx/snippets/cloudflare-realip.conf` restaura la IP real del
   cliente (necesaria para el rate-limit de login en `AuthController`).
-- **Primer arranque con datos de muestra:** corre una vez
+- **Primer arranque con datos iniciales:** corre una vez
   `COMPOSE_PROFILES=db,seed deploy/scripts/deploy.sh staging <tag>`. Un servicio `seed`
-  de una sola pasada carga `demo/invoices.json` y termina; el backend real siempre corre
-  con `APP_SEED_ENABLED=false` (el guard de secretos sigue exigiendo `JWT_SECRET` y
-  `ADMIN_PASSWORD` propios). Nunca en produccion real.
+  de una sola pasada carga `demo/invoices.json` (o el archivo que apunte `APP_SEED_FILE`,
+  si en produccion real se reemplaza por un dataset inicial propio en vez del de muestra)
+  y termina; el backend real siempre corre con `APP_SEED_ENABLED=false` (el guard de
+  secretos sigue exigiendo `JWT_SECRET` y `ADMIN_PASSWORD` propios). Solo en el primer
+  arranque, nunca de forma continua: sin ERP externo que alimente facturas nuevas, esas se
+  crean desde el panel (`Admin -> Facturas`) o con `scripts/generate_invoices.py`, no
+  volviendo a activar el profile `seed`.
 - **Robustez en la VM** (`deploy/docker-compose.yml`): rotacion de logs (`LOG_MAX_SIZE`/
   `LOG_MAX_FILE`), limites de memoria (`BACKEND_MEM_LIMIT`, `POSTGRES_MEM_LIMIT`; la JVM
   dimensiona el heap con `-XX:MaxRAMPercentage=75`), apagado ordenado del backend
@@ -357,8 +361,8 @@ ni su CDN gestionando el propio despliegue).
    "Condition": {
      "StringEquals": { "token.actions.githubusercontent.com:aud": "sts.amazonaws.com" },
      "StringLike": { "token.actions.githubusercontent.com:sub": [
-       "repo:Sikimons/entregas_disenio_de_apis:environment:staging",
-       "repo:Sikimons/entregas_disenio_de_apis:environment:production" ] }
+       "repo:ups-master/ruta-delivery:environment:staging",
+       "repo:ups-master/ruta-delivery:environment:production" ] }
    }
    ```
    y permisos `ssm:SendCommand` (sobre el documento `AWS-RunShellScript` y las
@@ -370,7 +374,7 @@ ni su CDN gestionando el propio despliegue).
 **VM (por entorno)**
 
 ```bash
-sudo git clone https://github.com/Sikimons/entregas_disenio_de_apis.git /opt/ruta  # repo privado: deploy key de solo lectura
+sudo git clone https://github.com/ups-master/ruta-delivery.git /opt/ruta  # repo privado: deploy key de solo lectura
 cp /opt/ruta/deploy/env/production.env.example /opt/ruta/deploy/env/production.env  # completar
 # certificados de origen de Cloudflare en /opt/ruta/deploy/certs/
 echo "$GHCR_PAT" | sudo docker login ghcr.io -u <usuario> --password-stdin        # PAT con read:packages (o paquetes publicos)
