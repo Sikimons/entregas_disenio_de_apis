@@ -10,9 +10,10 @@ import com.ruta.deliverypin.domain.port.in.ListDriversUseCase;
 import com.ruta.deliverypin.domain.port.in.UpdateDriverUseCase;
 import com.ruta.deliverypin.domain.port.out.DriverRepositoryPort;
 import com.ruta.deliverypin.domain.port.out.PasswordEncoderPort;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -63,8 +64,8 @@ public class DriverManagementApplicationService implements
     }
 
     @Override
-    public List<Driver> listAll() {
-        return driverRepository.findAll();
+    public PageResult<Driver> listAll(PageRequest pageRequest) {
+        return driverRepository.findAll(pageRequest);
     }
 
     @Override

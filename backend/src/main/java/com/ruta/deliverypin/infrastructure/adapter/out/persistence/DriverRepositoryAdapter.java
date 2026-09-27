@@ -1,12 +1,15 @@
 package com.ruta.deliverypin.infrastructure.adapter.out.persistence;
 
 import com.ruta.deliverypin.domain.model.Driver;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 import com.ruta.deliverypin.domain.port.out.DriverRepositoryPort;
 import com.ruta.deliverypin.infrastructure.adapter.out.persistence.entity.DriverJpaEntity;
 import com.ruta.deliverypin.infrastructure.adapter.out.persistence.repository.SpringDataDriverJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -37,8 +40,14 @@ public class DriverRepositoryAdapter implements DriverRepositoryPort {
     }
 
     @Override
-    public List<Driver> findAll() {
-        return jpaRepository.findAll().stream().map(DriverPersistenceMapper::toDomain).toList();
+    public PageResult<Driver> findAll(PageRequest pageRequest) {
+        Page<DriverJpaEntity> page = jpaRepository.findAll(
+                org.springframework.data.domain.PageRequest.of(pageRequest.page(), pageRequest.size(), Sort.by("id"))
+        );
+        return new PageResult<>(
+                page.getContent().stream().map(DriverPersistenceMapper::toDomain).toList(),
+                page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages()
+        );
     }
 
     @Override

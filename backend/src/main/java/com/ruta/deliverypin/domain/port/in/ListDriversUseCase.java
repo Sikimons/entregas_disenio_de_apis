@@ -1,10 +1,10 @@
 package com.ruta.deliverypin.domain.port.in;
 
 import com.ruta.deliverypin.domain.model.Driver;
-
-import java.util.List;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 
 public interface ListDriversUseCase {
 
-    List<Driver> listAll();
+    PageResult<Driver> listAll(PageRequest pageRequest);
 }

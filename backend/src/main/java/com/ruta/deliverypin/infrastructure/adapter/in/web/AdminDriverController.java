@@ -2,12 +2,14 @@ package com.ruta.deliverypin.infrastructure.adapter.in.web;
 
 import com.ruta.deliverypin.domain.exception.SelfAccountModificationException;
 import com.ruta.deliverypin.domain.model.Driver;
+import com.ruta.deliverypin.domain.model.PageRequest;
 import com.ruta.deliverypin.domain.port.in.CreateDriverUseCase;
 import com.ruta.deliverypin.domain.port.in.DeleteDriverUseCase;
 import com.ruta.deliverypin.domain.port.in.ListDriversUseCase;
 import com.ruta.deliverypin.domain.port.in.UpdateDriverUseCase;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.CreateDriverRequest;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.DriverResponse;
+import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.PageResponse;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.dto.UpdateDriverRequest;
 import com.ruta.deliverypin.infrastructure.adapter.in.web.security.CurrentDriverResolver;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,8 +20,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.List;
 
 @Tag(name = "Administración de usuarios", description = "Alta, baja y edición de administradores y conductores (app_user).")
 @RestController
@@ -53,11 +53,18 @@ public class AdminDriverController {
         }
     }
 
-    @Operation(summary = "Listar usuarios", description = "Lista todos los administradores y conductores registrados.")
-    @ApiResponse(responseCode = "200", description = "Listado de usuarios")
+    @Operation(summary = "Listar usuarios", description = "Administradores y conductores registrados, paginado (tamano maximo 100).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pagina de usuarios"),
+            @ApiResponse(responseCode = "400", description = "'size' supera el maximo permitido")
+    })
     @GetMapping
-    public List<DriverResponse> list() {
-        return listDriversUseCase.listAll().stream().map(DriverResponse::from).toList();
+    public PageResponse<DriverResponse> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        var result = listDriversUseCase.listAll(new PageRequest(page, size));
+        return PageResponse.from(result, DriverResponse::from);
     }
 
     @Operation(summary = "Crear un usuario", description = "Crea un administrador o conductor con contraseña ya hasheada (BCrypt).")

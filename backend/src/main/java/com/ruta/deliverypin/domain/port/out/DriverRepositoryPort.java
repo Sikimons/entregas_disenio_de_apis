@@ -1,8 +1,9 @@
 package com.ruta.deliverypin.domain.port.out;
 
 import com.ruta.deliverypin.domain.model.Driver;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -17,7 +18,7 @@ public interface DriverRepositoryPort {
 
     boolean existsByUsername(String username);
 
-    List<Driver> findAll();
+    PageResult<Driver> findAll(PageRequest pageRequest);
 
     Driver save(Driver driver);
 

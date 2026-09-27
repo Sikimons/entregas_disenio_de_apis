@@ -1,6 +1,8 @@
 package com.ruta.deliverypin.infrastructure.adapter.in.web;
 
 import com.ruta.deliverypin.domain.model.Driver;
+import com.ruta.deliverypin.domain.model.PageRequest;
+import com.ruta.deliverypin.domain.model.PageResult;
 import com.ruta.deliverypin.domain.model.Role;
 import com.ruta.deliverypin.domain.port.in.CreateDriverUseCase;
 import com.ruta.deliverypin.domain.port.in.DeleteDriverUseCase;
@@ -27,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -76,7 +79,8 @@ class AdminDriverControllerWebMvcTest {
     @WithMockUser(roles = "ADMIN")
     void list_withAdminRole_returns200() throws Exception {
         Driver driver = new Driver(1L, "conductor1", "hash", "Conductor Uno", Role.CONDUCTOR, true, Instant.now());
-        when(listDriversUseCase.listAll()).thenReturn(List.of(driver));
+        when(listDriversUseCase.listAll(any(PageRequest.class)))
+                .thenReturn(new PageResult<>(List.of(driver), 0, 100, 1, 1));
 
         mockMvc.perform(get("/api/v1/admin/users"))
                 .andExpect(status().isOk());
