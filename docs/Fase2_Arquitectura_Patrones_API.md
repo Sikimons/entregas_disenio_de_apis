@@ -13,7 +13,7 @@
 | **Fecha** | 26 de septiembre de 2026 |
 | **Estado** | Para revisión |
 
-> **Nota de trabajo.** Versión editable del Word de la Fase 2, alineada con `sistema-pruebas-entrega-1.4.dsl` y con la evaluación técnica vigente de 92/100 (`docs/EVALUACION_TECNICA.md` §18). El **Anexo A** lista los pocos puntos que aún conviene confirmar contra el código. Las figuras se generan desde el DSL y se esperan en la carpeta `figuras/` (pendiente: esa carpeta no existe todavia en el repositorio, ver Anexo A).
+> **Nota de trabajo.** Versión editable del Word de la Fase 2, alineada con `sistema-pruebas-entrega-1.4.dsl` y con la evaluación técnica vigente (`docs/EVALUACION_TECNICA.md`). El **Anexo A** lista los pocos puntos que aún conviene confirmar contra el código. Las figuras se generan desde el DSL y ya existen en la carpeta `figuras/` (ver Anexo A).
 
 ---
 
@@ -282,7 +282,7 @@ Esta ronda de validación contó los archivos de puertos y revisó el frontend c
 - **Compose de producción para la EC2 (resuelto).** `deploy/docker-compose.yml` ya existe: nginx + backend + Postgres opcional, parametrizado por `--env-file deploy/env/<entorno>.env` y por profiles (`db`, `frontend`, `demo`); sin datos demo por defecto, con `JWT_SECRET`/`ADMIN_PASSWORD` propios exigidos por `SecretsGuardRunner`. Reflejado en 3.6.
 - **Cómo llega Cloudflare a la EC2 y dónde se termina TLS (resuelto).** `deploy/nginx/templates/api.conf.template` + `deploy/nginx/snippets/tls.conf`: el Nginx de la EC2 termina el TLS de origen (Cloudflare en modo Full strict) y reenvía `/api/` al contenedor backend; ya está agregado como nodo de infraestructura (`nginx`) en la vista de despliegue de `sistema-pruebas-entrega-1.4.dsl`.
 
-Nuevo, sin resolver todavía: la carpeta `figuras/` que referencia la tabla de abajo no existe en el repositorio (los enlaces a las seis imágenes están rotos); regenerarlas desde el `.dsl` vigente con Structurizr queda pendiente.
+**Carpeta `figuras/` (resuelto).** Las seis imágenes de la tabla de abajo ya se generaron desde `sistema-pruebas-entrega-1.4.dsl` y existen en el repositorio: `structurizr-cli` (imagen Docker `structurizr/cli:2025.11.09`, que trae Graphviz) exportó las seis vistas a DOT y se renderizaron a PNG con `dot -Tpng`. La vista dinámica se probó también exportada a Mermaid y renderizada con `mermaid-cli`, pero el resultado tenía texto superpuesto sobre las flechas; se usó la versión Graphviz, más legible. Al exportar `C4-Componentes-API` un `->` dentro de la descripción del Circuit Breaker (texto libre, no relación del modelo) rompía el parser de etiquetas HTML de Graphviz; se corrigió el texto en el `.dsl` ("Circuito abierto -> 503" pasó a "Circuito abierto: responde 503") sin cambiar su significado.
 
 ### Figuras
 
