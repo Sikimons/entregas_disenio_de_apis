@@ -13,7 +13,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not 1 <= args.count <= 1000:
         parser.error('--count debe estar entre 1 y 1000')
-    token = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'admin123'))
+    token = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'admin_local_demo_only'))
     folder = Path(__file__).resolve().parents[1] / 'demo'
     catalog = sorted({line['description'] for invoice in json.loads((folder / 'invoices.json').read_text(encoding='utf-8')) for line in invoice['lines']})
     rng = random.SystemRandom()
@@ -26,13 +26,13 @@ if __name__ == '__main__':
             products = [{'description': p, 'quantity': rng.choice([0.5, 0.75, 1.25, 2.5]) if 'venta por kg' in p else rng.randint(1, 6)} for p in rng.sample(catalog, rng.randint(3, 8))]
             while True:
                 number = '001-104-%010d' % rng.randint(1, 9999999999)
-                status, invoice = request('/api/admin/invoices', {'number': number, 'partnerName': 'Cliente Supermercado %02d (MOCK)' % (index % 10 + 1),
+                status, invoice = request('/api/v1/admin/invoices', {'number': number, 'partnerName': 'Cliente Supermercado %02d (MOCK)' % (index % 10 + 1),
                     'deliveryAddress': 'Calle de prueba, Guayaquil', 'latitude': -2.171, 'longitude': -79.922, 'requiresPin': True, 'products': products}, token)
                 if status != 409:
                     break
-            if status != 200:
+            if status != 201:
                 raise RuntimeError((status, invoice))
-            status, invoice = request('/api/admin/invoices/%s/publish' % invoice['id'], {}, token)
+            status, invoice = request('/api/v1/admin/invoices/%s/publish' % invoice['id'], {}, token)
             if status != 200:
                 raise RuntimeError((status, invoice))
             writer.writerow({'factura': invoice['number'], 'pin': invoice['pin']})
