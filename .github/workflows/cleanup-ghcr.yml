@@ -1,0 +1,90 @@
+name: Cleanup GHCR
+
+# Cada push a develop/main publica una imagen nueva con tag :sha-xxxxxxx (cd.yml,
+# job build-images) -- sin retencion, esto crece sin limite. Este workflow corre
+# semanal (y a mano si hace falta) y borra las versiones de ruta-backend/ruta-frontend
+# mas viejas que las ultimas N, protegiendo siempre las liberadas (:vX.Y.Z, :X.Y.Z) y
+# el puntero vigente (:latest, :staging).
+#
+# No se uso "actions/delete-package-versions" (la opcion mas comun para esto): su
+# ignore-versions compara contra el DIGEST de la version (version.name en su codigo
+# fuente), no contra el tag -- inutil para proteger por ":latest"/":vX.Y.Z" como
+# necesitamos. Ademas llama incondicionalmente a la API de paquetes de USUARIO
+# (getAllPackageVersionsForPackageOwnedByUser), y este repo es de una organizacion.
+# Un script propio contra la API de paquetes de organizacion, filtrando por
+# metadata.container.tags (el campo real con los tags), es mas corto de verificar
+# que confiar en ese comportamiento.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # lunes 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "Cuantas versiones recientes (no protegidas) conservar por imagen"
+        required: false
+        default: "10"
+      dry_run:
+        description: "true: solo listar que se borraria, sin borrar nada"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  packages: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [ruta-backend, ruta-frontend]
+    env:
+      # Borrar una version de paquete exige read:packages + delete:packages, que
+      # GITHUB_TOKEN no puede otorgar (permissions: packages: write solo alcanza
+      # para publicar, no para borrar -- confirmado en la documentacion de la API:
+      # ese endpoint solo acepta un PAT clasico con esos dos scopes). Requiere un
+      # Personal Access Token CLASICO (no fine-grained: los fine-grained no
+      # documentan soporte para este endpoint) de un admin, con esos dos scopes,
+      # guardado como secreto PACKAGES_CLEANUP_TOKEN.
+      GH_TOKEN: ${{ secrets.PACKAGES_CLEANUP_TOKEN }}
+      KEEP: ${{ github.event.inputs.keep || '10' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+      OWNER: ${{ github.repository_owner }}
+      IMAGE: ${{ matrix.image }}
+    steps:
+      - name: Podar versiones viejas de ${{ matrix.image }}
+        run: |
+          set -euo pipefail
+
+          gh api --paginate "orgs/$OWNER/packages/container/$IMAGE/versions" \
+            --jq '.[] | {id, created_at, tags: (.metadata.container.tags // [])}' \
+            > versions.jsonl
+
+          # Protegidas para siempre: cualquier version con un tag de release
+          # (vX.Y.Z / X.Y.Z) o el puntero vigente (:latest, :staging). De las
+          # NO protegidas, se conservan las $KEEP mas recientes por fecha.
+          jq -s --argjson keep "$KEEP" '
+            sort_by(.created_at) | reverse
+            | map(select((.tags | any(test("^(latest|staging|v?[0-9]+\\.[0-9]+\\.[0-9]+)$"))) | not))
+            | .[$keep:]
+            | .[].id
+          ' versions.jsonl > to_delete.txt
+
+          COUNT=$(wc -l < to_delete.txt | tr -d ' ')
+          echo "Versiones a borrar de $IMAGE: $COUNT"
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "Nada que podar."
+            exit 0
+          fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "dry_run=true: no se borra nada. IDs que se borrarian:"
+            cat to_delete.txt
+            exit 0
+          fi
+
+          while read -r id; do
+            gh api --method DELETE "orgs/$OWNER/packages/container/$IMAGE/versions/$id"
+            echo "Borrada version $id de $IMAGE"
+          done < to_delete.txt
