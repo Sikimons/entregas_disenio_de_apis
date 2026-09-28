@@ -422,7 +422,23 @@ ese usuario (o con `sudo`, como arriba).
 
 | Environment | Variables | Secrets | Proteccion |
 |---|---|---|---|
-| `staging` / `production` | `AWS_REGION`, `AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`, opcional `DEPLOY_DIR` | -- | `production`: *Required reviewers* y *deployment branches* = `main` |
+| `staging` | `AWS_REGION`, `AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`, opcional `DEPLOY_DIR` | -- | **sin** *deployment branches* (ver por que abajo) |
+| `production` | (idem) | -- | *Required reviewers*, *deployment branches* = `main` |
+
+**Por que `staging` no puede tener `deployment branches = develop`:** `cd.yml` se
+dispara con `workflow_run`, y ese tipo de workflow siempre se ejecuta con el contexto
+de git de la **rama por defecto del repo** (`main`), sin importar que branch dispato el
+`CI` que lo origino -- lo mismo que hace que CD siempre use la version de `cd.yml` que
+esta en `main` (ver el CAVEAT al inicio de ese archivo). La proteccion "deployment
+branches" de un Environment se evalua contra ese contexto real, no contra el string
+`needs.gate.outputs.environment` que calculamos nosotros mismos -- asi que restringir
+`staging` a `develop` rechaza **todo** despliegue a staging con
+`Branch "main" is not allowed to deploy to staging`, sin excepcion posible. La barrera
+real contra un despliegue accidental ya la da el propio job (`check_config`: sin las 3
+variables AWS, salta el despliegue), asi que la restriccion de rama en `staging`
+seria redundante incluso si funcionara. En `production` esto no se nota porque el
+contexto real del `workflow_run` (`main`) coincide, por casualidad, con la rama que
+esa proteccion exige.
 
 Ademas: Settings -> Actions -> General -> Workflow permissions -> **Read and write**
 (GHCR). Si `main`/`develop` tienen un ruleset con `required_status_checks`, el
