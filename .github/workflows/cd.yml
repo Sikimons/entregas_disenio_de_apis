@@ -8,9 +8,17 @@ name: CD
 # que CI valido (github.event.workflow_run.head_sha), no de la rama a secas.
 #
 # Flujo:
-#   develop: gate -> publish-images (:staging, :sha-xxx) -> deploy-backend (EC2)
-#   main:    gate -> release (vX.Y.Z) -> publish-images (:vX.Y.Z, :latest, ...) -> deploy-backend
-#            (espera aprobacion del environment "production"); en paralelo back-merge main -> develop
+#   develop: gate -> build-images (:staging, :sha-xxx) -> deploy-backend (EC2)
+#   main:    gate -> build-images (:sha-xxx) -> release (vX.Y.Z, solo si el build funciono)
+#            -> retag-release (:vX.Y.Z, :latest, sobre la MISMA imagen ya publicada,
+#            sin reconstruir) -> deploy-backend (espera aprobacion del environment
+#            "production"); en paralelo back-merge main -> develop
+#
+# El orden build-antes-de-release es deliberado: si "release" corriera primero y la
+# construccion de la imagen fallara despues (como paso en la practica: "Cannot infer
+# ref from detached HEAD"), el tag/GitHub Release ya habria quedado publicado sin
+# ninguna imagen que lo respalde. Construir primero garantiza que un tag semantico
+# nunca exista sin su imagen correspondiente en GHCR.
 #
 # El frontend NO se despliega desde aqui: Cloudflare Pages tiene su propia integracion de
 # Git (build y deploy nativos por rama, con previews automaticos por PR) -- ver README
@@ -68,11 +76,13 @@ jobs:
   # Calcula la version semantica a partir del historial de commits con
   # semantic-release (Conventional Commits: "feat:" -> minor, resto -> patch,
   # "!:"/"BREAKING CHANGE:" -> major), genera CHANGELOG.md, taguea el repositorio
-  # y crea la release de GitHub con notas. Solo en main.
+  # y crea la release de GitHub con notas. Solo en main, y solo si build-images ya
+  # confirmo que la imagen de este commit construye bien (ver comentario de flujo
+  # arriba): nunca se crea un tag/release sin imagen que lo respalde.
   # Configuracion en ".releaserc.json" y dependencias en el "package.json" de la raiz.
   release:
-    needs: gate
-    if: needs.gate.outputs.branch == 'main'
+    needs: [gate, build-images]
+    if: needs.gate.outputs.branch == 'main' && needs.build-images.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write # crear el tag, el commit del changelog y la release
@@ -149,11 +159,13 @@ jobs:
           git merge --no-edit origin/main
           git push origin develop
 
-  # Publica ambas imagenes en el Container Registry del propio repositorio
-  # (ghcr.io/<owner>/ruta-backend y ruta-frontend):
-  #   - main (solo si semantic-release publico una version nueva): vX.Y.Z, X.Y.Z,
-  #     latest y sha-xxxxxxx. Evita publicar imagenes en commits "chore:"/"docs:".
-  #   - develop: staging y sha-xxxxxxx.
+  # Construye y publica ambas imagenes en el Container Registry del propio repositorio
+  # (ghcr.io/<owner>/ruta-backend y ruta-frontend) con su tag inmutable :sha-xxxxxxx
+  # SIEMPRE (main y develop), mas :staging en develop. Corre antes que "release" a
+  # proposito (ver comentario de flujo arriba): si esto falla, "release" ni siquiera
+  # se intenta, asi que nunca queda un tag/GitHub Release de main sin imagen. Los tags
+  # semanticos (:vX.Y.Z, :latest) se agregan despues, en "retag-release", sobre esta
+  # misma imagen ya publicada -- no hace falta reconstruir para eso.
   # El tag que se despliega es siempre uno inmutable (vX.Y.Z en produccion,
   # sha-xxxxxxx en staging), nunca latest/staging, para que el rollback tenga a que volver.
   # La imagen del frontend solo se usa en el escenario B (todo en la VM); en el
@@ -164,11 +176,9 @@ jobs:
   # reutiliza esas capas en vez de reconstruir desde cero.
   # Requiere que el repositorio permita a GITHUB_TOKEN escribir paquetes
   # (Settings -> Actions -> General -> Workflow permissions -> Read and write).
-  publish-images:
-    needs: [gate, release]
-    if: >-
-      !cancelled() && needs.gate.result == 'success' &&
-      (needs.gate.outputs.branch == 'develop' || needs.release.outputs.released == 'true')
+  build-images:
+    needs: gate
+    if: ${{ !cancelled() && needs.gate.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -205,9 +215,6 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/ruta-${{ matrix.image }}
           flavor: latest=false
           tags: |
-            type=raw,value=latest,enable=${{ needs.gate.outputs.branch == 'main' }}
-            type=raw,value=${{ needs.release.outputs.version_tag }},enable=${{ needs.gate.outputs.branch == 'main' }}
-            type=raw,value=${{ needs.release.outputs.version }},enable=${{ needs.gate.outputs.branch == 'main' }}
             type=raw,value=staging,enable=${{ needs.gate.outputs.branch == 'develop' }}
             type=raw,value=${{ needs.gate.outputs.sha_tag }}
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -219,6 +226,41 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
+  # Le agrega los tags semanticos (:vX.Y.Z, :X.Y.Z, :latest) a la MISMA imagen que
+  # build-images ya publico con :sha-xxxxxxx -- "docker buildx imagetools create" solo
+  # copia manifiestos en el registro, no reconstruye nada. Como "release" ya exigio que
+  # build-images tuviera exito antes de taguear en Git, y este job exige que "release"
+  # efectivamente haya liberado una version, la imagen :vX.Y.Z SIEMPRE existe si el
+  # tag de Git existe -- nunca puede quedar un release sin su imagen.
+  retag-release:
+    needs: [gate, release]
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Agregar tags semanticos a las imagenes ya publicadas
+        env:
+          VERSION_TAG: ${{ needs.release.outputs.version_tag }}
+          VERSION: ${{ needs.release.outputs.version }}
+          SHA_TAG: ${{ needs.gate.outputs.sha_tag }}
+        run: |
+          set -euo pipefail
+          for image in backend frontend; do
+            repo="ghcr.io/${{ github.repository_owner }}/ruta-$image"
+            docker buildx imagetools create \
+              --tag "$repo:$VERSION_TAG" \
+              --tag "$repo:$VERSION" \
+              --tag "$repo:latest" \
+              "$repo:$SHA_TAG"
+          done
+
   # Despliega el backend en la EC2 del entorno via AWS SSM Run Command, autenticado con
   # OIDC (sin llaves de larga vida en GitHub y sin puerto 22 abierto). En la instancia
   # corre deploy/scripts/deploy.sh: pull, backup, up --wait, verificacion y rollback
@@ -229,8 +271,11 @@ jobs:
   # Variables por environment: AWS_REGION, AWS_DEPLOY_ROLE_ARN, EC2_INSTANCE_ID y,
   # opcional, DEPLOY_DIR (por defecto /opt/ruta). Ver README -> "Setup de CD".
   deploy-backend:
-    needs: [gate, release, publish-images]
-    if: ${{ !cancelled() && needs.publish-images.result == 'success' }}
+    needs: [gate, release, build-images, retag-release]
+    if: >-
+      !cancelled() && needs.build-images.result == 'success' &&
+      (needs.gate.outputs.branch == 'develop' ||
+        (needs.release.outputs.released == 'true' && needs.retag-release.result == 'success'))
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.gate.outputs.environment }}
@@ -244,12 +289,33 @@ jobs:
       DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/opt/ruta' }}
       INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
     steps:
+      # Sin esto, un environment sin AWS_REGION/AWS_DEPLOY_ROLE_ARN/EC2_INSTANCE_ID
+      # configuradas (p. ej. "production" antes de tener la infraestructura real) hace
+      # que "configure-aws-credentials" falle con un rol vacio y el job entero se marque
+      # en rojo -- un fallo que no aporta nada, porque ya se sabe de antemano que no hay
+      # nada que desplegar. Se detecta aca y se salta el resto con una anotacion visible
+      # en vez de fallar.
+      - id: check_config
+        name: Verificar variables de despliegue
+        env:
+          REGION: ${{ vars.AWS_REGION }}
+          ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          INSTANCE: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          if [ -z "$REGION" ] || [ -z "$ROLE_ARN" ] || [ -z "$INSTANCE" ]; then
+            echo "::notice title=Despliegue omitido::Faltan variables del Environment '${{ env.DEPLOY_ENV }}' (AWS_REGION/AWS_DEPLOY_ROLE_ARN/EC2_INSTANCE_ID). Configuralas en Settings -> Environments -> ${{ env.DEPLOY_ENV }} para habilitar el despliegue automatico. La imagen ${{ env.DEPLOY_TAG }} ya quedo publicada en GHCR."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        if: steps.check_config.outputs.configured == 'true'
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: gha-deploy-${{ github.run_id }}
       - name: Desplegar ${{ env.DEPLOY_TAG }} en ${{ env.DEPLOY_ENV }}
+        if: steps.check_config.outputs.configured == 'true'
         run: |
           set -euo pipefail
           # El checkout de la VM sigue exactamente el commit que se despliega, para que
