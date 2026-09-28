@@ -338,10 +338,11 @@ dos workflows separados, encadenados con `workflow_run`:
 
 ```
 PR ──────────► CI (tests + build de imagenes) ──────────► Pages: preview automatico (nativo)
-develop push ► CI ► CD: publish :staging/:sha-xxx ► deploy EC2 staging
+develop push ► CI ► CD: build-images :staging/:sha-xxx ► deploy EC2 staging
                         Pages: build/deploy automatico de "develop" (nativo, en paralelo)
-main push ───► CI ► CD: semantic-release vX.Y.Z ► publish :vX.Y.Z/:latest
-                        ► [aprobacion "production"] ► deploy EC2 prod
+main push ───► CI ► CD: build-images :sha-xxx ► semantic-release vX.Y.Z (solo si el
+                        build funciono) ► retag-release :vX.Y.Z/:latest (misma imagen,
+                        sin reconstruir) ► [aprobacion "production"] ► deploy EC2 prod
                         └► back-merge main -> develop (CHANGELOG.md)
                         Pages: build/deploy automatico de "main" (nativo, en paralelo)
 ```
@@ -361,21 +362,28 @@ ni su CDN gestionando el propio despliegue).
   repositorio** a `develop` o `main` -- un PR desde un fork con una rama llamada `main`
   no puede disparar un release ni un despliegue. Hace checkout del commit exacto que CI
   valido (`workflow_run.head_sha`). Jobs:
-  - **`release`** (solo `main`): [`semantic-release`](https://semantic-release.gitbook.io/)
-    (`.releaserc.json`, dependencias en el `package.json` de la raiz) calcula la version
-    con [Conventional Commits](https://www.conventionalcommits.org/) (`feat:` -> minor,
+  - **`build-images`** (main y develop): publica `ruta-backend` y `ruta-frontend` en
+    GHCR con su tag inmutable `sha-xxxxxxx` (mas `staging` en `develop`). Corre *antes*
+    que `release` a proposito: si el build falla, `release` ni se intenta, asi que nunca
+    queda un tag/GitHub Release sin imagen que lo respalde.
+  - **`release`** (solo `main`, y solo si `build-images` tuvo exito):
+    [`semantic-release`](https://semantic-release.gitbook.io/) (`.releaserc.json`,
+    dependencias en el `package.json` de la raiz) calcula la version con
+    [Conventional Commits](https://www.conventionalcommits.org/) (`feat:` -> minor,
     otro -> patch, `!:`/`BREAKING CHANGE:` -> major), actualiza `CHANGELOG.md`, crea el
     tag `vX.Y.Z` y la release de GitHub.
+  - **`retag-release`** (solo si hubo release): le agrega `vX.Y.Z`, `X.Y.Z` y `latest`
+    a la MISMA imagen que `build-images` ya publico con `sha-xxxxxxx` -- `docker buildx
+    imagetools create` solo copia manifiestos en el registro, no reconstruye nada.
   - **`back-merge`** (solo si hubo release): mezcla `main` en `develop` para que el
     commit del changelog no haga divergir las ramas.
-  - **`publish-images`**: publica `ruta-backend` y `ruta-frontend` en GHCR. En `main`
-    (solo si hubo release): `vX.Y.Z`, `X.Y.Z`, `latest`, `sha-xxxxxxx`. En `develop`:
-    `staging`, `sha-xxxxxxx`. La imagen del frontend solo se usa en el escenario B (todo
-    en la VM); en el escenario A (frontend en Cloudflare Pages) no se descarga de GHCR.
   - **`deploy-backend`**: environment `staging` o `production`. Se autentica en AWS por
     **OIDC** (sin llaves de larga vida) y ejecuta en la EC2, via **SSM Run Command**
     (sin SSH ni puerto 22 abierto), `git checkout <sha>` + `deploy/scripts/deploy.sh`.
-    El job falla si el despliegue falla (y en ese caso la VM ya hizo rollback).
+    El job falla si el despliegue falla (y en ese caso la VM ya hizo rollback). Si el
+    environment no tiene `AWS_REGION`/`AWS_DEPLOY_ROLE_ARN`/`EC2_INSTANCE_ID`
+    configuradas, el job termina en verde con una anotacion "Despliegue omitido" en vez
+    de fallar.
 
 ### Setup de CD (una sola vez)
 
