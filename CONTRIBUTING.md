@@ -32,6 +32,22 @@ estilo, tiene efecto real en que numero de version sale:
 | `feat!:` / pie `BREAKING CHANGE:` | major (`1.0.0` -> `2.0.0`) | `feat(api)!: remover /api/v0` |
 | `docs:`, `refactor:`, `test:`, `chore:`, `ci:`, `perf:`, `style:` | no dispara release | `docs: aclarar seed en produccion` |
 
+**El prefijo se elige por que carpeta se toca, no por costumbre.** Un cambio a
+`.github/workflows/` o `deploy/` no cambia el codigo de la app -- las imagenes de
+`ruta-backend`/`ruta-frontend` quedan identicas aunque cambie como se construyen o
+se despliegan. Usar `fix:`/`feat:` ahi infla la version del producto sin que haya
+nada distinto corriendo en produccion (paso en la practica: un cambio solo a
+`cd.yml` etiquetado `fix:` disparo `1.0.1 -> 1.0.2` sin que el codigo cambiara).
+
+| Si el cambio toca... | Usar |
+|---|---|
+| `backend/`, `frontend/` (codigo de la app) | `fix:` / `feat:` / `feat!:` segun corresponda |
+| `.github/workflows/`, `deploy/`, `package.json` de la raiz (tooling, no la app) | `ci:` o `chore:` |
+| `README.md`, `CONTRIBUTING.md`, `docs/` | `docs:` |
+
+Si un commit toca ambas cosas a la vez (poco comun), el prefijo es el del cambio de
+mayor peso -- normalmente el de `backend/`/`frontend/` si lo hay.
+
 Un commit sin alguno de estos prefijos no rompe nada, pero `commit-analyzer` lo trata
 como si no aportara nada a la version -- usa el prefijo que corresponda.
 
