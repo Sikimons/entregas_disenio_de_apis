@@ -1,3 +1,9 @@
+## [1.0.2](https://github.com/ups-master/ruta-delivery/compare/v1.0.1...v1.0.2) (2026-09-28)
+
+### Bug Fixes
+
+* **cd:** reordenar build-images antes de release, y saltar deploy sin variables ([89c3cc9](https://github.com/ups-master/ruta-delivery/commit/89c3cc97a2cf8ad9bd23b8c87d1ed8a1894c19ee))
+
 ## [1.0.1](https://github.com/ups-master/ruta-delivery/compare/v1.0.0...v1.0.1) (2026-09-27)
 
 ### Bug Fixes
