@@ -389,6 +389,18 @@ ni su CDN gestionando el propio despliegue).
 
 **AWS**
 
+Los pasos 1 y 2 (proveedor OIDC + rol IAM con su trust policy y permisos de SSM) se
+pueden hacer con un solo comando en vez de a mano en la consola:
+
+```bash
+AWS_REGION=us-east-1 SSM_INSTANCE_IDS="i-xxxx i-yyyy" ./deploy/scripts/setup-aws-oidc.sh
+```
+
+Es idempotente (se puede volver a correr para actualizar la trust policy o los
+permisos) y al final imprime el Role ARN junto con los `gh variable set` listos para
+copiar por Environment. No crea la(s) EC2 (paso 3) ni carga las variables en GitHub
+por si solo -- eso queda descrito abajo.
+
 1. IAM -> Identity providers -> OpenID Connect: `https://token.actions.githubusercontent.com`,
    audience `sts.amazonaws.com`.
 2. Rol `gha-ruta-deploy` con trust policy limitada a los environments del repo:
@@ -422,7 +434,23 @@ ese usuario (o con `sudo`, como arriba).
 
 | Environment | Variables | Secrets | Proteccion |
 |---|---|---|---|
-| `staging` / `production` | `AWS_REGION`, `AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`, opcional `DEPLOY_DIR` | -- | `production`: *Required reviewers* y *deployment branches* = `main` |
+| `staging` | `AWS_REGION`, `AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID`, opcional `DEPLOY_DIR` | -- | **sin** *deployment branches* (ver por que abajo) |
+| `production` | (idem) | -- | *Required reviewers*, *deployment branches* = `main` |
+
+**Por que `staging` no puede tener `deployment branches = develop`:** `cd.yml` se
+dispara con `workflow_run`, y ese tipo de workflow siempre se ejecuta con el contexto
+de git de la **rama por defecto del repo** (`main`), sin importar que branch dispato el
+`CI` que lo origino -- lo mismo que hace que CD siempre use la version de `cd.yml` que
+esta en `main` (ver el CAVEAT al inicio de ese archivo). La proteccion "deployment
+branches" de un Environment se evalua contra ese contexto real, no contra el string
+`needs.gate.outputs.environment` que calculamos nosotros mismos -- asi que restringir
+`staging` a `develop` rechaza **todo** despliegue a staging con
+`Branch "main" is not allowed to deploy to staging`, sin excepcion posible. La barrera
+real contra un despliegue accidental ya la da el propio job (`check_config`: sin las 3
+variables AWS, salta el despliegue), asi que la restriccion de rama en `staging`
+seria redundante incluso si funcionara. En `production` esto no se nota porque el
+contexto real del `workflow_run` (`main`) coincide, por casualidad, con la rama que
+esa proteccion exige.
 
 Ademas: Settings -> Actions -> General -> Workflow permissions -> **Read and write**
 (GHCR). Si `main`/`develop` tienen un ruleset con `required_status_checks`, el
