@@ -389,6 +389,18 @@ ni su CDN gestionando el propio despliegue).
 
 **AWS**
 
+Los pasos 1 y 2 (proveedor OIDC + rol IAM con su trust policy y permisos de SSM) se
+pueden hacer con un solo comando en vez de a mano en la consola:
+
+```bash
+AWS_REGION=us-east-1 SSM_INSTANCE_IDS="i-xxxx i-yyyy" ./deploy/scripts/setup-aws-oidc.sh
+```
+
+Es idempotente (se puede volver a correr para actualizar la trust policy o los
+permisos) y al final imprime el Role ARN junto con los `gh variable set` listos para
+copiar por Environment. No crea la(s) EC2 (paso 3) ni carga las variables en GitHub
+por si solo -- eso queda descrito abajo.
+
 1. IAM -> Identity providers -> OpenID Connect: `https://token.actions.githubusercontent.com`,
    audience `sts.amazonaws.com`.
 2. Rol `gha-ruta-deploy` con trust policy limitada a los environments del repo:
