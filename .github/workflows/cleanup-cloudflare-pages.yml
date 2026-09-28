@@ -1,0 +1,85 @@
+name: Cleanup Cloudflare Pages
+
+# Cloudflare Pages crea un "preview deployment" por cada push a cualquier rama
+# (incluida develop) y por cada Pull Request -- sin retencion, se acumulan sin
+# limite, igual que las imagenes :sha-xxxxxxx en GHCR (ver cleanup-ghcr.yml). Este
+# workflow corre semanal (y a mano si hace falta) y borra los previews mas viejos
+# que los ultimos N, sin tocar NUNCA los deployments de "production" (el sitio
+# real, que Cloudflare sirve desde el ultimo deployment de produccion exitoso --
+# borrar el equivocado podria tumbar el sitio en vivo, asi que ese environment
+# queda completamente fuera del alcance de este script, no solo protegido por
+# fecha).
+on:
+  schedule:
+    - cron: "30 6 * * 1" # lunes 06:30 UTC (media hora despues de cleanup-ghcr.yml)
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "Cuantos preview deployments recientes conservar"
+        required: false
+        default: "20"
+      dry_run:
+        description: "true: solo listar que se borraria, sin borrar nada"
+        type: boolean
+        required: false
+        default: false
+
+permissions: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+      KEEP: ${{ github.event.inputs.keep || '20' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+    steps:
+      - name: Podar preview deployments viejos
+        run: |
+          set -euo pipefail
+
+          : "${CF_API_TOKEN:?Falta el secreto CLOUDFLARE_API_TOKEN}"
+          : "${ACCOUNT_ID:?Falta la variable CLOUDFLARE_ACCOUNT_ID}"
+          : "${PROJECT:?Falta la variable CLOUDFLARE_PAGES_PROJECT}"
+
+          API="https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$PROJECT/deployments"
+          PAGE=1
+          : > deployments.jsonl
+          while :; do
+            RESP=$(curl -sf -H "Authorization: Bearer $CF_API_TOKEN" "$API?page=$PAGE&per_page=25")
+            echo "$RESP" | jq -c '.result[] | {id, environment, created_on}' >> deployments.jsonl
+            COUNT=$(echo "$RESP" | jq '.result | length')
+            [ "$COUNT" -lt 25 ] && break
+            PAGE=$((PAGE + 1))
+          done
+
+          # Solo "preview" entra en juego -- "production" queda fuera de este
+          # workflow por completo, nunca se evalua para borrado.
+          jq -s --argjson keep "$KEEP" '
+            map(select(.environment == "preview"))
+            | sort_by(.created_on) | reverse
+            | .[$keep:]
+            | .[].id
+          ' deployments.jsonl > to_delete.txt
+
+          COUNT=$(wc -l < to_delete.txt | tr -d ' ')
+          echo "Preview deployments a borrar: $COUNT"
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "Nada que podar."
+            exit 0
+          fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "dry_run=true: no se borra nada. IDs que se borrarian:"
+            cat to_delete.txt
+            exit 0
+          fi
+
+          while read -r id; do
+            curl -sf -X DELETE -H "Authorization: Bearer $CF_API_TOKEN" \
+              "$API/$id?force=true" >/dev/null
+            echo "Borrado deployment $id"
+          done < to_delete.txt
