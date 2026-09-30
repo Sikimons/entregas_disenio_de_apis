@@ -229,7 +229,7 @@ cd frontend && corepack enable && pnpm install --frozen-lockfile && pnpm exec vi
 `pnpm run build` corre `tsc -b` (chequeo de tipos) antes de `vite build`; el build
 falla si hay errores de tipos.
 
-El backend usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_POOL_MAX_SIZE`,
+El backend usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_SSL_MODE` (`prefer` por defecto; `verify-full` contra RDS), `DB_POOL_MAX_SIZE`,
 `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`,
 `APP_COST_INFRA_MONTHLY_USD`, `APP_COST_STORAGE_PER_GB_USD`, `APP_COST_SUPPORT_HOUR_USD`,
 `APP_CIRCUIT_BREAKER_ENABLED`, `APP_CIRCUIT_BREAKER_FAILURE_RATE`, `APP_CIRCUIT_BREAKER_WAIT_SECONDS`,
@@ -245,10 +245,12 @@ El mismo archivo sirve para los tres entornos:
 
 - **Local (desarrollo):** todo en un host, sin TLS, construyendo las imagenes en vez de
   bajarlas de GHCR (ver arriba, `deploy/env/local.env.example`).
-- **Escenario A (staging/produccion actual):** backend + Postgres + nginx en una VM
-  (EC2); el frontend se publica aparte en **Cloudflare Pages**.
-- **Escenario B:** backend, Postgres, nginx y frontend en la misma VM, detras del mismo
-  nginx.
+- **Escenario A (staging/produccion actual):** backend + nginx en una VM (EC2) y la base
+  de datos en **AWS RDS PostgreSQL** (ver "Base de datos en RDS" abajo); el frontend se
+  publica aparte en **Cloudflare Pages**. Para volver a Postgres en contenedor basta
+  agregar el profile `db` y poner `DB_HOST=postgres`, `DB_SSL_MODE=prefer`.
+- **Escenario B:** backend, Postgres (contenedor), nginx y frontend en la misma VM,
+  detras del mismo nginx.
 
 Los tres ejes de variacion se resuelven cada uno con la herramienta que le corresponde:
 
@@ -276,9 +278,19 @@ Notas:
   SSL/TLS -> Origin Server) y guardalo como `deploy/certs/origin.pem` /
   `deploy/certs/origin-key.pem` (ignorados por git). Pon el dominio en modo **Full
   (strict)**. `deploy/nginx/snippets/cloudflare-realip.conf` restaura la IP real del
-  cliente (necesaria para el rate-limit de login en `AuthController`).
+  cliente (necesaria para el rate-limit de login en `AuthController`). nginx corre sin
+  root (uid 101), asi que ese usuario debe poder leer los certificados:
+  `sudo chown 101:101 deploy/certs/origin.pem deploy/certs/origin-key.pem && sudo chmod 600 deploy/certs/origin-key.pem`.
+  Sin esto nginx no arranca.
+- **Contenedores sin root:** ningun contenedor corre como root, y todos llevan
+  `cap_drop: ALL` y `no-new-privileges` (`deploy/docker-compose.yml`). Usuarios: backend y
+  seed `10001`, nginx y frontend `101` (imagen `nginxinc/nginx-unprivileged`), Postgres
+  `70`. Por no ser root, nginx y el frontend escuchan dentro del contenedor en 8080/8443;
+  el compose los publica en 80/443 (`HTTP_PORT`/`HTTPS_PORT`), asi que hacia afuera nada
+  cambia. CI (`ci.yml`) falla si la imagen del backend o del frontend arranca como uid 0.
 - **Primer arranque con datos iniciales:** corre una vez
-  `COMPOSE_PROFILES=db,seed deploy/scripts/deploy.sh staging <tag>`. Un servicio `seed`
+  `COMPOSE_PROFILES=seed deploy/scripts/deploy.sh staging <tag>` (`db,seed` si usas
+  Postgres en contenedor en vez de RDS). Un servicio `seed`
   de una sola pasada carga `demo/invoices.json` (o el archivo que apunte `APP_SEED_FILE`,
   si en produccion real se reemplaza por un dataset inicial propio en vez del de muestra)
   y termina; el backend real siempre corre con `APP_SEED_ENABLED=false` (el guard de
@@ -291,10 +303,40 @@ Notas:
   dimensiona el heap con `-XX:MaxRAMPercentage=75`), apagado ordenado del backend
   (`server.shutdown: graceful` + `stop_grace_period: 30s`) y healthcheck sobre
   `/actuator/health/readiness`.
+- **Frontend y API en subdominios del mismo sitio:** con el frontend en Pages y la API en
+  la EC2, usa un dominio personalizado en Pages (`app.midominio.com`, API en
+  `api.midominio.com`) y define `COOKIE_DOMAIN=midominio.com`. Asi la cookie `XSRF-TOKEN`
+  se emite para todo el dominio y el JS del frontend la puede leer; sin eso el login
+  funciona pero todo POST/PUT/DELETE posterior responde 403. Con `*.pages.dev` (dominio
+  distinto al de la API) no funciona: la cookie de sesion pasa a ser de terceros y los
+  navegadores la bloquean.
 - **CORS** acepta patrones (`https://*.proyecto.pages.dev`), necesarios en staging para
   las previews por PR de Cloudflare Pages.
 - Si prefieres correr el backend sin Docker, `backend/.env.example` sigue sirviendo de
   referencia para las mismas variables (`./backend/run.sh` las carga desde `.env`).
+
+### Base de datos en RDS
+
+Staging y produccion usan **AWS RDS PostgreSQL 16** (la misma version que las pruebas con
+Testcontainers). La instancia arranca vacia: Flyway crea el esquema en el primer arranque
+del backend.
+
+1. Crear la instancia RDS con *Initial database name* `delivery_pin_middleware` y como
+   usuario maestro el valor de `DB_USERNAME`. Sin acceso publico.
+2. En el security group de RDS, permitir TCP 5432 **solo** desde el security group de la
+   EC2 del backend.
+3. En `deploy/env/<entorno>.env`: `DB_HOST=<endpoint de RDS>`, `DB_PASSWORD` (entre
+   comillas simples si contiene `$`), `DB_SSL_MODE=verify-full`, y `COMPOSE_PROFILES`
+   sin `db`.
+
+`DB_SSL_MODE=verify-full` valida el certificado y el hostname del servidor contra la CA
+global de RDS, que `backend/Dockerfile` descarga a `~/.postgresql/root.crt` (donde
+pgjdbc la busca por defecto). Por eso `DB_HOST` debe ser el endpoint DNS de RDS, no su
+IP. `require` tambien funciona, pero solo cifra: no valida a quien se conecta.
+
+Respaldos: con RDS, `backup.sh` se omite solo (no hay contenedor `postgres`); se confia en
+los snapshots automaticos de la instancia. `backup.sh` y el procedimiento `pg_restore` de
+abajo aplican unicamente con el profile `db`.
 
 ### `deploy/scripts/deploy.sh` y respaldos
 
@@ -420,6 +462,21 @@ por si solo -- eso queda descrito abajo.
 
 **VM (por entorno)**
 
+Requisitos: Amazon Linux 2023, **t3.small o mayor** (2 GB; con t3.micro el backend de
+1 GB + nginx + SO se queda sin memoria), 20 GB gp3, Elastic IP. El compose usa
+`depends_on.required` y `--wait-timeout`, asi que necesita el plugin **Docker Compose
+>= 2.20**, que el paquete `docker` de AL2023 no trae:
+
+```bash
+sudo dnf install -y docker git
+sudo systemctl enable --now docker
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -fsSL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+docker compose version   # debe ser >= 2.20
+```
+
 ```bash
 sudo git clone https://github.com/ups-master/ruta-delivery.git /opt/ruta  # repo privado: deploy key de solo lectura
 cp /opt/ruta/deploy/env/production.env.example /opt/ruta/deploy/env/production.env  # completar
@@ -507,7 +564,13 @@ seguridad recomendada para builds reproducibles.
 ## Documentación
 
 `docs/` incluye el documento de negocio (`Fase1_Vision_Producto_Modelo_Negocio_API_Final.md`),
-el de arquitectura y patrones (`Fase2_Arquitectura_Patrones_API.md`) y el modelo C4. La
-version **vigente** del modelo C4 es `docs/sistema-pruebas-entrega-1.4.dsl` (las
-revisiones `-1.0`, `-1.1`, `-1.2` y `-1.3` se conservan solo como historial de diseño, ya
-superadas). `docs/EVALUACION_TECNICA.md` es la evaluación técnica del repositorio.
+el de arquitectura y patrones (`Fase2_Arquitectura_Patrones_API.md`), el contrato de la API
+(`Fase3` -- ver `openapi.json`, exportado real desde `/v3/api-docs`) y el de desarrollo,
+seguridad, pruebas y despliegue (`Fase4_Desarrollo_Seguridad_Despliegue.md`), ademas del
+modelo C4. La version **vigente** del modelo C4 es `docs/sistema-pruebas-entrega-1.4.dsl`
+(las revisiones `-1.0`, `-1.1`, `-1.2` y `-1.3` se conservan solo como historial de diseño,
+ya superadas). `docs/openapi.json` es el contrato OpenAPI 3 real, exportado desde
+`GET /v3/api-docs` con el backend corriendo (23 operaciones en los 8 controladores de
+negocio, todas con `summary`); para explorarlo interactivamente, `/swagger-ui/index.html`
+con el backend levantado. `docs/EVALUACION_TECNICA.md` es la evaluación técnica del
+repositorio.

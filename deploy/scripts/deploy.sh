@@ -44,7 +44,7 @@ compose() {
 verify() {
   local tag="$1"
   # 1) nginx arriba y sirviendo (mismo endpoint que su healthcheck).
-  compose "$tag" exec -T nginx wget -qO- http://127.0.0.1/healthz >/dev/null || return 1
+  compose "$tag" exec -T nginx wget -qO- http://127.0.0.1:8080/healthz >/dev/null || return 1
   # 2) backend listo para trafico, a traves de la red interna del compose.
   compose "$tag" exec -T backend curl -sf http://localhost:8080/actuator/health/readiness \
     | grep -q '"status":"UP"'

@@ -4,8 +4,11 @@
 # falta en produccion (escenario B). No incluye cloudflare-realip.conf: no hay Cloudflare
 # delante en local, $remote_addr ya es la IP real (o la interna del propio Docker).
 
+# nginx corre sin root (nginx-unprivileged): escucha en 8080 dentro del contenedor; el
+# compose lo publica como HTTP_PORT.
+
 server {
-    listen 80;
+    listen 8080;
     server_name ${SERVER_NAME};
 
     client_max_body_size 15M;
@@ -22,6 +25,6 @@ server {
 
     location / {
         include /etc/nginx/snippets/proxy-headers.conf;
-        proxy_pass http://frontend:80;
+        proxy_pass http://frontend:8080;
     }
 }

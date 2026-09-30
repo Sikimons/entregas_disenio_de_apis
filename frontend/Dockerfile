@@ -18,9 +18,13 @@ RUN pnpm run build \
     && rm -f dist/_headers dist/_redirects
 
 # --- Etapa de runtime ---
-FROM nginx:1.30-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY security-headers.conf /etc/nginx/snippets/security-headers.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+# Imagen oficial de NGINX sin root: corre como uid 101 (nginx) y escucha en un puerto
+# no privilegiado (8080), con pid y caches en rutas escribibles por ese usuario.
+FROM nginxinc/nginx-unprivileged:1.30-alpine
+COPY --chown=101:101 nginx.conf /etc/nginx/conf.d/default.conf
+COPY --chown=101:101 security-headers.conf /etc/nginx/snippets/security-headers.conf
+COPY --from=build --chown=101:101 /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+USER 101
+
+EXPOSE 8080

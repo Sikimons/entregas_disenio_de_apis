@@ -6,25 +6,24 @@
 import http from 'k6/http'
 import { check, sleep } from 'k6'
 import { login } from './auth.js'
+import { BASE_URL, baseOptions, p95Threshold, scaled } from './config.js'
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:18091'
-
-export const options = {
+export const options = baseOptions({
   scenarios: {
     spike: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '30s', target: 750 },
-        { duration: '1m', target: 750 },
+        { duration: '30s', target: scaled(750) },
+        { duration: '1m', target: scaled(750) },
         { duration: '30s', target: 0 },
       ],
     },
   },
   thresholds: {
-    http_req_duration: ['p(95)<1000'],
+    http_req_duration: [p95Threshold(1000)],
   },
-}
+})
 
 export function setup() {
   return { headers: login(BASE_URL, http) }

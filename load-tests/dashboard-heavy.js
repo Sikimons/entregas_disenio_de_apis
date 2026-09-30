@@ -6,24 +6,23 @@
 import http from 'k6/http'
 import { check, sleep } from 'k6'
 import { login } from './auth.js'
+import { BASE_URL, baseOptions, scaled } from './config.js'
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:18091'
-
-export const options = {
+export const options = baseOptions({
   scenarios: {
     dashboard_heavy: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '30s', target: 50 },
-        { duration: '30s', target: 150 },
-        { duration: '30s', target: 300 },
-        { duration: '30s', target: 500 },
+        { duration: '30s', target: scaled(50) },
+        { duration: '30s', target: scaled(150) },
+        { duration: '30s', target: scaled(300) },
+        { duration: '30s', target: scaled(500) },
         { duration: '30s', target: 0 },
       ],
     },
   },
-}
+})
 
 export function setup() {
   const headers = login(BASE_URL, http)

@@ -1,15 +1,18 @@
 # Escenario A: backend en esta VM (EC2), frontend servido aparte en Cloudflare Pages.
 # Solo expone /api; cualquier otra ruta responde 404 (el sitio estatico vive en Pages).
 
+# nginx corre sin root (nginx-unprivileged): escucha en 8080/8443 dentro del contenedor;
+# el compose los publica como 80/443 (HTTP_PORT/HTTPS_PORT).
+
 server {
-    listen 80;
+    listen 8080;
     server_name ${SERVER_NAME};
     location = /healthz { return 200 "ok"; add_header Content-Type text/plain; }
     location / { return 301 https://$host$request_uri; }
 }
 
 server {
-    listen 443 ssl;
+    listen 8443 ssl;
     server_name ${SERVER_NAME};
 
     include /etc/nginx/snippets/cloudflare-realip.conf;

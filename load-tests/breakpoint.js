@@ -6,24 +6,23 @@
 import http from 'k6/http'
 import { check } from 'k6'
 import { login } from './auth.js'
+import { BASE_URL, baseOptions, p95Threshold, scaled } from './config.js'
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:18091'
-
-export const options = {
+export const options = baseOptions({
   scenarios: {
     breakpoint: {
       executor: 'ramping-arrival-rate',
-      startRate: 500,
+      startRate: scaled(500),
       timeUnit: '1s',
-      preAllocatedVUs: 200,
-      maxVUs: 4000,
+      preAllocatedVUs: scaled(200),
+      maxVUs: scaled(4000),
       stages: [
-        { duration: '1m', target: 500 },
-        { duration: '1m', target: 1500 },
-        { duration: '1m', target: 3000 },
-        { duration: '1m', target: 5000 },
-        { duration: '1m', target: 8000 },
-        { duration: '1m', target: 10000 },
+        { duration: '1m', target: scaled(500) },
+        { duration: '1m', target: scaled(1500) },
+        { duration: '1m', target: scaled(3000) },
+        { duration: '1m', target: scaled(5000) },
+        { duration: '1m', target: scaled(8000) },
+        { duration: '1m', target: scaled(10000) },
       ],
     },
   },
@@ -32,9 +31,9 @@ export const options = {
     // tasa de llegada ocurrio -- ese es el breakpoint que "Rendimiento y pruebas de
     // carga" (§9 de EVALUACION_TECNICA.md) senalaba como no identificado.
     http_req_failed: [{ threshold: 'rate<0.01', abortOnFail: true }],
-    http_req_duration: [{ threshold: 'p(95)<500', abortOnFail: true }],
+    http_req_duration: [{ threshold: p95Threshold(500), abortOnFail: true }],
   },
-}
+})
 
 export function setup() {
   return { headers: login(BASE_URL, http) }
