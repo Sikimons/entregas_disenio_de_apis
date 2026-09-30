@@ -5,59 +5,59 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.4: actualiza v
 
     model {
         // Personas
-        cliente = person "Cliente" "Recibe el pedido; dicta el PIN al conductor en el momento de la entrega (Fase1 §3)."
+        cliente = person "Cliente" "Recibe el pedido y dicta el PIN al conductor."
         conductor = person "Conductor" "Confirma la entrega con foto, ubicación y PIN; reporta incidencias." "Role.CONDUCTOR"
         administracion = person "Administración" "Gestiona facturas y equipo; supervisa entregas e incidencias." "Role.ADMIN"
 
         plataforma = softwareSystem "Plataforma de verificación de entregas" "Verifica entregas con PIN, foto y ubicación. React + Spring Boot + PostgreSQL." {
 
-            frontend = container "Aplicación web" "SPA/PWA que se ejecuta en el navegador; el rol autenticado determina las vistas del conductor o de la administración." "React 19 + TypeScript + Vite + vite-plugin-pwa" "Frontend" {
-                authContext = component "Contexto de autenticación" "Guarda el token y el usuario (localStorage/sessionStorage)." "React Context"
-                apiClient = component "Cliente HTTP" "Axios con token Bearer; cierra sesión en 401; baseURL configurable con VITE_API_BASE_URL (por defecto /api/v1 relativo)." "Axios"
+            frontend = container "Aplicación web" "SPA/PWA; el rol autenticado determina la vista." "React 19 + TypeScript + Vite + vite-plugin-pwa" "Frontend" {
+                authContext = component "Contexto de autenticación" "Guarda el token y el usuario." "React Context"
+                apiClient = component "Cliente HTTP" "Axios con token Bearer; cierra sesión en 401." "Axios"
                 loginPage = component "Inicio de sesión" "Formulario de acceso; redirige por rol." "React Component"
                 driverHome = component "Pantalla del conductor" "Busca la factura, captura foto/GPS y confirma con PIN o reporta incidencia." "React Component"
                 driverHistory = component "Historial del conductor" "Historial propio paginado y evidencia." "React Component"
                 adminInvoices = component "Gestión de facturas" "Crea y publica facturas (genera el PIN); exporta a CSV." "React Component"
                 adminDrivers = component "Gestión de equipo" "CRUD de cuentas de conductores y administradores." "React Component"
                 adminDeliveries = component "Registro de entregas" "Lista paginada de entregas, ubicación y evidencia." "React Component"
-                adminDashboard = component "Tablero administrativo" "Mapa y métricas por conductor filtrados por fechas; costo por entrega y estado del Circuit Breaker." "React Component"
+                adminDashboard = component "Tablero administrativo" "Mapa y métricas por conductor; costo por entrega y estado del breaker." "React Component"
             }
 
-            api = container "API de verificación" "API REST con arquitectura hexagonal: autenticación, facturas, entregas, historial, costo por entrega y resiliencia. Rutas agrupadas por rol bajo /api/v1 (/api/v1/driver y /api/v1/admin); contrato documentado con OpenAPI (springdoc) en los 8 controladores de negocio." "Java 17 + Spring Boot 3.3" "Backend" {
-                jwtFilter = component "Filtro JWT" "Seguridad sin estado: valida el JWT y aplica el rol de cada ruta. Deja publicos /api/v1/auth, /v3/api-docs, /swagger-ui y las probes de /actuator/health." "Spring Security Filter" "Seguridad"
-                exceptionHandler = component "Manejador global de excepciones" "Manejo centralizado de errores: formato unico de mensaje; 409 (entrega ya confirmada), 422 (PIN invalido), 429 (demasiados intentos de login), 503 (circuito abierto) y 400 para DeliveryRejectedException generica." "Spring RestControllerAdvice"
+            api = container "API de verificación" "API REST hexagonal bajo /api/v1 (driver/admin); OpenAPI en los 8 controladores de negocio." "Java 17 + Spring Boot 3.3" "Backend" {
+                jwtFilter = component "Filtro JWT" "Valida el JWT y el rol de cada ruta; deja públicas auth, docs y health." "Spring Security Filter" "Seguridad"
+                exceptionHandler = component "Manejador global de excepciones" "Manejo centralizado: 409/422/429/503/400 con formato de error único." "Spring RestControllerAdvice"
 
                 authController = component "Controlador de autenticación" "POST /api/v1/auth/login (público)." "Spring REST Controller"
-                driverController = component "Controlador del conductor" "/api/v1/driver: búsqueda limitada, confirmación, incidencias e historial paginado. Acepta CONDUCTOR y ADMIN." "Spring REST Controller"
+                driverController = component "Controlador del conductor" "/api/v1/driver: búsqueda, confirmación, incidencias e historial." "Spring REST Controller"
                 adminInvoiceController = component "Controlador de facturas" "/api/v1/admin/invoices: crea, publica y consulta facturas y PIN." "Spring REST Controller"
                 adminDriverController = component "Controlador de equipo" "/api/v1/admin/users: CRUD de cuentas." "Spring REST Controller"
                 adminHistoryController = component "Controlador de historial" "/api/v1/admin/deliveries: historial paginado (page, size) y evidencia." "Spring REST Controller"
                 adminDashboardController = component "Controlador del tablero" "/api/v1/admin/dashboard: mapa y métricas filtrados por from/to (maximo 93 dias)." "Spring REST Controller"
-                costController = component "Controlador de costos" "GET /api/v1/admin/cost?month=yyyy-MM y PUT /support-hours: costo por entrega verificada (showback, Fase1 §4.5) con entregas y bytes de evidencia calculados en SQL, mas tarifas y horas de soporte." "Spring REST Controller"
-                resilienceController = component "Controlador de resiliencia" "GET /api/v1/admin/resilience/status y POST /simulate-failures {count 1-50}, sin ruta para desactivar la simulacion." "Spring REST Controller"
+                costController = component "Controlador de costos" "Costo por entrega verificada (showback); GET /cost, PUT /support-hours." "Spring REST Controller"
+                resilienceController = component "Controlador de resiliencia" "Estado del Circuit Breaker y simulador de fallas del ERP." "Spring REST Controller"
 
                 authService = component "Servicio de autenticación" "Valida credenciales y emite el JWT." "Spring Service" "Nucleo"
-                deliveryService = component "Servicio de entregas" "Confirma entregas en una única transacción con bloqueo pesimista (@Lock PESSIMISTIC_WRITE) y registra el intento." "Spring Service" "Nucleo"
-                historyService = component "Servicio de historial y métricas" "Paginación y filtrado del historial (PageRequest/PageResult); métricas por conductor." "Spring Service" "Nucleo"
+                deliveryService = component "Servicio de entregas" "Confirma entregas con bloqueo pesimista en una transacción." "Spring Service" "Nucleo"
+                historyService = component "Servicio de historial y métricas" "Paginación y filtrado del historial; métricas por conductor." "Spring Service" "Nucleo"
                 driverMgmtService = component "Servicio de gestión de equipo" "Crea, actualiza y elimina cuentas." "Spring Service" "Nucleo"
-                invoiceMgmtService = component "Servicio de gestión de facturas" "InvoiceManagementApplicationService: lista, crea y publica facturas a traves del puerto InvoiceAdminPort." "Spring Service" "Nucleo"
-                costService = component "Servicio de costo por entrega" "OperationalCostApplicationService: combina el resumen de entregas confirmadas con tarifas y horas de soporte del mes." "Spring Service" "Nucleo"
+                invoiceMgmtService = component "Servicio de gestión de facturas" "Lista, crea y publica facturas via InvoiceAdminPort." "Spring Service" "Nucleo"
+                costService = component "Servicio de costo por entrega" "Combina entregas confirmadas con tarifas y horas de soporte." "Spring Service" "Nucleo"
 
-                invoiceAdapter = component "Adaptador de facturas" "Implementa InvoiceQueryPort, DeliveryConfirmationGatewayPort e InvoiceAdminPort: persiste facturas, simula el ERP (Fase1 §3) y controla los intentos del PIN (5 intentos, bloqueo 5 min). Sus lecturas pasan por el Retry y todas sus llamadas por el Circuit Breaker; sus lecturas de lineas y ubicacion esperada se sirven primero desde el Cache Aside." "Spring Data JPA" "Adaptador"
-                deliveryLogRepository = component "Repositorio de entregas" "Puerto DeliveryAttemptRepositoryPort: log de entregas y evidencia, con consultas paginadas y resumen SQL de costo (sin cargar fotos)." "Spring Data JPA" "Adaptador"
-                driverRepository = component "Repositorio de usuarios" "Puerto DriverRepositoryPort: conductores y administradores." "Spring Data JPA" "Adaptador"
-                jwtAdapter = component "Adaptador de tokens" "Puerto TokenProviderPort: firma y valida JWT (HMAC-SHA256)." "io.jsonwebtoken" "Adaptador"
-                passwordAdapter = component "Adaptador de contraseñas" "Puerto PasswordEncoderPort: delega en BCrypt." "Spring Security" "Adaptador"
-                costRatesAdapter = component "Adaptador de tarifas" "Puerto CostRatesPort: tarifas de infraestructura, almacenamiento y horas de soporte (APP_COST_*), sin tarifa de envio de PIN." "Spring Config" "Adaptador"
-                costInputAdapter = component "Adaptador de horas de soporte" "Puerto OperationalCostInputPort: guarda y edita las horas de soporte por mes." "Spring Data JPA" "Adaptador"
-                circuitBreaker = component "Circuit Breaker del ERP" "Breaker 'erpGateway', construido a mano en ResilienceConfig; aplicado dentro del adaptador de facturas (protectedCall), cubre consulta, confirmacion y gestion de facturas. Excluye DeliveryRejectedException (incluye PIN incorrecto y entrega ya confirmada). Umbrales: 50% de fallos, ventana de 10, minimo 5 llamadas, 15s abierto, 3 llamadas en semiabierto, transicion automatica. Circuito abierto: responde 503." "Resilience4j" "Resiliencia"
-                simulatedFailureToggle = component "Simulador de fallas del ERP" "SimulatedErpFailureToggle: contador atomico que fuerza fallas dentro del breaker para demostrar el ciclo cerrado/abierto/semiabierto." "Java" "Resiliencia"
-                retry = component "Retry del ERP" "Bean 'erpGatewayRetry' (Resilience4j): 3 intentos con backoff de 200ms, solo en lecturas del adaptador de facturas (busqueda, lineas); las escrituras (confirmar, publicar) no lo usan, ya sostienen bloqueo pesimista de fila. Envuelve al Circuit Breaker: cada intento tambien cuenta como llamada para el breaker." "Resilience4j" "Resiliencia"
-                cache = component "Cache Aside de facturas" "Caffeine ('invoiceLines', 'expectedLocation'), TTL configurable: evita repetir contra la base lecturas que no cambian tras crear la factura." "Caffeine" "Rendimiento"
-                loginRateLimiter = component "Limitador de intentos de login" "bucket4j sobre una cache de Caffeine: 5 intentos por IP+usuario cada 60s (configurable); resetea el contador tras un login exitoso para no penalizar al usuario legitimo." "bucket4j + Caffeine" "Seguridad"
+                invoiceAdapter = component "Adaptador de facturas" "Persiste facturas, simula el ERP y bloquea el PIN tras 5 intentos; protegido por Retry, Circuit Breaker y Cache Aside." "Spring Data JPA" "Adaptador"
+                deliveryLogRepository = component "Repositorio de entregas" "Log de entregas y evidencia; consultas paginadas y resumen de costo." "Spring Data JPA" "Adaptador"
+                driverRepository = component "Repositorio de usuarios" "Conductores y administradores." "Spring Data JPA" "Adaptador"
+                jwtAdapter = component "Adaptador de tokens" "Firma y valida JWT (HMAC-SHA256)." "io.jsonwebtoken" "Adaptador"
+                passwordAdapter = component "Adaptador de contraseñas" "Delega en BCrypt." "Spring Security" "Adaptador"
+                costRatesAdapter = component "Adaptador de tarifas" "Tarifas de infraestructura, almacenamiento y soporte." "Spring Config" "Adaptador"
+                costInputAdapter = component "Adaptador de horas de soporte" "Guarda y edita las horas de soporte por mes." "Spring Data JPA" "Adaptador"
+                circuitBreaker = component "Circuit Breaker del ERP" "Breaker 'erpGateway' sobre el adaptador de facturas; excluye rechazos de negocio; circuito abierto responde 503." "Resilience4j" "Resiliencia"
+                simulatedFailureToggle = component "Simulador de fallas del ERP" "Fuerza fallas simuladas para demostrar el ciclo del breaker." "Java" "Resiliencia"
+                retry = component "Retry del ERP" "3 intentos/200ms solo en lecturas de facturas; envuelve al Circuit Breaker." "Resilience4j" "Resiliencia"
+                cache = component "Cache Aside de facturas" "Caffeine sobre lineas y ubicación esperada, TTL configurable." "Caffeine" "Rendimiento"
+                loginRateLimiter = component "Limitador de intentos de login" "5 intentos por IP+usuario cada 60s; resetea tras login exitoso." "bucket4j + Caffeine" "Seguridad"
             }
 
-            db = container "Base de datos" "Facturas (PIN en texto plano, sin expiracion), usuarios, historial de entregas con evidencia y horas de soporte por mes." "PostgreSQL 16" "Database"
+            db = container "Base de datos" "Facturas (PIN en texto plano), usuarios, historial y costos." "PostgreSQL 16" "Database"
         }
 
         // Contexto
@@ -149,14 +149,14 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.4: actualiza v
                 pwaInstancia = containerInstance plataforma.frontend
             }
             cloudflare = deploymentNode "Cloudflare" "Red perimetral de Cloudflare." "Cloudflare" {
-                pages = deploymentNode "Cloudflare Pages" "Aloja y distribuye los archivos estáticos de la PWA (build de Vite); Cloudflare construye y despliega directo desde su integracion nativa de Git (sin pasar por GitHub Actions), un despliegue por rama (main = produccion) y un preview automatico por cada Pull Request." "Cloudflare Pages" {
-                    sitio = infrastructureNode "Sitio estático de la PWA" "HTML, JS, service worker y assets de OCR; cabeceras de seguridad y CSP en public/_headers." "CDN de Cloudflare" "Infraestructura"
+                pages = deploymentNode "Cloudflare Pages" "Aloja el build estático de la PWA; despliegue automático por rama vía integración nativa de Git." "Cloudflare Pages" {
+                    sitio = infrastructureNode "Sitio estático de la PWA" "HTML, JS, service worker y assets de OCR; CSP en public/_headers." "CDN de Cloudflare" "Infraestructura"
                 }
-                proxy = infrastructureNode "DNS y proxy de Cloudflare" "Resuelve el dominio de la API, termina TLS, oculta la IP del servidor y admite reglas de limitación de tasa." "Cloudflare DNS + Proxy" "Infraestructura"
+                proxy = infrastructureNode "DNS y proxy de Cloudflare" "Resuelve el dominio, termina TLS y oculta la IP del servidor." "Cloudflare DNS + Proxy" "Infraestructura"
             }
             aws = deploymentNode "Amazon Web Services" "" "AWS" {
-                ec2 = deploymentNode "Instancia EC2" "Una sola máquina con Elastic IP; el grupo de seguridad solo admite tráfico desde los rangos de Cloudflare. Las imagenes de backend/frontend se descargan versionadas (tag inmutable por entorno) desde GitHub Container Registry, publicadas por .github/workflows/cd.yml tras cada CI en verde; deploy/scripts/deploy.sh hace pull, respalda la base y aplica rollback automatico si el despliegue falla." "Amazon EC2 + Docker Compose" {
-                    nginx = infrastructureNode "Nginx de borde" "Termina el TLS de origen (Cloudflare en modo Full strict); expone /healthz y reenvia /api/ al contenedor backend (deploy/nginx/templates/api.conf.template)." "Docker, nginx 1.30-alpine" "Infraestructura"
+                ec2 = deploymentNode "Instancia EC2" "Elastic IP, solo accesible desde Cloudflare; imágenes versionadas desde GHCR, con pull/backup/rollback automático (deploy.sh)." "Amazon EC2 + Docker Compose" {
+                    nginx = infrastructureNode "Nginx de borde" "Termina TLS de origen; expone /healthz y reenvía /api/ al backend." "Docker, nginx 1.30-alpine" "Infraestructura"
                     contBackend = deploymentNode "Contenedor backend" "" "Docker, eclipse-temurin 17" {
                         apiInstancia = containerInstance plataforma.api
                     }
@@ -165,7 +165,7 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.4: actualiza v
                     }
                 }
             }
-            produccion.navegador -> produccion.cloudflare.pages.sitio "Descarga la PWA" "HTTPS"
+            produccion.navegador.pwaInstancia -> produccion.cloudflare.pages.sitio "Descarga la PWA" "HTTPS"
             produccion.navegador.pwaInstancia -> produccion.cloudflare.proxy "Llama a la API por su dominio" "HTTPS"
             produccion.cloudflare.proxy -> produccion.aws.ec2.nginx "Reenvía a la Elastic IP" "HTTPS"
             produccion.aws.ec2.nginx -> produccion.aws.ec2.contBackend.apiInstancia "proxy_pass /api/" "HTTP"
