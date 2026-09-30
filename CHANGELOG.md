@@ -1,3 +1,9 @@
+## [1.0.3](https://github.com/ups-master/ruta-delivery/compare/v1.0.2...v1.0.3) (2026-09-30)
+
+### Bug Fixes
+
+* **backend:** emitir la cookie XSRF-TOKEN para todo el dominio con COOKIE_DOMAIN ([fe339c0](https://github.com/ups-master/ruta-delivery/commit/fe339c002d595f7653ba92e7d5a1fd0eb3a86218))
+
 ## [1.0.2](https://github.com/ups-master/ruta-delivery/compare/v1.0.1...v1.0.2) (2026-09-28)
 
 ### Bug Fixes
