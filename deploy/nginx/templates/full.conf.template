@@ -2,15 +2,18 @@
 # /api -> backend; todo lo demas -> el frontend (que ya trae su propio nginx con el
 # fallback de SPA y el proxy de /map-tiles, ver frontend/nginx.conf).
 
+# nginx corre sin root (nginx-unprivileged): escucha en 8080/8443 dentro del contenedor;
+# el compose los publica como 80/443 (HTTP_PORT/HTTPS_PORT).
+
 server {
-    listen 80;
+    listen 8080;
     server_name ${SERVER_NAME};
     location = /healthz { return 200 "ok"; add_header Content-Type text/plain; }
     location / { return 301 https://$host$request_uri; }
 }
 
 server {
-    listen 443 ssl;
+    listen 8443 ssl;
     server_name ${SERVER_NAME};
 
     include /etc/nginx/snippets/cloudflare-realip.conf;
@@ -30,6 +33,6 @@ server {
 
     location / {
         include /etc/nginx/snippets/proxy-headers.conf;
-        proxy_pass http://frontend:80;
+        proxy_pass http://frontend:8080;
     }
 }

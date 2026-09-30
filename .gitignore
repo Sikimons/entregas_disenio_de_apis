@@ -13,3 +13,5 @@ deploy/certs/*
 !deploy/certs/.gitkeep
 deploy/state/
 backups/
+load-tests/env/*.env
+load-tests/results/
