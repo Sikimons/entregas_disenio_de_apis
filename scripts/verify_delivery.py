@@ -1,22 +1,44 @@
-"""Verifica la API local sin restablecer ni modificar las facturas del usuario."""
+"""Verifica la API (local, staging o produccion) sin restablecer ni modificar las facturas
+existentes: crea sus propias facturas 'VERIFY/...' y confirma entregas sobre ellas, o sea
+que ESCRIBE datos en el entorno destino.
+
+Variables de entorno (load-tests/run.sh verify <env> las llena desde el .env):
+  RUTA_API               URL base (por defecto http://localhost:8080)
+  RUTA_ADMIN / RUTA_PASSWORD               admin del entorno
+  RUTA_DRIVER / RUTA_DRIVER_PASSWORD       conductor (por defecto conductor / conductor123)
+  RUTA_INSECURE_TLS=1    no verifica el certificado (ir directo a la EC2 con el Origin
+                         Certificate de Cloudflare, que no es publico)
+  RUTA_CHECK_FIXTURES=0  omite la comprobacion de los datos del seed demo (59 facturas, 50
+                         PIN); usalo en entornos que no se sembraron con demo/invoices.json
+"""
 import base64
 import csv
 import http.cookiejar
 import json
 import os
 import re
+import ssl
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
+from urllib.request import HTTPCookieProcessor, HTTPSHandler, Request, build_opener, urlopen
 
-BASE = os.environ.get('RUTA_API', 'http://localhost:8080')
+BASE = os.environ.get('RUTA_API', 'http://localhost:8080').rstrip('/')
+CHECK_FIXTURES = os.environ.get('RUTA_CHECK_FIXTURES', '1') != '0'
+# Cloudflare bloquea por defecto el User-Agent "Python-urllib"; uno propio lo identifica.
+USER_AGENT = 'RutaVerify/1.0'
+if os.environ.get('RUTA_INSECURE_TLS') == '1':
+    TLS_CONTEXT = ssl.create_default_context()
+    TLS_CONTEXT.check_hostname = False
+    TLS_CONTEXT.verify_mode = ssl.CERT_NONE
+else:
+    TLS_CONTEXT = None
 PHOTO = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII='
 
 
 def _send(opener, path, body, csrf_token):
-    headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json', 'User-Agent': USER_AGENT}
     if csrf_token:
         # SecurityConfig exige este header en toda escritura desde que el JWT paso de
         # header Authorization a cookie HttpOnly (Tanda 1, auditoria tecnica): sin el, un
@@ -41,7 +63,7 @@ class Session:
 
     def __init__(self):
         self._cookiejar = http.cookiejar.CookieJar()
-        self._opener = build_opener(HTTPCookieProcessor(self._cookiejar))
+        self._opener = build_opener(HTTPCookieProcessor(self._cookiejar), HTTPSHandler(context=TLS_CONTEXT))
 
     def request(self, path, body=None):
         csrf_token = next((c.value for c in self._cookiejar if c.name == 'XSRF-TOKEN'), None)
@@ -56,7 +78,8 @@ def request(path, body=None, token=None):
     if token is not None:
         return token.request(path, body)
     try:
-        with urlopen(Request(BASE + path, headers={'Content-Type': 'application/json'}), timeout=15) as response:
+        req = Request(BASE + path, headers={'Content-Type': 'application/json', 'User-Agent': USER_AGENT})
+        with urlopen(req, timeout=15, context=TLS_CONTEXT) as response:
             raw = response.read()
             return response.status, json.loads(raw) if 'json' in response.headers.get('Content-Type', '') else raw
     except HTTPError as error:
@@ -85,31 +108,35 @@ def fetch_all_invoices(token, q=''):
 
 
 if __name__ == '__main__':
-    admin = login(os.environ.get('RUTA_ADMIN', 'admin'), os.environ.get('RUTA_PASSWORD', 'local_only_admin_password_change_me'))
-    driver = login('conductor', 'conductor123')
+    admin = login(os.environ.get('RUTA_ADMIN') or 'admin', os.environ.get('RUTA_PASSWORD') or 'local_only_admin_password_change_me')
+    driver = login(os.environ.get('RUTA_DRIVER') or 'conductor', os.environ.get('RUTA_DRIVER_PASSWORD') or 'conductor123')
     assert request('/api/v1/admin/invoices', token=driver)[0] == 403
     assert request('/api/v1/driver/invoices?q=001-104-')[0] == 401
     print('OK: autenticacion y permisos por rol')
-    rows = fetch_all_invoices(admin)
-    indexed = {row['number']: row for row in rows}
-    csv_path = Path(__file__).resolve().parents[1] / 'demo/facturas_y_pines.csv'
-    exported = list(csv.DictReader(csv_path.open(encoding='utf-8-sig'), delimiter=';'))
-    assert len(exported) == 50
-    assert all(indexed[row['factura']]['pin'] == row['pin'] for row in exported)
-    fixtures = json.loads((csv_path.parent / 'invoices.json').read_text(encoding='utf-8'))
-    for row in fixtures:
-        assert indexed[row['number']]['id'] == row['id']
-        # /driver/invoices/{id}/lines ya no expone lineas de facturas que no esten
-        # publicadas (N7, docs/EVALUACION_TECNICA.md §18): antes un conductor podia leer
-        # el contenido de una factura en borrador con solo adivinar su id. Los fixtures de
-        # demo incluyen a proposito 2 borradores y 1 cancelada (para el panel admin);
-        # para esas, solo se confirma el rechazo, no el conteo de productos.
-        status, lines = request('/api/v1/driver/invoices/%s/lines' % row['id'], token=driver)
-        if row['state'] == 'posted':
-            assert status == 200 and len(lines) == len(row['lines'])
-        else:
-            assert status == 400
-    print('OK: 59 facturas, 314 productos y los 50 PIN originales conservados (borradores y cancelada ya no exponen sus lineas al conductor)')
+    # Solo tiene sentido si el entorno se sembro con demo/invoices.json (RUTA_CHECK_FIXTURES=0 lo omite).
+    if CHECK_FIXTURES:
+        rows = fetch_all_invoices(admin)
+        indexed = {row['number']: row for row in rows}
+        csv_path = Path(__file__).resolve().parents[1] / 'demo/facturas_y_pines.csv'
+        exported = list(csv.DictReader(csv_path.open(encoding='utf-8-sig'), delimiter=';'))
+        assert len(exported) == 50
+        assert all(indexed[row['factura']]['pin'] == row['pin'] for row in exported)
+        fixtures = json.loads((csv_path.parent / 'invoices.json').read_text(encoding='utf-8'))
+        for row in fixtures:
+            assert indexed[row['number']]['id'] == row['id']
+            # /driver/invoices/{id}/lines ya no expone lineas de facturas que no esten
+            # publicadas (N7, docs/EVALUACION_TECNICA.md §18): antes un conductor podia leer
+            # el contenido de una factura en borrador con solo adivinar su id. Los fixtures de
+            # demo incluyen a proposito 2 borradores y 1 cancelada (para el panel admin);
+            # para esas, solo se confirma el rechazo, no el conteo de productos.
+            status, lines = request('/api/v1/driver/invoices/%s/lines' % row['id'], token=driver)
+            if row['state'] == 'posted':
+                assert status == 200 and len(lines) == len(row['lines'])
+            else:
+                assert status == 400
+        print('OK: 59 facturas, 314 productos y los 50 PIN originales conservados (borradores y cancelada ya no exponen sus lineas al conductor)')
+    else:
+        print('OMITIDO: comprobacion de los datos del seed demo (RUTA_CHECK_FIXTURES=0)')
 
     prefix = 'VERIFY/' + uuid.uuid4().hex[:10]
     def create(suffix, requires_pin=True):

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" font-family="Arial, sans-serif">
+<rect width="760" height="420" fill="white"/>
+<text x="380.0" y="28" font-size="18" font-weight="bold" text-anchor="middle">Latencia en el punto de quiebre (p90/p95/p99)</text>
+<line x1="90" y1="350.0" x2="720" y2="350.0" stroke="#e0e0e0" stroke-width="1"/>
+<text x="80" y="354.0" font-size="11" text-anchor="end" fill="#555">0</text>
+<line x1="90" y1="290.0" x2="720" y2="290.0" stroke="#e0e0e0" stroke-width="1"/>
+<text x="80" y="294.0" font-size="11" text-anchor="end" fill="#555">161</text>
+<line x1="90" y1="230.0" x2="720" y2="230.0" stroke="#e0e0e0" stroke-width="1"/>
+<text x="80" y="234.0" font-size="11" text-anchor="end" fill="#555">322</text>
+<line x1="90" y1="170.0" x2="720" y2="170.0" stroke="#e0e0e0" stroke-width="1"/>
+<text x="80" y="174.0" font-size="11" text-anchor="end" fill="#555">482</text>
+<line x1="90" y1="110.0" x2="720" y2="110.0" stroke="#e0e0e0" stroke-width="1"/>
+<text x="80" y="114.0" font-size="11" text-anchor="end" fill="#555">643</text>
+<line x1="90" y1="50.0" x2="720" y2="50.0" stroke="#e0e0e0" stroke-width="1"/>
+<text x="80" y="54.0" font-size="11" text-anchor="end" fill="#555">804</text>
+<rect x="132.0" y="208.2" width="126.0" height="141.8" fill="#F6821F" rx="3"/>
+<text x="195.0" y="200.2" font-size="12" text-anchor="middle" font-weight="bold">380 ms</text>
+<text x="195.0" y="372.0" font-size="12" text-anchor="middle">p90</text>
+<rect x="342.0" y="125.6" width="126.0" height="224.4" fill="#F6821F" rx="3"/>
+<text x="405.0" y="117.6" font-size="12" text-anchor="middle" font-weight="bold">601 ms</text>
+<text x="405.0" y="372.0" font-size="12" text-anchor="middle">p95</text>
+<rect x="552.0" y="89.1" width="126.0" height="260.9" fill="#F6821F" rx="3"/>
+<text x="615.0" y="81.1" font-size="12" text-anchor="middle" font-weight="bold">699 ms</text>
+<text x="615.0" y="372.0" font-size="12" text-anchor="middle">p99</text>
+<line x1="90" y1="350" x2="720" y2="350" stroke="#333" stroke-width="1.5"/>
+</svg>

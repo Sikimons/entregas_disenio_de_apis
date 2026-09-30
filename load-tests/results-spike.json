@@ -1,0 +1,144 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "status is 200 or 503": {
+                    "name": "status is 200 or 503",
+                    "path": "::status is 200 or 503",
+                    "id": "9158419957bbc07d723ad901a3da8b58",
+                    "passes": 403395,
+                    "fails": 0
+                }
+            },
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "iteration_duration": {
+            "avg": 503.3318911696433,
+            "min": 501.155497,
+            "med": 502.468966,
+            "max": 617.127299,
+            "p(90)": 505.6261476,
+            "p(95)": 507.325747,
+            "p(99)": 515.99506848
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 403397,
+            "value": 0
+        },
+        "checks": {
+            "passes": 403395,
+            "fails": 0,
+            "value": 1
+        },
+        "vus_max": {
+            "value": 750,
+            "min": 750,
+            "max": 750
+        },
+        "http_reqs": {
+            "count": 403397,
+            "rate": 3075.4260892806387
+        },
+        "http_req_connecting": {
+            "avg": 0.002250124837319067,
+            "min": 0,
+            "med": 0,
+            "max": 33.498544,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0.08597747999999975
+        },
+        "http_req_tls_handshaking": {
+            "p(99)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_duration": {
+            "avg": 2.421324016606473,
+            "min": 0.831159,
+            "med": 1.632571,
+            "max": 3588.322618,
+            "p(90)": 4.3903370000000015,
+            "p(95)": 5.535815199999999,
+            "p(99)": 12.191046799999986,
+            "thresholds": {
+                "p(95)<1000": false
+            }
+        },
+        "http_req_receiving": {
+            "min": 0.006602,
+            "med": 0.039226,
+            "max": 3586.514897,
+            "p(90)": 0.093299,
+            "p(95)": 0.11613219999999995,
+            "p(99)": 0.24789231999999983,
+            "avg": 0.08805629879498271
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(99)": 12.191046799999986,
+            "avg": 2.421324016606473,
+            "min": 0.831159,
+            "med": 1.632571,
+            "max": 3588.322618,
+            "p(90)": 4.3903370000000015,
+            "p(95)": 5.535815199999999
+        },
+        "vus": {
+            "value": 9,
+            "min": 9,
+            "max": 750
+        },
+        "http_req_waiting": {
+            "avg": 2.32521936990851,
+            "min": 0.795449,
+            "med": 1.569705,
+            "max": 116.919423,
+            "p(90)": 4.303837600000002,
+            "p(95)": 5.4520985999999985,
+            "p(99)": 12.076121239999987
+        },
+        "http_req_sending": {
+            "avg": 0.008048347902934563,
+            "min": 0.001982,
+            "med": 0.007214,
+            "max": 2.378841,
+            "p(90)": 0.010801,
+            "p(95)": 0.012633,
+            "p(99)": 0.027652119999999936
+        },
+        "data_sent": {
+            "count": 146432951,
+            "rate": 1116378.4505976827
+        },
+        "iterations": {
+            "count": 134465,
+            "rate": 1025.1369472135914
+        },
+        "data_received": {
+            "count": 2726336354,
+            "rate": 20785097.438121393
+        },
+        "http_req_blocked": {
+            "max": 33.533329,
+            "p(90)": 0.004263,
+            "p(95)": 0.005122,
+            "p(99)": 0.11301879999999906,
+            "avg": 0.005622615896994991,
+            "min": 0.000419,
+            "med": 0.002575
+        }
+    },
+    "setup_data": {
+        "headers": {
+            "Cookie": "access_token=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6MSwiZnVsbE5hbWUiOiJBZG1pbmlzdHJhZG9yIiwiaWF0IjoxNzkwNTY4MjU4LCJleHAiOjE3OTA1OTcwNTh9.9EMlPFaoSXd3niEE1wAFtKd7O5sJYRTIhBwu3b9cHuJ0UW-THBv8bQratX2bEdkR"
+        }
+    }
+}
