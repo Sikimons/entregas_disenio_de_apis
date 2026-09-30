@@ -294,6 +294,7 @@ jobs:
       DEPLOY_TAG: ${{ needs.gate.outputs.branch == 'main' && needs.release.outputs.version_tag || needs.gate.outputs.sha_tag }}
       DEPLOY_SHA: ${{ needs.gate.outputs.sha }}
       DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/opt/ruta' }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER || 'deploy' }}
       INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
     steps:
       # Sin esto, un environment sin AWS_REGION/AWS_DEPLOY_ROLE_ARN/EC2_INSTANCE_ID
@@ -328,15 +329,17 @@ jobs:
           # El checkout de la VM sigue exactamente el commit que se despliega, para que
           # deploy/docker-compose.yml y los templates de nginx coincidan con la imagen.
           # Los .env y certificados estan en .gitignore, el checkout no los toca.
+          # SSM ejecuta como root; git (dubious ownership), la deploy key y el login a GHCR
+          # viven en el usuario $DEPLOY_USER (sin sudo, grupo docker), asi que root baja a ese
+          # usuario para todo lo demas. @sh escapa las comillas simples de cada nivel.
           COMMANDS=$(jq -cn \
             --arg dir "$DEPLOY_DIR" --arg sha "$DEPLOY_SHA" \
             --arg env "$DEPLOY_ENV" --arg tag "$DEPLOY_TAG" \
-            '[
+            --arg user "$DEPLOY_USER" \
+            '"set -euo pipefail; cd \($dir | @sh); git fetch --quiet --depth=1 origin \($sha | @sh); git checkout --quiet --force --detach FETCH_HEAD; deploy/scripts/deploy.sh \($env | @sh) \($tag | @sh)" as $inner
+            | [
               "set -euo pipefail",
-              "cd \($dir)",
-              "git fetch --quiet --depth=1 origin \($sha)",
-              "git checkout --quiet --force --detach FETCH_HEAD",
-              "deploy/scripts/deploy.sh \($env) \($tag)"
+              "sudo -u \($user | @sh) -H bash -c \($inner | @sh)"
             ]')
           CMD_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
