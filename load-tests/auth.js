@@ -10,7 +10,10 @@
 // README de cada uno), asi que no hace falta el token CSRF -- eso solo protege escrituras.
 export function login(baseUrl, http) {
   const username = __ENV.RUTA_ADMIN || 'admin'
-  const password = __ENV.RUTA_PASSWORD || 'admin123'
+  const password = __ENV.RUTA_PASSWORD
+  if (!password) {
+    throw new Error('Falta RUTA_PASSWORD (contrasena del admin del entorno que se prueba).')
+  }
   const res = http.post(
     `${baseUrl}/api/v1/auth/login`,
     JSON.stringify({ username, password, remember: true }),

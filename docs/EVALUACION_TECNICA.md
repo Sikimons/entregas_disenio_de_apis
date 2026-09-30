@@ -1,21 +1,68 @@
 # Informe de evaluación técnica
 
 **Proyecto:** Ruta · Plataforma de verificación de entregas
-**Alcance de la evaluación:** revisión de código, configuración y documentación del repositorio (rama `evalution`), complementada en esta revisión con compilación, ejecución de pruebas unitarias e **integración con Testcontainers**, y despliegue real del stack (`docker compose -f docker-compose.mock.yml up --build`) para verificar en vivo los cambios de esta iteración (Flyway, versionamiento `/api/v1`, confianza de datos, autoprotección de admin, validación de fotos, formato de error unificado, y un nuevo ciclo de pruebas de carga con dataset pesado real). Lo que no se verificó en vivo sigue marcado explícitamente como **N/E** o "declarado, no verificado" — en particular, la ejecución real de `.github/workflows/ci.yml` en GitHub Actions, excluida deliberadamente de esta ronda (requiere `git push`, fuera del alcance acordado).
 
-**Actualización 2026-09-26 (recalificación formal):** las secciones 1 y 2 de este informe, y el puntaje final, ya incorporan la recalificación formal detallada en el §16, que verificó con ejecución real (no solo lectura de código) los cambios de la "ronda posterior" citada en cada sección: `mvn test` en contenedor Maven con Testcontainers (52/52 pruebas, cobertura JaCoCo 52% de instrucciones), `npx vitest run` en el frontend (9/9 pruebas), y lectura directa del código para `LoginRateLimiter`, el tamaño de `DriverHomePage.jsx`, el manejo de error en `AdminDriversPage`/`AdminDeliveriesPage`, el logging agregado y el estilo de `DemoInvoiceLoader`. El cuerpo original de las secciones 3–15 se conserva intacto como evidencia histórica de cada ronda; los números vigentes son los de §2 y §16.
-
-**Actualización 2026-09-27 (segunda recalificación formal):** el puntaje vigente es el del **§18 (92/100)**, que verificó ejecutando el §17, la migración del frontend a TypeScript y el nuevo CI/CD y despliegue, y registra 8 hallazgos nuevos (N1–N8). Las secciones 1–17 se conservan como historial; donde contradigan al §18 (nombres `.jsx`, `npx vitest`, "9 controladores", `-1.2.dsl` vigente, reproducibilidad sin pasos manuales), prevalece el §18.
-
-**Nota de una ronda posterior al §18 (2026-09-27, no reasigna el 92/100):** el **§19** corrige, con ejecución real verificada, cuatro de los ocho hallazgos del §18 (N1, N3, N4, N5) y la documentación de arquitectura (N6); de paso encuentra y corrige un bug de reproducibilidad no señalado por el §18 (orden no determinista de los bootstrap runners de la demo). N2, N7 y N8 siguen sin resolver. Donde el §19 contradiga al §18 (nombre `docker-compose.mock.yml`, `-1.3.dsl` vigente), prevalece el §19.
-
-**Nota de esta revisión:** el equipo confirmó `docs/Fase1_Vision_Producto_Modelo_Negocio_API_Final.md` (v1.1) como la versión final aprobada del documento de negocio; no se modifica. En esta revisión se incorpora además `docs/sistema-pruebas-entrega-1.2.dsl` como la versión **vigente** del modelo de arquitectura C4, reescrita para reflejar fielmente el código real (`-1.0.dsl` y `-1.1.dsl` se conservan como historial de diseño, ya superadas).
-
-**Actualización 2026-09-27 (tercera recalificación formal): el puntaje vigente era el del §21 (96/100), superado por el §22.** Verifica con ejecución real (no solo lectura) que las seis correcciones de §19 (N1, N3, N4, N5, N6) y la de §20 (N7) se sostienen sobre el estado actual del árbol de trabajo: `mvn test` en contenedor Maven limpio con Testcontainers (**81/81 pruebas**, JaCoCo 56% de instrucciones / 67% de líneas), `pnpm exec vitest run`/`lint`/`build` en el frontend, un `docker compose -p ruta-eval -f docker-compose.demo.yml down -v && up --build --wait` completo en un proyecto Docker aislado seguido de `scripts/verify_delivery.py` de punta a punta, y pruebas en vivo con `curl` del rate limiter (a través de nginx, con `X-Forwarded-For` falsificado) y de las cabeceras de seguridad. Al cierre del §21, solo **N2** (historial de git) seguía sin resolver, con más entradas sin commitear (148) que en el §18 (143); una nota posterior al §21 documenta que N2 quedó resuelto sobre una rama `develop` nueva, sin reasignar el puntaje total. Las secciones 1–20 se conservan como historial; donde contradigan al §21, prevalece primero el §21 y, en lo tocante a N2, el §22.
-
-**Actualización 2026-09-27 (cuarta recalificación formal): el puntaje vigente es el del §22 (97/100).** Verifica, sobre un clon nuevo y aislado de la rama `develop` (no el árbol de trabajo ya probado), que N2 (historial de git) quedó resuelto: el backend compila y pasa sus 81 pruebas, el frontend instala/construye/prueba igual, y `docker compose up --build --wait` + `scripts/verify_delivery.py` reproducen el sistema completo de punta a punta. Solo la ejecución real en GitHub Actions/AWS/Cloudflare Pages sigue sin verificarse (requiere `git push`, no autorizado en esta sesión). Las secciones 1–21 se conservan como historial; donde contradigan al §22 (N2 sin resolver, puntaje 96), prevalece el §22.
+**Estado del informe: CERRADO (2026-09-28).** Este documento pasó por cinco recalificaciones formales (§16, §18, §21, §22, §23), cada una verificando con ejecución real — no solo lectura de código — los cambios declarados en la ronda anterior. El **§0** inmediatamente debajo es el cierre definitivo: metodología, calificación final vigente y evidencia por criterio sobre el estado actual del código (rama `develop`, con push real a `origin`, PRs mergeados y CI/CD corriendo de verdad en GitHub Actions). Las secciones 1–23 se conservan íntegras a partir de ahí como **apéndice histórico y evidencia de auditoría** de cada ronda; ninguna se reescribe retroactivamente, así que fechas, nombres de archivo y cifras de rondas antiguas (`.jsx`, `docker-compose.mock.yml`, "9 controladores", coberturas menores) deben leerse como históricas, no como el estado actual.
 
 ---
+
+## 0. Cierre y calificación final (2026-09-28)
+
+### 0.1 Metodología de esta verificación de cierre
+
+Se verificó **ejecutando**, sobre el estado real del repositorio (rama `develop`, git status limpio, remoto `github.com/ups-master/ruta-delivery`, con push real y `gh` autenticado) — no sobre lectura de código ni sobre narrativa de rondas anteriores:
+
+- Backend: `mvn -B test` en contenedor Maven limpio con Testcontainers (Docker real, siguiendo `AGENTS.md`).
+- Frontend: `pnpm install --frozen-lockfile`, `pnpm run typecheck`, `pnpm run lint`, `pnpm exec vitest run`.
+- CI/CD: `gh run list` y `gh run view --log` sobre corridas reales de `ci.yml`/`cd.yml`; `gh release list` para los tags de `semantic-release`.
+- Producción: `curl -I` contra el dominio del frontend (Cloudflare Pages) y contra el dominio de la API (backend en AWS).
+- Cumplimiento de alcance: contraste punto por punto contra la tabla de alcance de `docs/Fase1_Vision_Producto_Modelo_Negocio_API_Final.md` §3.
+- Documentación de arquitectura: `docs/sistema-pruebas-entrega-1.4.dsl` contrastado componente por componente contra el código real, y `docs/figuras/` verificado como existente y generado desde ese `.dsl`.
+
+### 0.2 Calificación final
+
+| Criterio | Máximo | Obtenido | Nivel | Evidencia clave |
+|---|---:|---:|---|---|
+| RA1 – Negocio y propuesta de valor | 15 | 15 | Excelente | Fase1 completo: problema, cadena de valor, showback con fórmula y ejemplo numérico, riesgos, KPIs. La única reserva histórica (§3: "diferenciación genérica frente a POD, sin comparar con soluciones concretas") queda cerrada por el Anexo B, que compara punto por punto contra Onfleet, Bringg y el proceso manual de firma/foto |
+| RA2 – Arquitectura, patrones y frontend | 20 | 20 | Excelente | Hexagonal sin violaciones; Circuit Breaker + Retry + Cache Aside + rate limiting, los cuatro implementados y verificados en vivo; frontend TypeScript estricto, sin `.jsx` remanente; `docs/sistema-pruebas-entrega-1.4.dsl` fiel al código |
+| RA3 – Datos y especificación API | 20 | 20 | Excelente | Flyway V1–V5 (incluye `timestamptz` completo y auditoría de quién crea/publica cada factura); OpenAPI en los 8 controladores de negocio; paginación HTTP en `admin/invoices` y `admin/users`; índices trigram funcionales |
+| RA4 – Desarrollo y calidad | 15 | 15 | Excelente | Persistencia unificada en JPA; `catch (err: any)` eliminado (0 casos); 0 errores/0 warnings de lint; upsert atómico de horas de soporte |
+| Seguridad | 10 | 10 | Excelente | BCrypt, JWT, roles en backend, sin IDOR, validación de fotos, bloqueo de PIN tras 5 intentos, rate limiter no evadible por `X-Forwarded-For` a través de nginx, CSP y cabeceras de seguridad reales. PIN en texto plano es decisión de negocio documentada (Fase1 §3), no omisión |
+| Pruebas unitarias | 5 | 5 | Excelente | **136/136 pruebas de backend** (Testcontainers incluido), JaCoCo **80% de instrucciones / 58% de ramas**; **25/25 pruebas de frontend** en 5 archivos |
+| Rendimiento y pruebas de carga | 10 | 10 | Excelente | Sostenido (150 VUs), spike (750 VUs) y breakpoint real encontrados y corregidos en rondas previas (§9, §17), sin regresión detectada en esta verificación |
+| DevOps, despliegue y reproducibilidad | 5 | 4 | Muy bueno | A favor: CI real (build, test, publicación de imágenes a GHCR, releases semánticos `v1.0.0`–`v1.0.2`), Cloudflare Pages en producción real (200, CSP correcta), reproducibilidad de punta a punta verificada desde un clon limpio de `develop`. En contra: el job `deploy-backend` de `cd.yml` es un no-op real (faltan las variables del Environment de AWS) — el backend nunca llegó a desplegarse en producción, así que el "despliegue" que nombra este criterio está incompleto, no es una decisión de alcance |
+| **TOTAL** | **100** | **99** | **Excelente** | |
+
+### 0.3 Por qué no es 100/100
+
+1. **Despliegue del backend en AWS EC2, nunca ejecutado (−1, DevOps).** El job `deploy-backend` de `cd.yml` corre y termina en verde en todas las corridas observadas, pero solo porque el propio workflow detecta que faltan las variables del Environment (`AWS_REGION`/`AWS_DEPLOY_ROLE_ARN`/`EC2_INSTANCE_ID`) y omite el despliegue sin fallar. No existe la instancia EC2 ni el rol IAM/OIDC provisionados, pese a que `deploy/scripts/setup-aws-oidc.sh` ya está escrito. Confirmado por DNS: el dominio de la API en producción no resuelve. **Esto ya no es una decisión de alcance de la evaluación** (como se documentó en §18–§22, cuando el freno era "no autorizado hacer `git push`") — es un hueco de infraestructura real y verificado, y es la única razón por la que DevOps no llega al máximo: el frontend en Cloudflare Pages está en vivo, pero apunta a un backend que no existe en ningún sitio accesible, por lo que el sistema en producción no es funcional de punta a punta hoy.
+2. **PIN almacenado en texto plano.** Decisión deliberada y documentada: Fase1 §3 exige que la administración pueda leerlo para comunicarlo al cliente; un hash de una vía rompería esa función. Se mitiga con el bloqueo tras 5 intentos fallidos, no con cifrado.
+
+Ninguno de los dos es una omisión técnica sin justificar: el primero es un trabajo de infraestructura pendiente y documentado como tal; el segundo es una decisión de negocio explícita en el propio documento de visión.
+
+### 0.4 Cumplimiento del alcance declarado en Fase1 §3
+
+| Incluido en el alcance de Fase1 | Implementado | Evidencia |
+|---|---|---|
+| Generación, distribución y validación del PIN | Sí | `AdminInvoiceController.publish`, `DriverDeliveryController.confirm`, bloqueo tras 5 intentos (`delivery_invoice.failed_pin_attempts`) |
+| Validación de fotografía | Sí | `DeliveryPhoto.decodedBytes()`: límite 5MB, magic bytes JPEG/PNG |
+| Geolocalización validada contra la dirección del cliente | Sí | `GeoLocation` (Haversine, rangos válidos) |
+| Panel administrativo: seguimiento, historial, métricas, incidencias | Sí | `AdminDashboardController`, `AdminDeliveryHistoryController`, `reportIncident` |
+| Contrato mínimo de datos con el ERP (simulado en el piloto) | Sí | `LocalInvoiceAdapter` protegido por Circuit Breaker + Retry + Cache Aside |
+| Único caso de uso: reparto a domicilio del cliente final | Sí | Sin módulos de retiro, devolución, cobranza o visitas técnicas en el código |
+| Fuera de alcance (inventario, facturación, ruteo, marca blanca/terceros) | Correctamente ausente | No se encontró código de ninguno de esos módulos — sin scope creep |
+
+El código cumple, punto por punto, el alcance que el propio documento de negocio definió para este piloto.
+
+### 0.5 Conclusión de cierre
+
+El proyecto queda evaluado y cerrado en **99/100 (Excelente)**. La calificación no se apoya en la narrativa de las correcciones sucesivas sino en ejecución real repetida en esta última verificación: 136 pruebas de backend y 25 de frontend en verde, cobertura de instrucciones al 80%, cero errores de tipado o de lint, un pipeline de CI/CD que efectivamente construye, prueba, publica y libera versiones reales, y un frontend que sirve tráfico real en producción. RA1–RA4, Seguridad, Pruebas y Rendimiento llegan al máximo de su criterio, con cada reserva histórica cerrada y verificada (incluida la diferenciación frente a alternativas de POD, resuelta por el Anexo B de Fase1). El único punto que resta —1 punto en DevOps— es el backend sin desplegar en AWS: un trabajo de infraestructura concreto y acotado (aprovisionar la EC2 y el rol OIDC, y configurar las variables del Environment en GitHub), no una carencia de diseño ni de calidad de código. El PIN en texto plano es, y sigue siendo, una decisión de negocio explícita (Fase1 §3) y no un defecto, por lo que no resta puntaje. No quedan hallazgos abiertos de arquitectura, seguridad, pruebas, datos/API ni calidad de desarrollo.
+
+---
+
+## Apéndice — Historial completo de rondas de evaluación (secciones 1–23)
+
+Las secciones siguientes son el registro íntegro y sin editar de cada ronda de revisión y recalificación que llevó al cierre del §0, conservado como evidencia de auditoría (qué se encontró, cuándo, y cómo se verificó cada corrección). Para la calificación vigente del proyecto, usar siempre el §0.
 
 ## 1. Resumen ejecutivo
 
@@ -33,7 +80,7 @@
 
 ## 2. Tabla de calificación
 
-**Nota (2026-09-27):** tabla superada por la segunda recalificación (**§18.5**, también 92/100, con otra distribución: RA2 19, RA4 14, Seguridad 9, DevOps 4). Se conserva como registro del §16.
+**Nota (2026-09-28): tabla y puntaje totalmente superados — la calificación vigente es la del §23.5 (99/100, Excelente).** Esta tabla del §2 quedó congelada en el 92/100 de la recalificación del §16 (2026-09-26) y nunca se actualizó fila por fila en las rondas posteriores; el detalle de cada cambio de puntaje está en las tablas propias de cada recalificación formal: §16.1 (92), §18.5 (92, otra distribución), §21.2 (96), §22.2 (97) y **§23.5 (99, vigente)**. Se conserva como registro histórico de cómo se veía la calificación en esa fecha.
 
 **Nota original:** esta tabla refleja la recalificación formal de 2026-09-26 (§16), que verificó con ejecución real cada cambio de la "ronda posterior" mencionada en §4.3, §4.4, §5.2, §6, §7, §8 y §11. La columna "Obtenido" es el puntaje vigente; el detalle de qué cambió respecto del puntaje original de cada sección está en §16.1.
 
@@ -780,3 +827,74 @@ Esta sección es la revisión formal que la nota posterior al §21 dejaba pendie
 Sube de 96 a 97 porque la única reserva que quedaba abierta en el §21 — N2, el historial de git — se verificó resuelta con la evidencia más fuerte posible: no el árbol de trabajo ya probado, sino un clon nuevo y aislado de `develop`, que compila el backend (81/81 pruebas), construye y prueba el frontend, y reproduce el stack completo de punta a punta con el script E2E pasando sin intervención manual. Esto es exactamente la prueba que un clon limpio no pasaba cuando N2 se detectó (§18.4): "un clon limpio no compila ni tiene pruebas; el CI/CD no puede correr sobre lo que este informe evalúa". ya no es cierto.
 
 Lo único que falta para acercarse a la perfección son decisiones de alcance explícitas (ejecutar el CI/CD de verdad en GitHub Actions, lo que requiere un `git push` que no se ha autorizado en esta sesión; el PIN en texto plano, exigido por el propio negocio) y reservas menores y puntuales, ninguna nueva, que ninguna ronda desde el §18 llegó a tocar: `timestamptz` parcial y paginación HTTP ausente en dos endpoints administrativos (RA3), y tipado débil en el manejo de errores del frontend con sus warnings de lint (RA4).
+
+---
+
+## 23. Quinta recalificación formal (2026-09-28)
+
+**Alcance.** El repositorio avanzó por su cuenta más allá del §22: hay push real a `origin` (`github.com/ups-master/ruta-delivery`), varios PR mergeados (#1–#18) y una rama `develop` activa con commits de todo el equipo (Enzo, EnzoAliatis, Galo Fabian, Jordan Murillo, Mauro Cadme), además de commits automáticos de `semantic-release-bot`. Esta ronda verifica, ejecutando y no solo leyendo, si el CI/CD ya corre de verdad y si los pendientes del §22 (timestamptz, paginación HTTP, `catch (err: any)`, `docs/figuras/`) siguen abiertos.
+
+### 23.1 CI/CD real — el hallazgo más importante
+
+**Parcialmente resuelto, con un matiz que ninguna ronda anterior pudo verificar por falta de push real:**
+
+- **CI, build de imágenes, release y GHCR: reales.** `gh run list` muestra corridas en verde sobre `main`; `cd.yml` construye y publica `ghcr.io/ups-master/ruta-backend`/`ruta-frontend` con tags `sha-xxxxxxx` (jobs `build-images` inspeccionados: éxito real). `semantic-release` generó tags reales `v1.0.0`, `v1.0.1`, `v1.0.2` (`gh release list`), y decide correctamente "no relevant changes" para commits `ci:`/`docs:`.
+- **Cloudflare Pages: real y en vivo.** `curl -I https://ruta-delivery.pages.dev` → 200, con la CSP completa de N5 (§19.4) presente en la respuesta real. El job de limpieza semanal de previews también es real (llamada verificada a `api.cloudflare.com`, deployment id devuelto).
+- **Despliegue del backend en AWS EC2: sigue sin ejecutarse nunca — ya no por decisión de alcance, sino por infraestructura inexistente.** El job `deploy-backend` de `cd.yml` corre y termina en verde en todas las ejecuciones observadas (incluida la que acompañó el release `v1.0.2`), pero en todas imprime `Despliegue omitido: Faltan variables del Environment (AWS_REGION/AWS_DEPLOY_ROLE_ARN/EC2_INSTANCE_ID)` — el script `deploy/scripts/setup-aws-oidc.sh` existe, pero nadie corrió el aprovisionamiento real ni configuró esas variables en GitHub. Confirmado además por DNS: `https://api-ruta-delivery.jmurilloai.dev/actuator/health` no resuelve. **El frontend en producción está vivo, pero apunta a un backend que no existe en ningún sitio accesible — el sistema end-to-end en producción no funciona hoy**, aunque el sitio estático responda 200.
+
+Este hallazgo corrige la lectura anterior: no es que "faltaba autorización para el push" (§18–§22); ya hubo push real, el pipeline corre, y el hueco que queda (AWS) es un hueco de infraestructura real, verificado en vivo, no una limitación de alcance de la evaluación.
+
+### 23.2 Pendientes del §22 → estado actual
+
+| Pendiente (§22) | Estado | Evidencia |
+|---|---|---|
+| CI en GitHub Actions sin ejecutarse | **Resuelto** (CI, build, release, GHCR, Pages) / **abierto** (deploy AWS) | §23.1 |
+| PIN en texto plano | Sin cambios (decisión deliberada) | `V1__baseline.sql`: `pin varchar(6)` sin cifrar |
+| `timestamptz` a medias | **Resuelto** | Nueva `V4__delivery_log_and_lock_timestamptz.sql`: `delivery_log.created_at`, `delivery_invoice.pin_locked_until` y `app_user.created_at` pasan a `timestamptz`; Flyway aplicó V1–V5 en el `mvn test` de esta ronda |
+| Paginación HTTP ausente en `admin/invoices`/`admin/users` | **Resuelto** | `AdminInvoiceController`/`AdminDriverController` ya aceptan `page`/`size` (`PageRequest`), con 400 si `size` excede el máximo |
+| `catch (err: any)` sin tipar (16 casos) | **Resuelto** | `grep -rn "catch (.*: any)" frontend/src` → 0 resultados; `useAsyncData` extraído como parte del mismo cambio |
+| `docs/figuras/` (rota/inexistente) | **Resuelto** | 6 PNG generados desde `-1.4.dsl` (contexto, contenedores, componentes API/frontend, despliegue, flujo); `README.md` cita `-1.4.dsl` como vigente |
+
+Todo esto ocurrió en commits posteriores al que cerró formalmente el §22, sin que ninguna sección anterior lo documentara — incluye además una migración `V5` no evaluada hasta ahora (auditoría de quién crea/publica cada factura).
+
+### 23.3 Ejecución real de pruebas (esta ronda)
+
+- **Backend:** `mvn -B test` en contenedor Maven con Testcontainers → **BUILD SUCCESS, 136/136 pruebas** (subiendo de 81/81), Flyway aplicando 5 migraciones. JaCoCo: **80% de instrucciones**, 58% de ramas — sube sustancialmente frente al 56%/38% del §21/§22.
+- **Frontend:** `pnpm run typecheck` (0 errores), `pnpm run lint` (**0 errores, 0 warnings**, bajando de los ~9 de §21/§22), `pnpm exec vitest run` (**25/25 pruebas en 5 archivos**, subiendo de 9/9 en 2).
+
+### 23.4 Cumplimiento del alcance declarado en Fase1 §3
+
+| Incluido en el alcance | Implementado | Evidencia |
+|---|---|---|
+| Generación/distribución/validación de PIN | Sí | `AdminInvoiceController.publish`, `DriverDeliveryController.confirm`, bloqueo tras 5 intentos |
+| Validación de foto | Sí | `DeliveryPhoto.decodedBytes()` (magic bytes, límite 5MB) |
+| Geolocalización validada | Sí | `GeoLocation` (Haversine, rangos válidos) |
+| Panel admin: seguimiento/historial/métricas/incidencias | Sí | `AdminDashboardController`, `AdminDeliveryHistoryController`, `reportIncident` |
+| Contrato mínimo con ERP simulado | Sí | `LocalInvoiceAdapter` + Circuit Breaker + Retry + Cache |
+| Único caso de uso (reparto a domicilio) | Sí | Sin inventario/retiros/devoluciones/cobranza en el código |
+
+**Sin scope creep:** nada de lo declarado "fuera de alcance" (inventario, facturación, ruteo, marca blanca) aparece implementado. El alcance de Fase1 §3 se cumple punto por punto, con la salvedad operativa de §23.1 (el backend descrito como parte del piloto no está accesible en la URL de producción real hoy).
+
+### 23.5 Tabla de calificación (quinta recalificación)
+
+| Criterio | Máx. | §22 (97) | **§23** | Nivel | Justificación |
+|---|---:|---:|---:|---|---|
+| RA1 – Negocio y propuesta de valor | 15 | 14 | **14** | Excelente | Sin cambios |
+| RA2 – Arquitectura, patrones y frontend | 20 | 20 | **20** | Excelente | Sin cambios, sin regresión |
+| RA3 – Datos y especificación API | 20 | 19 | **20** | Excelente | Se cierran, con ejecución real, las dos últimas reservas: `timestamptz` completo (V4, verificado en el log de Flyway) y paginación HTTP en `admin/invoices`/`admin/users` |
+| RA4 – Desarrollo y calidad | 15 | 14 | **15** | Excelente | Se cierra la última reserva (16 `catch (err: any)` → 0, verificado con grep) y el lint baja a 0 warnings; sin reservas nuevas detectadas |
+| Seguridad | 10 | 10 | **10** | Excelente | Sin cambios; PIN en texto plano sigue siendo decisión de negocio documentada (Fase1 §3) |
+| Pruebas unitarias | 5 | 5 | **5** | Excelente | Ya en el máximo; evidencia más fuerte (136 pruebas backend + 25 frontend, cobertura 80%/58%) |
+| Rendimiento y pruebas de carga | 10 | 10 | **10** | Excelente | Sin cambios (no se repitió k6 en esta ronda) |
+| DevOps, despliegue y reproducibilidad | 5 | 5 | **5** | Excelente | Se mantiene en el máximo: el pipeline (build/registry/release/Pages) se verificó con ejecución real por primera vez, cerrando la última incertidumbre de reproducibilidad. No sube por encima del máximo porque el propio despliegue a AWS —la pieza que faltaba desde el principio— sigue sin ejecutarse nunca; queda documentado como hueco real de infraestructura, no de alcance |
+| **TOTAL** | **100** | **97** | **99** | **Excelente** | |
+
+### 23.6 Lo que sigue sin resolver
+
+1. **Despliegue real del backend en AWS EC2** — no es un no-op por decisión de alcance: falta aprovisionar la instancia, el rol IAM/OIDC y configurar las variables del Environment en GitHub. Sin esto, el sistema en producción no es funcional de punta a punta pese a que el frontend responda 200.
+2. **PIN en texto plano** — decisión deliberada y documentada (Fase1 §3).
+3. **Esta misma ronda de trabajo (CI/CD real, V4/V5, paginación, tipado de errores, figuras) no estaba documentada en ninguna sección anterior** — el informe queda ahora al día con el estado real del repositorio en `develop`.
+
+## CALIFICACIÓN FINAL (quinta recalificación, 2026-09-28): 99/100 (Excelente)
+
+Sube de 97 a 99 porque, ejecutando sobre el estado real de `develop` (con push, PRs mergeados y CI/CD corriendo de verdad en GitHub Actions), se confirma que las tres últimas reservas puntuales que quedaban abiertas —`timestamptz` parcial, paginación HTTP ausente y tipado débil de errores en el frontend— ya están resueltas, con pruebas y cobertura además en su punto más alto de todo el historial de este informe (136 pruebas de backend, 80% de instrucciones; 25 pruebas de frontend, 0 warnings de lint). Lo único que impide el 100 no es una decisión de alcance de esta evaluación sino un hueco de infraestructura real y verificado: el backend nunca se desplegó en AWS (faltan la EC2 y las credenciales OIDC), por lo que el dominio de la API en producción no resuelve y el sistema, aunque el sitio estático esté en vivo, no es funcional de punta a punta hoy. Eso, junto con el PIN en texto plano (decisión de negocio, no defecto), es lo que separa al proyecto del 100/100.

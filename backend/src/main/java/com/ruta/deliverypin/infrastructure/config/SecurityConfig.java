@@ -81,7 +81,7 @@ public class SecurityConfig {
                 // fijarse aqui, en CsrfConfigurer -- fijarlo solo en .sessionManagement(...) no
                 // alcanza, porque CsrfConfigurer nunca lee ese valor para decidir si crear la suya.
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())
                         .ignoringRequestMatchers("/api/v1/auth/login")
@@ -111,6 +111,19 @@ public class SecurityConfig {
                 .addFilterAfter(new CsrfCookieFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // Con app.cookie.domain (p. ej. "midominio.com"), XSRF-TOKEN se emite para todo el
+    // dominio: el frontend en app.midominio.com puede leerla con document.cookie aunque la
+    // API viva en api.midominio.com (mismo sitio, SameSite no la bloquea). Sin el valor
+    // (local, mismo origen) queda host-only, como antes.
+    CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        String domain = appProperties.getCookie().getDomain();
+        if (domain != null && !domain.isBlank()) {
+            repository.setCookieCustomizer(cookie -> cookie.domain(domain.trim()));
+        }
+        return repository;
     }
 
     private static final class CsrfCookieFilter extends OncePerRequestFilter {

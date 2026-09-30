@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AppProperties {
 
     private Cors cors = new Cors();
+    private Cookie cookie = new Cookie();
     private Admin admin = new Admin();
     private LoginRateLimit loginRateLimit = new LoginRateLimit();
     private ConfirmRateLimit confirmRateLimit = new ConfirmRateLimit();
@@ -17,6 +18,14 @@ public class AppProperties {
 
     public void setCors(Cors cors) {
         this.cors = cors;
+    }
+
+    public Cookie getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(Cookie cookie) {
+        this.cookie = cookie;
     }
 
     public Admin getAdmin() {
@@ -60,6 +69,23 @@ public class AppProperties {
 
         public void setAllowedOrigins(String allowedOrigins) {
             this.allowedOrigins = allowedOrigins;
+        }
+    }
+
+    public static class Cookie {
+        /**
+         * Dominio (p. ej. "midominio.com") de la cookie XSRF-TOKEN. Vacio = host-only (local,
+         * mismo origen). Con frontend y API en subdominios del mismo sitio (app.x / api.x)
+         * hace falta para que el JS del frontend pueda leer la cookie.
+         */
+        private String domain;
+
+        public String getDomain() {
+            return domain;
+        }
+
+        public void setDomain(String domain) {
+            this.domain = domain;
         }
     }
 
