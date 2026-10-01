@@ -2,7 +2,7 @@
 # backend). Mismo contenido que frontend/security-headers.conf, pero la CSP difiere en dos
 # directivas porque aqui NO existen los proxies same-origin /api/ ni /map-tiles/ de
 # frontend/nginx.conf: la API vive en otro origen (VITE_API_BASE_URL) y las teselas del mapa
-# en el proveedor real (VITE_MAP_TILES_URL). __API_ORIGIN__/__TILES_ORIGIN__ los sustituye el
+# en el proveedor real (VITE_MAP_TILES_URL, obligatoria en Pages). __API_ORIGIN__/__TILES_ORIGIN__ los sustituye el
 # paso de build en .github/workflows/ci.yml (preview por PR) y cd.yml (deploy-frontend) con
 # los mismos valores que ya usa "pnpm run build"; si faltara sustituir alguno, ese paso falla
 # antes de publicar (una CSP con el marcador literal bloquearia hasta el login).
