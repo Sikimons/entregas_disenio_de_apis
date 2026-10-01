@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { DriverShell, PageIntro, Modal } from '../../components/Workspace'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { MAP_ATTRIBUTION, MAP_TILES_URL } from '../../config/mapTiles'
 import apiClient from '../../api/client'
 import { useAsyncData } from '../../hooks/useAsyncData'
 import type { DeliveryAttempt, PageResponse } from '../../types/domain'
@@ -69,11 +70,8 @@ export default function DriverHistoryPage() {
     if (activeTab !== 'mapa' || !selected || selected.latitude == null || selected.longitude == null || !mapContainerRef.current) return
 
     const map = L.map(mapContainerRef.current).setView([selected.latitude, selected.longitude], 16)
-    // Tiles servidos same-origin via /map-tiles/ (proxy de nginx) por defecto: algunas
-    // redes moviles/corporativas del conductor bloquean CDNs de terceros directo. En
-    // despliegues sin ese proxy, VITE_MAP_TILES_URL apunta directo al proveedor.
-    L.tileLayer(import.meta.env.VITE_MAP_TILES_URL || '/map-tiles/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    L.tileLayer(MAP_TILES_URL, {
+      attribution: MAP_ATTRIBUTION,
       maxZoom: 19,
     }).addTo(map)
     L.circleMarker([selected.latitude, selected.longitude], {

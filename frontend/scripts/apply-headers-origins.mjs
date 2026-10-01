@@ -18,6 +18,19 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const headersPath = path.join(__dirname, '..', 'dist', '_headers');
 
+// Cloudflare Pages define CF_PAGES=1 en sus builds. Ahi no existen los proxies same-origin
+// /api/ ni /map-tiles/ de nginx: sin estas variables el bundle pediria las teselas a
+// /map-tiles/ (que Pages resuelve con index.html, 200 text/html) y el mapa quedaria en
+// blanco, asi que se falla el build en vez de publicar con los valores por defecto.
+if (process.env.CF_PAGES) {
+  const missing = ['VITE_API_BASE_URL', 'VITE_MAP_TILES_URL'].filter((name) => !process.env[name]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Build de Cloudflare Pages sin ${missing.join(' ni ')}: definelas en Settings -> Environment variables (Production y Preview).`,
+    );
+  }
+}
+
 function originOf(name, value, fallback) {
   const raw = value || fallback;
   try {
