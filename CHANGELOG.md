@@ -1,3 +1,9 @@
+## [1.0.4](https://github.com/ups-master/ruta-delivery/compare/v1.0.3...v1.0.4) (2026-10-01)
+
+### Bug Fixes
+
+* **frontend:** teselas del mapa en Cloudflare Pages sin proxy /map-tiles ([55bafcb](https://github.com/ups-master/ruta-delivery/commit/55bafcb58d0fbe5ac53d14d9d726a7c76e0e31f3))
+
 ## [1.0.3](https://github.com/ups-master/ruta-delivery/compare/v1.0.2...v1.0.3) (2026-09-30)
 
 ### Bug Fixes
