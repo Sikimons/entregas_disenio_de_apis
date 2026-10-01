@@ -481,9 +481,14 @@ que regenere ese secreto sigue pasando el ruleset.
 4. Variables de entorno del build, **por entorno** (Settings -> Environment variables,
    separado en *Production* y *Preview*): `VITE_API_BASE_URL` (la URL real de la API de
    ese entorno, p. ej. `https://api.midominio.com/api/v1` en Production y la de staging
-   en Preview) y, opcional, `VITE_MAP_TILES_URL` (si no se define, el build usa
-   `https://tile.openstreetmap.org/{z}/{x}/{y}.png`; en Pages no existe el proxy
-   `/map-tiles` de `frontend/nginx.conf`).
+   en Preview) y `VITE_MAP_TILES_URL` (p. ej. `https://tile.openstreetmap.org/{z}/{x}/{y}.png`).
+   Ambas son **obligatorias** en Pages: no existe el proxy `/map-tiles` de
+   `frontend/nginx.conf`, asi que sin `VITE_MAP_TILES_URL` el mapa queda en blanco (Pages
+   responde `index.html` a cada tesela) y el build falla a proposito (`CF_PAGES`, ver
+   `frontend/scripts/apply-headers-origins.mjs`).
+   Si en la consola aparece un bloqueo de CSP por un script inline con
+   `window.__CF$cv$params`, lo inyecta Cloudflare (*JavaScript Detections*/Bot Fight Mode)
+   en el dominio propio; no afecta a la app y se quita desactivando esa opcion en la zona.
 5. `CORS_ALLOWED_ORIGINS` del backend de ese entorno debe admitir el dominio de
    produccion **y** el patron de las previews (`https://*.<proyecto>.pages.dev`) --
    `SecurityConfig` ya acepta patrones de origen, no solo exactos.
