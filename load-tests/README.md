@@ -68,7 +68,7 @@ declaran `summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(9
 que tanto el resumen de consola como el `--summary-export` incluyen **p99** (antes solo se
 reportaba hasta p95).
 
-## Resultados reales (2026-09-27, `deploy/docker-compose.yml`, stack local, `DB_POOL_MAX_SIZE=10`)
+## Resultados locales (2026-09-27, `deploy/docker-compose.yml`, stack local, `DB_POOL_MAX_SIZE=10`)
 
 ### Carga sostenida (Load/Stress Testing)
 
@@ -78,7 +78,7 @@ mínimo exigido: 100-200 VUs, ramp-up 2-3 min, meseta 5-10 min, ramp-down 1-2 mi
 ```bash
 docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
   -e BASE_URL=http://backend:8080 -e RUTA_PASSWORD=<...> \
-  grafana/k6 run --summary-export=/scripts/results-sustained.json /scripts/sustained.js
+  grafana/k6 run --summary-export=/scripts/local/results-sustained.json /scripts/sustained.js
 ```
 
 | Indicador | Resultado | Umbral | Cumple |
@@ -90,8 +90,8 @@ docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
 | **p99** | **7,05 ms** | — | — |
 | Tasa de error | 0,00 % | < 1 % | ✅ |
 
-![Throughput por escenario](graficas/throughput.png)
-![Latencia por escenario](graficas/latencia.png)
+![Throughput por escenario](local/graficas/throughput.png)
+![Latencia por escenario](local/graficas/latencia.png)
 
 ### Pico extremo (Spike Testing)
 
@@ -101,7 +101,7 @@ rango mínimo exigido: 5-10x la carga normal, pico de 1-2 min).
 ```bash
 docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
   -e BASE_URL=http://backend:8080 -e RUTA_PASSWORD=<...> \
-  grafana/k6 run --summary-export=/scripts/results-spike.json /scripts/spike.js
+  grafana/k6 run --summary-export=/scripts/local/results-spike.json /scripts/spike.js
 ```
 
 | Indicador | Resultado | Umbral | Cumple |
@@ -114,7 +114,7 @@ docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
 | Tasa de error | 0,00 % | — | ✅ |
 | Estado del Circuit Breaker tras el spike | `CLOSED`, 0 llamadas rechazadas | — | Sin señal de saturación |
 
-![Tasa de error por escenario](graficas/error_rate.png)
+![Tasa de error por escenario](local/graficas/error_rate.png)
 
 ### Punto de ruptura (Breakpoint)
 
@@ -127,7 +127,7 @@ breakpoint real, no un número elegido a mano.
 ```bash
 docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
   -e BASE_URL=http://backend:8080 -e RUTA_PASSWORD=<...> \
-  grafana/k6 run --summary-export=/scripts/results-breakpoint-pool10.json /scripts/breakpoint.js
+  grafana/k6 run --summary-export=/scripts/local/results-breakpoint-pool10.json /scripts/breakpoint.js
 ```
 
 | Indicador | Resultado al momento del corte |
@@ -139,15 +139,15 @@ docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
 | **p99** | **699,2 ms** |
 | Tasa de error | 0,00 % (el sistema se degrada en latencia, no cae) |
 
-![Throughput en el punto de quiebre](graficas/breakpoint_throughput.png)
-![Latencia en el punto de quiebre](graficas/breakpoint_latencia.png)
+![Throughput en el punto de quiebre](local/graficas/breakpoint_throughput.png)
+![Latencia en el punto de quiebre](local/graficas/breakpoint_latencia.png)
 
 **Lectura:** el sistema nunca devuelve errores bajo esta mezcla de tráfico; lo que ocurre
 al superar ~4 500 req/s es que la latencia se degrada exponencialmente (p95 pasa de
-single-digit ms a >600 ms) hasta cruzar el umbral. `results-breakpoint-pool10.json` es la
+single-digit ms a >600 ms) hasta cruzar el umbral. `local/results-breakpoint-pool10.json` es la
 salida cruda de esta corrida.
 
-### Nota histórica: efecto del pool de HikariCP (`results-breakpoint-before.json`/`-after.json`)
+### Nota histórica: efecto del pool de HikariCP (`local/results-breakpoint-before.json`/`-after.json`)
 
 Una ronda anterior (2026-09-26) comparó el breakpoint con `DB_POOL_MAX_SIZE=10` (valor por
 defecto) contra `DB_POOL_MAX_SIZE=30`, en otra máquina y sin p99 configurado (por eso esos
@@ -169,9 +169,10 @@ degrada en latencia, nunca en errores.
 
 ## Gráficas
 
-Todas en `graficas/` (SVG generado desde los `results-*.json`, convertido a PNG para
-verlo sin abrir el archivo): `throughput.png`, `latencia.png`, `error_rate.png`,
-`breakpoint_throughput.png`, `breakpoint_p95.png`, `breakpoint_latencia.png`.
+Las de este stack local están en `local/graficas/` (SVG generado desde los
+`local/results-*.json`, convertido a PNG para verlo sin abrir el archivo):
+`throughput.png`, `latencia.png`, `error_rate.png`, `breakpoint_throughput.png`,
+`breakpoint_p95.png`, `breakpoint_latencia.png`.
 
 ## Qué no se prueba y por qué
 
