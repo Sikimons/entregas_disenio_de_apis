@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/ups-master/ruta-delivery/compare/v1.0.4...v1.0.5) (2026-10-02)
+
+### Bug Fixes
+
+* **backend:** desactivar el validador externo de Swagger UI ([40fe12b](https://github.com/ups-master/ruta-delivery/commit/40fe12b8c137896fadc061beb0566880589562b6))
+* **backend:** enviar X-XSRF-TOKEN desde Swagger UI ([1f48ab4](https://github.com/ups-master/ruta-delivery/commit/1f48ab4ce2a85c63a948720067ef12b40b764419))
+
 ## [1.0.4](https://github.com/ups-master/ruta-delivery/compare/v1.0.3...v1.0.4) (2026-10-01)
 
 ### Bug Fixes
