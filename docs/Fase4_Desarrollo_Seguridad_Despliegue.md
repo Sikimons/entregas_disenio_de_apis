@@ -89,7 +89,8 @@ cookie `access_token`, coherente con la implementación real.
 
 Herramienta: **k6** (`load-tests/`), contra el stack real levantado con
 `docker compose -f deploy/docker-compose.yml --env-file deploy/env/local.env up -d --build --wait`.
-Se ejecutaron los dos escenarios mínimos que exige el enunciado, más un tercero
+Las secciones 3.1 a 3.4 corresponden al stack local; la 3.5 agrega las corridas contra la
+EC2 de producción y la comparativa. Se ejecutaron los dos escenarios mínimos que exige el enunciado, más un tercero
 (`breakpoint.js`) para identificar el punto de ruptura con precisión en vez de solo
 describir que "no se degradó" dentro del rango probado.
 
@@ -122,6 +123,40 @@ degradación progresiva.
 | Sostenida | 0→150→0 (12 min) | 639,5 req/s | 4,33 ms | 5,32 ms | 7,05 ms | 0,00 % |
 | Spike | 0→750→0 (2 min) | 3 075,4 req/s | 4,39 ms | 5,54 ms | 12,19 ms | 0,00 % |
 | Breakpoint (corte) | hasta 1 311 VUs | 4 548,9 req/s | 380,2 ms | 601,4 ms | 699,2 ms | 0,00 % |
+
+### 3.5 Producción (EC2) y comparativa con local
+
+Se repitió la carga sostenida contra la EC2 de producción (directo, sin Cloudflare), con
+`load-tests/run.sh` y `LOAD_SCALE` creciente (0,1 / 0,2 / 0,5 del perfil de 150 VUs; el
+smoke usa 2 VUs fijos). Resultados en `load-tests/production/`.
+
+| LOAD_SCALE | VUs | Throughput | Mediana | p95 | p99 | Error |
+|---|---:|---:|---:|---:|---:|---:|
+| 0,1 | 15 | 62,4 req/s | 105,8 ms | 112,0 ms | 122,5 ms | 0,00 % |
+| 0,2 | 30 | 125,2 req/s | 98,5 ms | 105,0 ms | 131,5 ms | 0,00 % |
+| 0,5 | 75 | 303,0 req/s | 105,6 ms | 209,9 ms | 346,6 ms | 0,00 % |
+
+![Sostenida: local vs producción](../load-tests/comparativa/sustained_local_vs_produccion.png)
+
+- **La latencia base es de red:** el mínimo ronda 86–107 ms (RTT de ~100 ms hasta la EC2),
+  frente a 5,3 ms de p95 en local; no son comparables 1 a 1.
+- **Con 0,5 aparece la primera degradación:** el throughput sigue casi lineal y la mediana
+  no cambia, pero el p95 se duplica (105→210 ms) y el p99 sube 2,6× (131→347 ms). Hay cola
+  en el servidor (CPU de la EC2, pool de conexiones o créditos de instancia); falta
+  confirmarlo con CloudWatch. Todas las corridas cumplen p95 < 500 ms y error < 1 %.
+- **Es un monolito en una sola instancia, la carga no se distribuye.** Todo el tráfico
+  entra a un único nodo (un contenedor backend, una JVM, un pool de conexiones y una EC2;
+  la BD es RDS, aparte). Por eso estas pruebas miden la capacidad *de una instancia*, y por
+  eso, al acercarse al límite, se ve una cola (el p95 y el p99 suben antes que la mediana)
+  y no errores. Además los seis endpoints de cada iteración comparten CPU y pool, de modo
+  que las consultas pesadas del tablero afectan a las ligeras. La diferencia con local no
+  es de arquitectura sino de tamaño de nodo y de red. Escalar horizontalmente es posible
+  (la sesión es una cookie JWT sin estado en el servidor), pero la caché Caffeine y el rate
+  limiting de bucket4j son locales a cada instancia y habría que revisarlos antes de
+  agregar réplicas; mientras tanto, la vía inmediata es vertical (más vCPU/RAM y
+  `DB_POOL_MAX_SIZE`). Detalle en `load-tests/README.md`.
+- **Brechas frente al enunciado:** en producción se llegó a 75 VUs (se piden 100–200) y no
+  se corrieron spike ni breakpoint; esos resultados siguen siendo los de local.
 
 El detalle completo, con las gráficas y los JSON crudos, vive en `load-tests/README.md`.
 

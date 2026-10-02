@@ -68,7 +68,7 @@ declaran `summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(9
 que tanto el resumen de consola como el `--summary-export` incluyen **p99** (antes solo se
 reportaba hasta p95).
 
-## Resultados reales (2026-09-27, `deploy/docker-compose.yml`, stack local, `DB_POOL_MAX_SIZE=10`)
+## Resultados locales (2026-09-27, `deploy/docker-compose.yml`, stack local, `DB_POOL_MAX_SIZE=10`)
 
 ### Carga sostenida (Load/Stress Testing)
 
@@ -78,7 +78,7 @@ mínimo exigido: 100-200 VUs, ramp-up 2-3 min, meseta 5-10 min, ramp-down 1-2 mi
 ```bash
 docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
   -e BASE_URL=http://backend:8080 -e RUTA_PASSWORD=<...> \
-  grafana/k6 run --summary-export=/scripts/results-sustained.json /scripts/sustained.js
+  grafana/k6 run --summary-export=/scripts/local/results-sustained.json /scripts/sustained.js
 ```
 
 | Indicador | Resultado | Umbral | Cumple |
@@ -90,8 +90,8 @@ docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
 | **p99** | **7,05 ms** | — | — |
 | Tasa de error | 0,00 % | < 1 % | ✅ |
 
-![Throughput por escenario](graficas/throughput.png)
-![Latencia por escenario](graficas/latencia.png)
+![Throughput por escenario](local/graficas/throughput.png)
+![Latencia por escenario](local/graficas/latencia.png)
 
 ### Pico extremo (Spike Testing)
 
@@ -101,7 +101,7 @@ rango mínimo exigido: 5-10x la carga normal, pico de 1-2 min).
 ```bash
 docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
   -e BASE_URL=http://backend:8080 -e RUTA_PASSWORD=<...> \
-  grafana/k6 run --summary-export=/scripts/results-spike.json /scripts/spike.js
+  grafana/k6 run --summary-export=/scripts/local/results-spike.json /scripts/spike.js
 ```
 
 | Indicador | Resultado | Umbral | Cumple |
@@ -114,7 +114,7 @@ docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
 | Tasa de error | 0,00 % | — | ✅ |
 | Estado del Circuit Breaker tras el spike | `CLOSED`, 0 llamadas rechazadas | — | Sin señal de saturación |
 
-![Tasa de error por escenario](graficas/error_rate.png)
+![Tasa de error por escenario](local/graficas/error_rate.png)
 
 ### Punto de ruptura (Breakpoint)
 
@@ -127,7 +127,7 @@ breakpoint real, no un número elegido a mano.
 ```bash
 docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
   -e BASE_URL=http://backend:8080 -e RUTA_PASSWORD=<...> \
-  grafana/k6 run --summary-export=/scripts/results-breakpoint-pool10.json /scripts/breakpoint.js
+  grafana/k6 run --summary-export=/scripts/local/results-breakpoint-pool10.json /scripts/breakpoint.js
 ```
 
 | Indicador | Resultado al momento del corte |
@@ -139,15 +139,15 @@ docker run --rm -i --network ruta-delivery-local_default -v "$PWD":/scripts \
 | **p99** | **699,2 ms** |
 | Tasa de error | 0,00 % (el sistema se degrada en latencia, no cae) |
 
-![Throughput en el punto de quiebre](graficas/breakpoint_throughput.png)
-![Latencia en el punto de quiebre](graficas/breakpoint_latencia.png)
+![Throughput en el punto de quiebre](local/graficas/breakpoint_throughput.png)
+![Latencia en el punto de quiebre](local/graficas/breakpoint_latencia.png)
 
 **Lectura:** el sistema nunca devuelve errores bajo esta mezcla de tráfico; lo que ocurre
 al superar ~4 500 req/s es que la latencia se degrada exponencialmente (p95 pasa de
-single-digit ms a >600 ms) hasta cruzar el umbral. `results-breakpoint-pool10.json` es la
+single-digit ms a >600 ms) hasta cruzar el umbral. `local/results-breakpoint-pool10.json` es la
 salida cruda de esta corrida.
 
-### Nota histórica: efecto del pool de HikariCP (`results-breakpoint-before.json`/`-after.json`)
+### Nota histórica: efecto del pool de HikariCP (`local/results-breakpoint-before.json`/`-after.json`)
 
 Una ronda anterior (2026-09-26) comparó el breakpoint con `DB_POOL_MAX_SIZE=10` (valor por
 defecto) contra `DB_POOL_MAX_SIZE=30`, en otra máquina y sin p99 configurado (por eso esos
@@ -167,11 +167,101 @@ de rendimiento). El número exacto de corte varía con la máquina donde se corr
 importante y estable es el orden de magnitud (varios miles de req/s) y que el sistema se
 degrada en latencia, nunca en errores.
 
-## Gráficas
+## Resultados en producción (2026-10-01, EC2 directo, sin Cloudflare)
 
-Todas en `graficas/` (SVG generado desde los `results-*.json`, convertido a PNG para
-verlo sin abrir el archivo): `throughput.png`, `latencia.png`, `error_rate.png`,
-`breakpoint_throughput.png`, `breakpoint_p95.png`, `breakpoint_latencia.png`.
+Corridas de `run.sh` con `env/production.env`; el `LOAD_SCALE` va en el nombre del JSON de
+`results/`. `sustained` con `LOAD_SCALE=1` serían 150 VUs.
+
+| Corrida | VUs máx | Peticiones | req/s | med | p90 | p95 | p99 | max | Errores |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| smoke | 2 | 109 | 3,5 | 113,8 ms | 128,2 ms | 129,6 ms | 141,5 ms | 200 ms | 0 % |
+| sustained 0.1 | 15 | 46 093 | 62,4 | 105,8 ms | 110,1 ms | 112,0 ms | 122,5 ms | 952 ms | 0 % |
+| sustained 0.2 | 30 | 92 605 | 125,2 | 98,5 ms | 103,0 ms | 105,0 ms | 131,5 ms | 20 485 ms | 0 % |
+| sustained 0.5 | 75 | 226 885 | 303,0 | 105,6 ms | 164,8 ms | **209,9 ms** | **346,6 ms** | 1 592 ms | 0 % |
+
+Todas cumplen `p(95)<500 ms` y error `<1 %`. JSON (con el JWT redactado) en `production/`;
+los originales de `results/` siguen ignorados por git.
+
+![Throughput en producción](production/graficas/throughput.png)
+![p95 en producción](production/graficas/p95.png)
+![p99 en producción](production/graficas/p99.png)
+
+### Comparativa local vs producción (sustained)
+
+![Local vs producción](comparativa/sustained_local_vs_produccion.png)
+
+| | Local (150 VUs) | Producción (75 VUs, 0.5) |
+|---|---:|---:|
+| Throughput | 639,5 req/s | 303,0 req/s |
+| p95 | 5,3 ms | 209,9 ms |
+| p99 | 7,1 ms | 346,6 ms |
+| Errores | 0 % | 0 % |
+
+La diferencia de p95/p99 (~40×) es sobre todo RTT de red (~100 ms) más la cola que aparece
+en la EC2 a partir de 0.5; no es comparable 1 a 1 porque local corre en la red de Docker y con
+el doble de VUs. Lo comparable es la forma: ambos sin errores, degradándose solo en latencia.
+
+**Lectura:**
+
+- La latencia base es el RTT de red: el mínimo ronda 86-107 ms y el handshake ~105-110 ms.
+  Hasta 30 VUs el backend aporta pocos ms.
+- Con 0.5 aparece la primera degradación. El throughput sigue casi lineal (303 req/s) y la
+  mediana no cambia, pero el p95 se duplica (105→210 ms) y el p99 sube 2,6× (131→347 ms).
+  Una parte de las peticiones hace cola en el servidor (CPU de la EC2, pool Hikari/RDS o
+  créditos de instancia); falta confirmarlo con CloudWatch.
+- Con `LOAD_SCALE=1` (~600 req/s) es probable que el p95 se acerque a 500 ms. El breakpoint
+  de esta EC2 queda entre 0.5 y 1.0, muy por debajo de los ~4 500 req/s del stack local.
+- Hay outliers aislados (20,5 s en una petición de la corrida 0.2; bloqueos de conexión de
+  ~1,1 s por posibles retransmisiones de SYN) sin errores asociados.
+- Pendiente: etiquetar cada petición del batch (`tags: { endpoint: ... }` en `sustained.js`) para
+  ver la latencia por ruta y confirmar cuál genera la cola.
+- Pendiente frente al enunciado: en producción se llegó a 75 VUs (se piden 100-200) y no se
+  corrieron `spike` ni `breakpoint`.
+
+### Cómo leer estos números: es un monolito, la carga no se distribuye
+
+La app es un **monolito desplegado como una sola instancia**: un contenedor `backend` (una
+JVM, `mem_limit` 1 GB por defecto), un `nginx` delante y una EC2. Según
+`deploy/env/production.env.example` la base de datos es RDS, un servicio aparte, pero todo
+el código de negocio corre en un único proceso. No hay balanceador ni réplicas, así que **el
+100 % del tráfico cae en el mismo nodo** y comparte sus recursos:
+
+- **Una sola capacidad que medir.** Lo que miden estas pruebas es lo que aguanta *una*
+  instancia (CPU de la EC2, hilos de Tomcat, heap de la JVM, pool de Hikari de 10
+  conexiones por defecto). Nada reparte la carga ni absorbe el exceso, por eso al acercarse
+  al límite lo que se ve es una **cola** (p95 y p99 suben antes que la mediana), no errores.
+  Es el patrón esperado de un nodo único: se degrada de forma gradual hasta saturarse.
+- **Los endpoints se pisan entre sí.** Cada iteración pide seis rutas (búsqueda de facturas,
+  historial, mapa, métricas, costo y estado del Circuit Breaker) y todas usan el mismo
+  pool y la misma CPU. Las agregaciones del tablero (`/dashboard/map` y `/metrics`) compiten
+  con las lecturas ligeras; en una arquitectura de servicios separados la ruta pesada no
+  afectaría a las demás. Hoy el resumen de k6 no separa la latencia por endpoint, así que
+  no se puede atribuir la cola a una ruta concreta (ver pendientes).
+- **Por qué el local aguantó ~4 500 req/s y la EC2 menos.** Ambos son un solo nodo, pero el
+  local es una máquina de desarrollo con CPU holgada y sin red de por medio; la EC2 es una
+  instancia mucho más pequeña con ~100 ms de RTT. La comparación mide *tamaño de nodo*, no
+  un cambio de arquitectura.
+- **El generador también es un solo punto.** k6 corre desde una única máquina y una única
+  ruta de red, así que parte de la cola y de los outliers de conexión puede venir del lado
+  del cliente y no del servidor.
+
+**Qué implica para escalar.** Con un monolito de una instancia, la salida inmediata es
+**vertical** (más vCPU/RAM, subir `DB_POOL_MAX_SIZE`; en la ronda local pasar el pool de 10
+a 30 movió el techo ~11 %). Escalar **horizontalmente** (varias réplicas detrás de un
+balanceador) es viable porque la sesión viaja en una cookie JWT sin estado en el servidor,
+pero hay estado local por instancia que habría que revisar antes: la caché Caffeine y el rate
+limiting de bucket4j (login y `/confirm`) viven en memoria de cada réplica, así que con
+varias los límites se multiplicarían y las cachés dejarían de ser coherentes entre sí.
+Estos resultados sirven como línea base de capacidad *por instancia* para dimensionar eso:
+~300 req/s con p95 ≈ 210 ms en esta EC2.
+
+## Gráficas y carpetas
+
+- `local/` — resultados y gráficas del stack local (`local/graficas/`, `local/results-*.json`).
+- `production/` — resultados (JWT redactado) y gráficas de la EC2 (`production/graficas/`).
+- `comparativa/` — local vs producción.
+- `generar_graficas.py` regenera `production/graficas/` y `comparativa/` (requiere matplotlib).
+  Las de `local/graficas/` se generaron aparte (SVG→PNG) y no las regenera este script.
 
 ## Qué no se prueba y por qué
 
