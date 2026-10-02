@@ -44,7 +44,7 @@ Se compararon los tres estilos propuestos (REST, GraphQL y gRPC) frente a las co
 Se adopta **REST** con recursos en JSON, verbos HTTP y códigos de estado estándar, en el nivel 2 del modelo de madurez de Richardson. HATEOAS no se incorpora porque el único consumidor es un cliente propio que conoce el contrato. Las decisiones de diseño del contrato son:
 
 - **Versionado por ruta.** Los ocho controladores de negocio cuelgan de `/api/v1`, agrupados por actor (`/api/v1/auth`, `/api/v1/driver`, `/api/v1/admin`). Las rutas de infraestructura (`/actuator/health`, `/v3/api-docs`, `/swagger-ui`) no se versionan porque no forman parte del contrato de negocio.
-- **Contrato documentado.** springdoc-openapi publica la especificación en `/v3/api-docs` y la interfaz Swagger en `/swagger-ui`, con el esquema de seguridad `bearerAuth`.
+- **Contrato documentado.** springdoc-openapi publica la especificación en `/v3/api-docs` y la interfaz Swagger en `/swagger-ui`, con el esquema de seguridad `sessionCookie` (`apiKey` en la cookie `access_token`). En los entornos desplegados, el Nginx de borde exige además usuario y contraseña (Basic Auth con `htpasswd`) para esas dos rutas.
 - **Códigos con significado.** 201 con cabecera `Location` al crear, 204 al eliminar, 409 ante un conflicto de estado (entrega ya confirmada, integridad referencial), 422 ante un PIN inválido y 503 con el circuito abierto.
 - **Error uniforme.** Todas las respuestas de error usan `{message, errors}`, de modo que el frontend las lee siempre igual.
 - **Acciones de negocio.** `/confirm`, `/incident` y `/publish` se modelan como POST, un estilo cercano a RPC que se justifica porque representan comandos con reglas propias y no simples cambios de estado.
@@ -95,7 +95,7 @@ La infraestructura que conecta estos contenedores depende del entorno: en local,
 
 La Figura 3 detalla la API. El recorrido de una petición muestra la ubicación de cada patrón:
 
-- **Entrada y seguridad.** Las peticiones llegan al filtro JWT, que valida el token y aplica el rol de cada ruta: `/api/v1/auth`, `/v3/api-docs` y `/swagger-ui` son públicos, `/api/v1/driver` admite CONDUCTOR y ADMIN, y `/api/v1/admin` exige ADMIN.
+- **Entrada y seguridad.** Las peticiones llegan al filtro JWT, que valida el token y aplica el rol de cada ruta: `/api/v1/auth` es público, `/v3/api-docs` y `/swagger-ui` no exigen JWT pero solo son alcanzables a través del Nginx de borde, que los protege con Basic Auth (`deploy/nginx/snippets/api-docs.conf`), `/api/v1/driver` admite CONDUCTOR y ADMIN, y `/api/v1/admin` exige ADMIN.
 - **Controladores REST** (adaptadores de entrada): autenticación, conductor, facturas, equipo, historial, tablero, costos y resiliencia. El manejador global de excepciones traduce los errores de dominio a códigos HTTP con un formato único.
 - **Servicios de aplicación**: autenticación, entregas, historial y métricas, gestión de equipo, gestión de facturas y costo por entrega. Cada controlador delega en su servicio a través de un puerto de entrada.
 - **Circuit Breaker del ERP.** El breaker `erpGateway` se aplica dentro del adaptador de facturas y protege la consulta, la confirmación y la gestión de facturas. El simulador de fallas permite demostrar su ciclo desde el panel.
