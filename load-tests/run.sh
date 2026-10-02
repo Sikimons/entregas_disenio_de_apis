@@ -65,7 +65,7 @@ fi
 RESULTS_DIR="$HERE/results"
 mkdir -p "$RESULTS_DIR"
 NAME="$(basename "$ENV_FILE" .env)"
-OUT="$NAME-$SCENARIO-$(date -u +%Y%m%dT%H%M%SZ).json"
+OUT="$NAME-$SCENARIO-${LOAD_SCALE:-1}-$(date -u +%Y%m%dT%H%M%SZ).json"
 
 ARGS=(--rm -i --user "$(id -u):$(id -g)" --env-file "$ENV_FILE"
       -v "$HERE":/scripts:ro -v "$RESULTS_DIR":/results)

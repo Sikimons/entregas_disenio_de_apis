@@ -13,15 +13,15 @@
 | **Fecha** | 26 de septiembre de 2026 |
 | **Estado** | Para revisión |
 
-> **Nota de trabajo.** Versión editable del Word de la Fase 2, alineada con `sistema-pruebas-entrega-1.4.dsl` y con la evaluación técnica vigente (`docs/EVALUACION_TECNICA.md`). El **Anexo A** lista los pocos puntos que aún conviene confirmar contra el código. Las figuras se generan desde el DSL y ya existen en la carpeta `figuras/` (ver Anexo A).
+> **Nota de trabajo.** Versión editable del Word de la Fase 2, alineada con `sistema-pruebas-entrega-1.5.dsl` y con la evaluación técnica vigente (`docs/EVALUACION_TECNICA.md`). El **Anexo A** lista los pocos puntos que aún conviene confirmar contra el código. Las figuras se generan desde el DSL y ya existen en la carpeta `figuras/` (ver Anexo A).
 
 ---
 
 ## 1. Introducción
 
-Este documento continúa la Fase 1, en la que se justificó la plataforma interna de verificación de entregas y su modelo de captura de valor. En esta fase se evalúa el estilo arquitectónico de la API, se presenta la arquitectura de software y se justifican los patrones de diseño aplicados. El contenido es coherente con la versión 1.1 de la Fase 1 y con el modelo C4 de la plataforma (`sistema-pruebas-entrega-1.4.dsl`), contrastado con el código del repositorio.
+Este documento continúa la Fase 1, en la que se justificó la plataforma interna de verificación de entregas y su modelo de captura de valor. En esta fase se evalúa el estilo arquitectónico de la API, se presenta la arquitectura de software y se justifican los patrones de diseño aplicados. El contenido es coherente con la versión 1.1 de la Fase 1 y con el modelo C4 de la plataforma (`sistema-pruebas-entrega-1.5.dsl`), contrastado con el código del repositorio.
 
-La plataforma está formada por una aplicación web progresiva en React, una API en Java 17 con Spring Boot 3.3 y una base de datos PostgreSQL 16 cuyo esquema gestiona Flyway. En producción, la aplicación web se publica en Cloudflare Pages y la API con su base de datos en una instancia de AWS EC2. Cada patrón se clasifica según su estado real en el código (implementado, parcial o no implementado), y las brechas que persisten se recogen en el apartado 6.
+La plataforma está formada por una aplicación web progresiva en React, una API en Java 17 con Spring Boot 3.3 y una base de datos PostgreSQL 16 cuyo esquema gestiona Flyway. En producción, la aplicación web se publica en Cloudflare Pages y la API en una instancia de AWS EC2 y la base de datos en Amazon RDS for PostgreSQL. Cada patrón se clasifica según su estado real en el código (implementado, parcial o no implementado), y las brechas que persisten se recogen en el apartado 6.
 
 ## 2. Evaluación del estilo arquitectónico
 
@@ -44,7 +44,7 @@ Se compararon los tres estilos propuestos (REST, GraphQL y gRPC) frente a las co
 Se adopta **REST** con recursos en JSON, verbos HTTP y códigos de estado estándar, en el nivel 2 del modelo de madurez de Richardson. HATEOAS no se incorpora porque el único consumidor es un cliente propio que conoce el contrato. Las decisiones de diseño del contrato son:
 
 - **Versionado por ruta.** Los ocho controladores de negocio cuelgan de `/api/v1`, agrupados por actor (`/api/v1/auth`, `/api/v1/driver`, `/api/v1/admin`). Las rutas de infraestructura (`/actuator/health`, `/v3/api-docs`, `/swagger-ui`) no se versionan porque no forman parte del contrato de negocio.
-- **Contrato documentado.** springdoc-openapi publica la especificación en `/v3/api-docs` y la interfaz Swagger en `/swagger-ui`, con el esquema de seguridad `bearerAuth`.
+- **Contrato documentado.** springdoc-openapi publica la especificación en `/v3/api-docs` y la interfaz Swagger en `/swagger-ui`, con el esquema de seguridad `sessionCookie` (`apiKey` en la cookie `access_token`). En los entornos desplegados, el Nginx de borde exige además usuario y contraseña (Basic Auth con `htpasswd`) para esas dos rutas.
 - **Códigos con significado.** 201 con cabecera `Location` al crear, 204 al eliminar, 409 ante un conflicto de estado (entrega ya confirmada, integridad referencial), 422 ante un PIN inválido y 503 con el circuito abierto.
 - **Error uniforme.** Todas las respuestas de error usan `{message, errors}`, de modo que el frontend las lee siempre igual.
 - **Acciones de negocio.** `/confirm`, `/incident` y `/publish` se modelan como POST, un estilo cercano a RPC que se justifica porque representan comandos con reglas propias y no simples cambios de estado.
@@ -65,7 +65,7 @@ Se adopta **REST** con recursos en JSON, verbos HTTP y códigos de estado están
 
 ## 3. Arquitectura de software: modelo C4
 
-La arquitectura se documenta con el modelo C4 en Structurizr (`sistema-pruebas-entrega-1.4.dsl`). La versión 1.4 parte de la 1.3 (que ya coincidía con el código) y la actualiza tras la recalificación técnica en vivo de `docs/EVALUACION_TECNICA.md` §17/§18: el frontend migró a TypeScript, el adaptador de facturas dejó `JdbcTemplate` por Spring Data JPA, se agregaron el Retry y el Cache Aside junto al Circuit Breaker y al rate limiting del login, y la vista de despliegue ahora incluye el Nginx de borde de la EC2 y de dónde se descargan las imágenes versionadas (GHCR, publicadas por `.github/workflows/cd.yml`). No incluye elementos que no estén implementados. Las figuras se generaron directamente desde el modelo.
+La arquitectura se documenta con el modelo C4 en Structurizr (`sistema-pruebas-entrega-1.5.dsl`). La versión 1.5 parte de la 1.4 y solo cambia la vista de despliegue: la base de datos de producción es Amazon RDS (un nodo propio dentro de AWS, fuera de la EC2) en vez de un contenedor PostgreSQL. La versión 1.4 parte de la 1.3 (que ya coincidía con el código) y la actualiza tras la recalificación técnica en vivo de `docs/EVALUACION_TECNICA.md` §17/§18: el frontend migró a TypeScript, el adaptador de facturas dejó `JdbcTemplate` por Spring Data JPA, se agregaron el Retry y el Cache Aside junto al Circuit Breaker y al rate limiting del login, y la vista de despliegue ahora incluye el Nginx de borde de la EC2 y de dónde se descargan las imágenes versionadas (GHCR, publicadas por `.github/workflows/cd.yml`). No incluye elementos que no estén implementados. Las figuras se generaron directamente desde el modelo.
 
 ### 3.1 Diagrama de contexto (nivel 1)
 
@@ -95,7 +95,7 @@ La infraestructura que conecta estos contenedores depende del entorno: en local,
 
 La Figura 3 detalla la API. El recorrido de una petición muestra la ubicación de cada patrón:
 
-- **Entrada y seguridad.** Las peticiones llegan al filtro JWT, que valida el token y aplica el rol de cada ruta: `/api/v1/auth`, `/v3/api-docs` y `/swagger-ui` son públicos, `/api/v1/driver` admite CONDUCTOR y ADMIN, y `/api/v1/admin` exige ADMIN.
+- **Entrada y seguridad.** Las peticiones llegan al filtro JWT, que valida el token y aplica el rol de cada ruta: `/api/v1/auth` es público, `/v3/api-docs` y `/swagger-ui` no exigen JWT pero solo son alcanzables a través del Nginx de borde, que los protege con Basic Auth (`deploy/nginx/snippets/api-docs.conf`), `/api/v1/driver` admite CONDUCTOR y ADMIN, y `/api/v1/admin` exige ADMIN.
 - **Controladores REST** (adaptadores de entrada): autenticación, conductor, facturas, equipo, historial, tablero, costos y resiliencia. El manejador global de excepciones traduce los errores de dominio a códigos HTTP con un formato único.
 - **Servicios de aplicación**: autenticación, entregas, historial y métricas, gestión de equipo, gestión de facturas y costo por entrega. Cada controlador delega en su servicio a través de un puerto de entrada.
 - **Circuit Breaker del ERP.** El breaker `erpGateway` se aplica dentro del adaptador de facturas y protege la consulta, la confirmación y la gestión de facturas. El simulador de fallas permite demostrar su ciclo desde el panel.
@@ -138,7 +138,8 @@ La Figura 6 muestra el despliegue de producción, elegido por su bajo costo para
 
 - **Cloudflare Pages** aloja los archivos estáticos de la PWA (build de Vite) y los distribuye desde su red.
 - **DNS y proxy de Cloudflare** resuelven el dominio de la API, terminan TLS y ocultan la IP del servidor. Es el punto de entrada de todas las peticiones a la API (apartado 4.2).
-- **Una instancia AWS EC2 con Elastic IP** ejecuta con Docker Compose el contenedor de la API y el de PostgreSQL. La Elastic IP mantiene fija la dirección a la que apunta el DNS, y la base de datos no publica su puerto fuera de la máquina. El backend expone `/actuator/health` para el chequeo de salud y aplica las migraciones de Flyway al arrancar.
+- **Una instancia AWS EC2 con Elastic IP** ejecuta con Docker Compose el Nginx de borde y el contenedor de la API. La Elastic IP mantiene fija la dirección a la que apunta el DNS. El backend expone `/actuator/health` para el chequeo de salud y aplica las migraciones de Flyway al arrancar.
+- **Amazon RDS for PostgreSQL** aloja la base de datos como servicio gestionado, fuera de la EC2 (ya no hay un contenedor de PostgreSQL en la VM). Su *security group* solo admite el puerto 5432 desde el de la EC2, el backend se conecta con TLS verificado (`DB_SSL_MODE=verify-full`, con la CA de RDS incluida en la imagen) y los respaldos son los *snapshots* automáticos de RDS. El contenedor `postgres` de `docker-compose.yml` (profile `db`) queda solo para desarrollo local.
 
 ![Figura 6. Vista de despliegue de producción.](figuras/c4_despliegue.png)
 
@@ -278,13 +279,13 @@ Esta ronda de validación contó los archivos de puertos y revisó el frontend c
 - **Imagen base del backend.** Confirmado `eclipse-temurin 17` en `backend/Dockerfile` (build con `maven:3.9.9-eclipse-temurin-17`, runtime `eclipse-temurin:17-jre-jammy`); coincide con el nodo "Contenedor backend" del DSL.
 - **Enrutamiento de la SPA en Cloudflare Pages.** Ya existe `frontend/public/_redirects` (`/* /index.html 200`). Reflejado en 3.6.
 - **Compose de producción para la EC2 (resuelto).** `deploy/docker-compose.yml` ya existe: nginx + backend + Postgres opcional, parametrizado por `--env-file deploy/env/<entorno>.env` y por profiles (`db`, `frontend`, `demo`); sin datos demo por defecto, con `JWT_SECRET`/`ADMIN_PASSWORD` propios exigidos por `SecretsGuardRunner`. Reflejado en 3.6.
-- **Cómo llega Cloudflare a la EC2 y dónde se termina TLS (resuelto).** `deploy/nginx/templates/api.conf.template` + `deploy/nginx/snippets/tls.conf`: el Nginx de la EC2 termina el TLS de origen (Cloudflare en modo Full strict) y reenvía `/api/` al contenedor backend; ya está agregado como nodo de infraestructura (`nginx`) en la vista de despliegue de `sistema-pruebas-entrega-1.4.dsl`.
+- **Cómo llega Cloudflare a la EC2 y dónde se termina TLS (resuelto).** `deploy/nginx/templates/api.conf.template` + `deploy/nginx/snippets/tls.conf`: el Nginx de la EC2 termina el TLS de origen (Cloudflare en modo Full strict) y reenvía `/api/` al contenedor backend; ya está agregado como nodo de infraestructura (`nginx`) en la vista de despliegue de `sistema-pruebas-entrega-1.5.dsl`.
 
-**Carpeta `figuras/` (resuelto).** Las seis imágenes de la tabla de abajo ya se generaron desde `sistema-pruebas-entrega-1.4.dsl` y existen en el repositorio: `structurizr-cli` (imagen Docker `structurizr/cli:2025.11.09`, que trae Graphviz) exportó las seis vistas a DOT y se renderizaron a PNG con `dot -Tpng`. La vista dinámica se probó también exportada a Mermaid y renderizada con `mermaid-cli`, pero el resultado tenía texto superpuesto sobre las flechas; se usó la versión Graphviz, más legible. Al exportar `C4-Componentes-API` un `->` dentro de la descripción del Circuit Breaker (texto libre, no relación del modelo) rompía el parser de etiquetas HTML de Graphviz; se corrigió el texto en el `.dsl` ("Circuito abierto -> 503" pasó a "Circuito abierto: responde 503") sin cambiar su significado.
+**Carpeta `figuras/` (resuelto).** Las seis imágenes de la tabla de abajo ya se generaron desde `sistema-pruebas-entrega-1.5.dsl` y existen en el repositorio: `structurizr-cli` (imagen Docker `structurizr/cli:2025.11.09`, que trae Graphviz) exportó las seis vistas a DOT y se renderizaron a PNG con `dot -Tpng`. La vista dinámica se probó también exportada a Mermaid y renderizada con `mermaid-cli`, pero el resultado tenía texto superpuesto sobre las flechas; se usó la versión Graphviz, más legible. Al exportar `C4-Componentes-API` un `->` dentro de la descripción del Circuit Breaker (texto libre, no relación del modelo) rompía el parser de etiquetas HTML de Graphviz; se corrigió el texto en el `.dsl` ("Circuito abierto -> 503" pasó a "Circuito abierto: responde 503") sin cambiar su significado.
 
 ### Figuras
 
-| Figura | Vista en `sistema-pruebas-entrega-1.4.dsl` | Archivo |
+| Figura | Vista en `sistema-pruebas-entrega-1.5.dsl` | Archivo |
 |---|---|---|
 | 1 | `C4-Contexto` | `figuras/c4_contexto.png` |
 | 2 | `C4-Contenedores` | `figuras/c4_contenedores.png` |

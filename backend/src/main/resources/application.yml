@@ -109,8 +109,15 @@ springdoc:
   override-with-generic-response: false
   swagger-ui:
     disable-swagger-default-url: true
+    # Sin validador externo: por defecto la UI pide un badge a validator.swagger.io (envia la URL
+    # del spec a un tercero, y el CSP del nginx de borde solo permite recursos del mismo origen).
+    validator-url: none
     tags-sorter: alpha
     operations-sorter: alpha
+    # Mandar X-XSRF-TOKEN (cookie XSRF-TOKEN) en "Try it out"; sin esto todo POST/PUT/DELETE
+    # posterior al login responde 403 (SecurityConfig usa CSRF doble-cookie).
+    csrf:
+      enabled: true
 
 logging:
   level:

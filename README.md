@@ -107,30 +107,38 @@ En el navegador permite el acceso a ubicacion/camara desde `localhost`.
 
 ## Swagger UI y OpenAPI
 
-Con el entorno mock encendido, abre:
+nginx expone la documentacion del backend protegida con **Basic Auth** (usuario y clave
+de un `htpasswd`); el resto de `/api/` no cambia. Rutas (tras el login de nginx):
 
-- **Swagger UI:** http://localhost:18091/swagger-ui/index.html
-- **OpenAPI JSON:** http://localhost:18091/v3/api-docs
-- **OpenAPI YAML:** http://localhost:18091/v3/api-docs.yaml
+- **Swagger UI:** `https://<SERVER_NAME>/swagger-ui/index.html` (local: `http://localhost:<HTTP_PORT>/...`)
+  En el escenario A (solo API, `NGINX_SITE=api`), abrir la raiz `https://<SERVER_NAME>/` en el navegador redirige (302) a Swagger.
+- **OpenAPI JSON / YAML:** `/v3/api-docs` y `/v3/api-docs.yaml`
 
-Si acabas de incorporar esta configuracion, reconstruye el backend:
+Crear el usuario de documentacion (una vez por entorno, en el host donde corre nginx;
+`deploy/secrets/` esta ignorado por git y se monta en `/etc/nginx/secrets`):
 
-```powershell
-docker compose -f docker-compose.mock.yml up -d --build backend
+```bash
+printf 'docs:%s\n' "$(openssl passwd -6 'CLAVE-LARGA')" > deploy/secrets/docs.htpasswd
+sudo chown 101:101 deploy/secrets/docs.htpasswd && sudo chmod 600 deploy/secrets/docs.htpasswd
+docker compose -f deploy/docker-compose.yml --env-file deploy/env/<entorno>.env exec nginx nginx -s reload
 ```
 
-Para probar los endpoints desde Swagger:
+Sin ese archivo, esas rutas responden 401 (nadie entra); `/api/` y `/healthz` siguen igual.
+Para rotar la clave, regenera el archivo y recarga nginx.
 
-1. Abre **Autenticacion → POST /api/auth/login → Try it out**.
-2. Ingresa `admin` / `admin123` (o las credenciales de tu conductor) y pulsa **Execute**.
-3. Copia el campo `token` de la respuesta.
-4. Pulsa **Authorize**, pega solo el token, sin escribir `Bearer`, y confirma.
-5. Abre cualquier endpoint permitido para tu rol y usa **Try it out → Execute**.
+El nginx tambien envia un `Content-Security-Policy` por ruta (`deploy/nginx/snippets/csp-map.conf`): estricto para `/api/` y
+acotado al mismo origen para Swagger UI, de modo que la UI funciona sin recursos externos.
+Si pruebas en local por un puerto distinto de 80, la URL del servidor de Swagger pierde el
+puerto (`Host $host`) y el CSP bloquea "Try it out": usa el puerto 80 (`HTTP_PORT=80`).
 
-La documentacion se puede abrir sin iniciar sesion; las operaciones de negocio
-mantienen la autenticacion JWT y sus permisos. Las llamadas desde Swagger usan
-la base del entorno actual y pueden crear o modificar datos.
-Con `docker-compose.yml`, usa el puerto `8091` en las URL anteriores.
+Para probar endpoints desde Swagger (la API usa cookie `HttpOnly` + CSRF, no Bearer):
+
+1. Abre **auth → POST /api/v1/auth/login → Try it out**, ingresa tus credenciales y **Execute**;
+   el navegador guarda la cookie de sesion.
+2. Abre cualquier endpoint permitido para tu rol y usa **Try it out → Execute**
+   (Swagger UI envia `X-XSRF-TOKEN` solo, `springdoc.swagger-ui.csrf.enabled`).
+
+Las llamadas usan la base del entorno actual y pueden crear o modificar datos.
 
 ## API de facturas (administrador)
 
@@ -572,8 +580,8 @@ seguridad recomendada para builds reproducibles.
 el de arquitectura y patrones (`Fase2_Arquitectura_Patrones_API.md`), el contrato de la API
 (`Fase3` -- ver `openapi.json`, exportado real desde `/v3/api-docs`) y el de desarrollo,
 seguridad, pruebas y despliegue (`Fase4_Desarrollo_Seguridad_Despliegue.md`), ademas del
-modelo C4. La version **vigente** del modelo C4 es `docs/sistema-pruebas-entrega-1.4.dsl`
-(las revisiones `-1.0`, `-1.1`, `-1.2` y `-1.3` se conservan solo como historial de diseño,
+modelo C4. La version **vigente** del modelo C4 es `docs/sistema-pruebas-entrega-1.5.dsl`
+(las revisiones `-1.0` a `-1.4` se conservan solo como historial de diseño,
 ya superadas). `docs/openapi.json` es el contrato OpenAPI 3 real, exportado desde
 `GET /v3/api-docs` con el backend corriendo (23 operaciones en los 8 controladores de
 negocio, todas con `summary`); para explorarlo interactivamente, `/swagger-ui/index.html`
