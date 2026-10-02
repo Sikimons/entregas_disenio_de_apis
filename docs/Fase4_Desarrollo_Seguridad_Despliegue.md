@@ -70,6 +70,8 @@ HMAC-SHA256, con expiración configurable (480 minutos).
   Nginx. `springdoc.swagger-ui.csrf.enabled` hace que "Try it out" envíe `X-XSRF-TOKEN`,
   coherente con el CSRF de doble cookie. Verificado con Nginx real: 401 sin credenciales o
   con clave errónea, 200 con la correcta.
+  En el Nginx de la API la raíz `/` redirige (302) a `/swagger-ui/index.html`, de modo que abrir
+  el dominio de la API en el navegador lleva a la documentación; las demás rutas no definidas siguen en 404.
 - **Content-Security-Policy en el Nginx de la API** (`deploy/nginx/snippets/csp-map.conf`),
   distinta por ruta y enviada desde el nivel `server` para no perder el HSTS: `/api/**`
   (solo JSON) con `default-src 'none'; frame-ancestors 'none'`, y Swagger UI / `/v3/api-docs`

@@ -111,6 +111,7 @@ nginx expone la documentacion del backend protegida con **Basic Auth** (usuario 
 de un `htpasswd`); el resto de `/api/` no cambia. Rutas (tras el login de nginx):
 
 - **Swagger UI:** `https://<SERVER_NAME>/swagger-ui/index.html` (local: `http://localhost:<HTTP_PORT>/...`)
+  En el escenario A (solo API, `NGINX_SITE=api`), abrir la raiz `https://<SERVER_NAME>/` en el navegador redirige (302) a Swagger.
 - **OpenAPI JSON / YAML:** `/v3/api-docs` y `/v3/api-docs.yaml`
 
 Crear el usuario de documentacion (una vez por entorno, en el host donde corre nginx;
