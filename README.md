@@ -107,30 +107,32 @@ En el navegador permite el acceso a ubicacion/camara desde `localhost`.
 
 ## Swagger UI y OpenAPI
 
-Con el entorno mock encendido, abre:
+nginx expone la documentacion del backend protegida con **Basic Auth** (usuario y clave
+de un `htpasswd`); el resto de `/api/` no cambia. Rutas (tras el login de nginx):
 
-- **Swagger UI:** http://localhost:18091/swagger-ui/index.html
-- **OpenAPI JSON:** http://localhost:18091/v3/api-docs
-- **OpenAPI YAML:** http://localhost:18091/v3/api-docs.yaml
+- **Swagger UI:** `https://<SERVER_NAME>/swagger-ui/index.html` (local: `http://localhost:<HTTP_PORT>/...`)
+- **OpenAPI JSON / YAML:** `/v3/api-docs` y `/v3/api-docs.yaml`
 
-Si acabas de incorporar esta configuracion, reconstruye el backend:
+Crear el usuario de documentacion (una vez por entorno, en el host donde corre nginx;
+`deploy/secrets/` esta ignorado por git y se monta en `/etc/nginx/secrets`):
 
-```powershell
-docker compose -f docker-compose.mock.yml up -d --build backend
+```bash
+printf 'docs:%s\n' "$(openssl passwd -6 'CLAVE-LARGA')" > deploy/secrets/docs.htpasswd
+sudo chown 101:101 deploy/secrets/docs.htpasswd && sudo chmod 600 deploy/secrets/docs.htpasswd
+docker compose -f deploy/docker-compose.yml --env-file deploy/env/<entorno>.env exec nginx nginx -s reload
 ```
 
-Para probar los endpoints desde Swagger:
+Sin ese archivo, esas rutas responden 401 (nadie entra); `/api/` y `/healthz` siguen igual.
+Para rotar la clave, regenera el archivo y recarga nginx.
 
-1. Abre **Autenticacion → POST /api/auth/login → Try it out**.
-2. Ingresa `admin` / `admin123` (o las credenciales de tu conductor) y pulsa **Execute**.
-3. Copia el campo `token` de la respuesta.
-4. Pulsa **Authorize**, pega solo el token, sin escribir `Bearer`, y confirma.
-5. Abre cualquier endpoint permitido para tu rol y usa **Try it out → Execute**.
+Para probar endpoints desde Swagger (la API usa cookie `HttpOnly` + CSRF, no Bearer):
 
-La documentacion se puede abrir sin iniciar sesion; las operaciones de negocio
-mantienen la autenticacion JWT y sus permisos. Las llamadas desde Swagger usan
-la base del entorno actual y pueden crear o modificar datos.
-Con `docker-compose.yml`, usa el puerto `8091` en las URL anteriores.
+1. Abre **auth → POST /api/v1/auth/login → Try it out**, ingresa tus credenciales y **Execute**;
+   el navegador guarda la cookie de sesion.
+2. Abre cualquier endpoint permitido para tu rol y usa **Try it out → Execute**
+   (Swagger UI envia `X-XSRF-TOKEN` solo, `springdoc.swagger-ui.csrf.enabled`).
+
+Las llamadas usan la base del entorno actual y pueden crear o modificar datos.
 
 ## API de facturas (administrador)
 
