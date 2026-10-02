@@ -11,6 +11,8 @@ output/
 deploy/env/*.env
 deploy/certs/*
 !deploy/certs/.gitkeep
+deploy/secrets/*
+!deploy/secrets/.gitkeep
 deploy/state/
 backups/
 load-tests/env/*.env

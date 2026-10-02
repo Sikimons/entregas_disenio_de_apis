@@ -31,6 +31,8 @@ server {
         proxy_pass http://backend:8080/api/;
     }
 
+    include /etc/nginx/snippets/api-docs.conf;
+
     location / {
         include /etc/nginx/snippets/proxy-headers.conf;
         proxy_pass http://frontend:8080;

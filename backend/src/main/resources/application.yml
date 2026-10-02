@@ -111,6 +111,10 @@ springdoc:
     disable-swagger-default-url: true
     tags-sorter: alpha
     operations-sorter: alpha
+    # Mandar X-XSRF-TOKEN (cookie XSRF-TOKEN) en "Try it out"; sin esto todo POST/PUT/DELETE
+    # posterior al login responde 403 (SecurityConfig usa CSRF doble-cookie).
+    csrf:
+      enabled: true
 
 logging:
   level:

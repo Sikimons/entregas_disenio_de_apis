@@ -62,6 +62,14 @@ HMAC-SHA256, con expiración configurable (480 minutos).
 - **PIN de entrega**: se bloquea la factura tras 5 intentos fallidos consecutivos
   (5 minutos). Se guarda en texto plano por una decisión de negocio explícita, no una
   omisión: Fase 1 §3 exige que la administración pueda leerlo para comunicarlo al cliente.
+- **Documentación de la API (Swagger UI / OpenAPI)**: `/swagger-ui` y `/v3/api-docs` se
+  publican a través del Nginx de borde con Basic Auth (`auth_basic` + `htpasswd`,
+  `deploy/nginx/snippets/api-docs.conf`). El archivo `deploy/secrets/docs.htpasswd` queda
+  fuera de git y, si falta, esas rutas responden 401 (cerradas por defecto) sin afectar a
+  `/api/` ni a `/healthz`. El backend las deja sin JWT porque no es alcanzable sin pasar por
+  Nginx. `springdoc.swagger-ui.csrf.enabled` hace que "Try it out" envíe `X-XSRF-TOKEN`,
+  coherente con el CSRF de doble cookie. Verificado con Nginx real: 401 sin credenciales o
+  con clave errónea, 200 con la correcta.
 
 El esquema de seguridad se declara en el propio contrato OpenAPI
 (`docs/openapi.json`, `components.securitySchemes.sessionCookie`) como una `apiKey` en la

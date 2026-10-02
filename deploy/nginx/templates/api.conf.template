@@ -30,6 +30,8 @@ server {
         proxy_pass http://backend:8080/api/;
     }
 
+    include /etc/nginx/snippets/api-docs.conf;
+
     location / {
         return 404;
     }
