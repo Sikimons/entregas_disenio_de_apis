@@ -7,11 +7,15 @@
 # nginx corre sin root (nginx-unprivileged): escucha en 8080 dentro del contenedor; el
 # compose lo publica como HTTP_PORT.
 
+include /etc/nginx/snippets/csp-map.conf;
+
 server {
     listen 8080;
     server_name ${SERVER_NAME};
 
     client_max_body_size 15M;
+    # CSP por ruta (/api/ y Swagger), ver snippets/csp-map.conf
+    add_header Content-Security-Policy $api_csp always;
 
     location = /healthz {
         return 200 "ok";

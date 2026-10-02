@@ -5,6 +5,8 @@
 # nginx corre sin root (nginx-unprivileged): escucha en 8080/8443 dentro del contenedor;
 # el compose los publica como 80/443 (HTTP_PORT/HTTPS_PORT).
 
+include /etc/nginx/snippets/csp-map.conf;
+
 server {
     listen 8080;
     server_name ${SERVER_NAME};
@@ -18,6 +20,9 @@ server {
 
     include /etc/nginx/snippets/cloudflare-realip.conf;
     include /etc/nginx/snippets/tls.conf;
+
+    # CSP por ruta (/api/ y Swagger), ver snippets/csp-map.conf
+    add_header Content-Security-Policy $api_csp always;
 
     client_max_body_size 15M;
 

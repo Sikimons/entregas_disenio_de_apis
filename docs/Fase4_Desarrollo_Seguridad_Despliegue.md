@@ -70,6 +70,14 @@ HMAC-SHA256, con expiración configurable (480 minutos).
   Nginx. `springdoc.swagger-ui.csrf.enabled` hace que "Try it out" envíe `X-XSRF-TOKEN`,
   coherente con el CSRF de doble cookie. Verificado con Nginx real: 401 sin credenciales o
   con clave errónea, 200 con la correcta.
+- **Content-Security-Policy en el Nginx de la API** (`deploy/nginx/snippets/csp-map.conf`),
+  distinta por ruta y enviada desde el nivel `server` para no perder el HSTS: `/api/**`
+  (solo JSON) con `default-src 'none'; frame-ancestors 'none'`, y Swagger UI / `/v3/api-docs`
+  con `script-src 'self'`, `style-src 'self' 'unsafe-inline'` (React inyecta atributos
+  `style`), `img-src`/`font-src` con `data:` y `connect-src 'self'`; `unsafe-inline` nunca
+  en scripts. Sin recursos externos (`springdoc.swagger-ui.validator-url=none` desactiva el
+  validador de swagger.io). Verificado en Chrome contra el stack real: Swagger carga completo,
+  sin violaciones de CSP, y desde "Try it out" el login responde 200 y el logout 204 (con CSRF).
 
 El esquema de seguridad se declara en el propio contrato OpenAPI
 (`docs/openapi.json`, `components.securitySchemes.sessionCookie`) como una `apiKey` en la

@@ -125,6 +125,11 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/env/<entorno>.env 
 Sin ese archivo, esas rutas responden 401 (nadie entra); `/api/` y `/healthz` siguen igual.
 Para rotar la clave, regenera el archivo y recarga nginx.
 
+El nginx tambien envia un `Content-Security-Policy` por ruta (`deploy/nginx/snippets/csp-map.conf`): estricto para `/api/` y
+acotado al mismo origen para Swagger UI, de modo que la UI funciona sin recursos externos.
+Si pruebas en local por un puerto distinto de 80, la URL del servidor de Swagger pierde el
+puerto (`Host $host`) y el CSP bloquea "Try it out": usa el puerto 80 (`HTTP_PORT=80`).
+
 Para probar endpoints desde Swagger (la API usa cookie `HttpOnly` + CSRF, no Bearer):
 
 1. Abre **auth → POST /api/v1/auth/login → Try it out**, ingresa tus credenciales y **Execute**;
