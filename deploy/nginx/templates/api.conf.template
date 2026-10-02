@@ -1,5 +1,6 @@
 # Escenario A: backend en esta VM (EC2), frontend servido aparte en Cloudflare Pages.
-# Solo expone /api; cualquier otra ruta responde 404 (el sitio estatico vive en Pages).
+# Expone /api, la documentacion (Swagger, con Basic Auth) y /healthz; la raiz redirige a
+# Swagger y cualquier otra ruta responde 404 (el sitio estatico vive en Pages).
 
 # nginx corre sin root (nginx-unprivileged): escucha en 8080/8443 dentro del contenedor;
 # el compose los publica como 80/443 (HTTP_PORT/HTTPS_PORT).
@@ -36,6 +37,13 @@ server {
     }
 
     include /etc/nginx/snippets/api-docs.conf;
+
+    # Abrir la URL de la API en el navegador lleva a Swagger (que pide su usuario/clave).
+    # Redireccion absoluta y a proposito: con una ruta relativa nginx agregaria el puerto
+    # interno (8443) al Location. 302 y no 301: el navegador no la cachea para siempre.
+    location = / {
+        return 302 https://$host/swagger-ui/index.html;
+    }
 
     location / {
         return 404;
