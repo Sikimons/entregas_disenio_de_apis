@@ -572,8 +572,8 @@ seguridad recomendada para builds reproducibles.
 el de arquitectura y patrones (`Fase2_Arquitectura_Patrones_API.md`), el contrato de la API
 (`Fase3` -- ver `openapi.json`, exportado real desde `/v3/api-docs`) y el de desarrollo,
 seguridad, pruebas y despliegue (`Fase4_Desarrollo_Seguridad_Despliegue.md`), ademas del
-modelo C4. La version **vigente** del modelo C4 es `docs/sistema-pruebas-entrega-1.4.dsl`
-(las revisiones `-1.0`, `-1.1`, `-1.2` y `-1.3` se conservan solo como historial de diseño,
+modelo C4. La version **vigente** del modelo C4 es `docs/sistema-pruebas-entrega-1.5.dsl`
+(las revisiones `-1.0` a `-1.4` se conservan solo como historial de diseño,
 ya superadas). `docs/openapi.json` es el contrato OpenAPI 3 real, exportado desde
 `GET /v3/api-docs` con el backend corriendo (23 operaciones en los 8 controladores de
 negocio, todas con `summary`); para explorarlo interactivamente, `/swagger-ui/index.html`
