@@ -13,7 +13,7 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.5: la base de 
 
             frontend = container "Aplicación web" "SPA/PWA; el rol autenticado determina la vista." "React 19 + TypeScript + Vite + vite-plugin-pwa" "Frontend" {
                 authContext = component "Contexto de autenticación" "Guarda el token y el usuario." "React Context"
-                apiClient = component "Cliente HTTP" "Axios con token Bearer; cierra sesión en 401." "Axios"
+                apiClient = component "Cliente HTTP" "Axios con cookie HttpOnly (withCredentials) y cabecera X-XSRF-TOKEN; cierra sesión en 401." "Axios"
                 loginPage = component "Inicio de sesión" "Formulario de acceso; redirige por rol." "React Component"
                 driverHome = component "Pantalla del conductor" "Busca la factura, captura foto/GPS y confirma con PIN o reporta incidencia." "React Component"
                 driverHistory = component "Historial del conductor" "Historial propio paginado y evidencia." "React Component"
@@ -57,7 +57,7 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.5: la base de 
                 loginRateLimiter = component "Limitador de intentos de login" "5 intentos por IP+usuario cada 60s; resetea tras login exitoso." "bucket4j + Caffeine" "Seguridad"
             }
 
-            db = container "Base de datos" "Facturas (PIN en texto plano), usuarios, historial y costos." "PostgreSQL 16" "Database"
+            db = container "Base de datos" "Facturas (PIN en texto plano), usuarios, historial y costos." "Amazon RDS for PostgreSQL 16" "Database"
         }
 
         // Contexto
@@ -69,7 +69,7 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.5: la base de 
         // Contenedores
         conductor -> plataforma.frontend "Usa, autenticado con su cuenta de conductor"
         administracion -> plataforma.frontend "Usa, autenticado con su cuenta de administrador"
-        plataforma.frontend -> plataforma.api "Consume la API REST (Bearer JWT)" "JSON/HTTPS"
+        plataforma.frontend -> plataforma.api "Consume la API REST (cookie HttpOnly + CSRF)" "JSON/HTTPS"
         plataforma.api -> plataforma.db "Lee y escribe" "JDBC"
 
         // Componentes del frontend
@@ -92,7 +92,7 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.5: la base de 
         plataforma.frontend.apiClient -> plataforma.api "Invoca /api/v1/*" "JSON/HTTPS"
 
         // Componentes de la API: entrada y seguridad
-        plataforma.frontend -> plataforma.api.jwtFilter "Invoca /api/v1/* con Bearer JWT" "JSON/HTTPS"
+        plataforma.frontend -> plataforma.api.jwtFilter "Invoca /api/v1/* con la cookie de sesión (JWT)" "JSON/HTTPS"
         plataforma.api.jwtFilter -> plataforma.api.jwtAdapter "Valida el token de cada petición"
         plataforma.api.jwtFilter -> plataforma.api.authController "Permite /api/v1/auth/**"
         plataforma.api.jwtFilter -> plataforma.api.driverController "Autoriza /api/v1/driver/** (ADMIN, CONDUCTOR)"
@@ -161,14 +161,15 @@ workspace "Plataforma de verificación de entregas" "Modelo C4 v1.5: la base de 
                         apiInstancia = containerInstance plataforma.api
                     }
                 }
-                rds = deploymentNode "Amazon RDS for PostgreSQL" "Base de datos gestionada, fuera de la EC2. Su security group solo admite el puerto 5432 desde el de la EC2; el backend se conecta con TLS verificado (DB_SSL_MODE=verify-full, CA de RDS en la imagen). Respaldos con los snapshots automáticos de RDS." "Amazon RDS, PostgreSQL 16" {
-                    dbInstancia = containerInstance plataforma.db
+                rds = deploymentNode "Amazon RDS" "Servicio gestionado por AWS, fuera de la EC2 y sin contenedores propios." "Amazon RDS" {
+                    dbInstancia = infrastructureNode "Base de datos (RDS for PostgreSQL 16)" "Facturas, usuarios, historial y costos. Solo acepta el puerto 5432 desde la EC2." "Amazon RDS for PostgreSQL 16" "Infraestructura,Database"
                 }
             }
             produccion.navegador.pwaInstancia -> produccion.cloudflare.pages.sitio "Descarga la PWA" "HTTPS"
             produccion.navegador.pwaInstancia -> produccion.cloudflare.proxy "Llama a la API por su dominio" "HTTPS"
             produccion.cloudflare.proxy -> produccion.aws.ec2.nginx "Reenvía a la Elastic IP" "HTTPS"
             produccion.aws.ec2.nginx -> produccion.aws.ec2.contBackend.apiInstancia "proxy_pass /api/" "HTTP"
+            produccion.aws.ec2.contBackend.apiInstancia -> produccion.aws.rds.dbInstancia "Lee y escribe" "JDBC sobre TLS (verify-full)"
         }
     }
 
