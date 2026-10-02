@@ -136,6 +136,17 @@ smoke usa 2 VUs fijos). Resultados en `load-tests/production/`.
   no cambia, pero el p95 se duplica (105→210 ms) y el p99 sube 2,6× (131→347 ms). Hay cola
   en el servidor (CPU de la EC2, pool de conexiones o créditos de instancia); falta
   confirmarlo con CloudWatch. Todas las corridas cumplen p95 < 500 ms y error < 1 %.
+- **Es un monolito en una sola instancia, la carga no se distribuye.** Todo el tráfico
+  entra a un único nodo (un contenedor backend, una JVM, un pool de conexiones y una EC2;
+  la BD es RDS, aparte). Por eso estas pruebas miden la capacidad *de una instancia*, y por
+  eso, al acercarse al límite, se ve una cola (el p95 y el p99 suben antes que la mediana)
+  y no errores. Además los seis endpoints de cada iteración comparten CPU y pool, de modo
+  que las consultas pesadas del tablero afectan a las ligeras. La diferencia con local no
+  es de arquitectura sino de tamaño de nodo y de red. Escalar horizontalmente es posible
+  (la sesión es una cookie JWT sin estado en el servidor), pero la caché Caffeine y el rate
+  limiting de bucket4j son locales a cada instancia y habría que revisarlos antes de
+  agregar réplicas; mientras tanto, la vía inmediata es vertical (más vCPU/RAM y
+  `DB_POOL_MAX_SIZE`). Detalle en `load-tests/README.md`.
 - **Brechas frente al enunciado:** en producción se llegó a 75 VUs (se piden 100–200) y no
   se corrieron spike ni breakpoint; esos resultados siguen siendo los de local.
 

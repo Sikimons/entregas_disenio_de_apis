@@ -213,8 +213,47 @@ el doble de VUs. Lo comparable es la forma: ambos sin errores, degradándose sol
   de esta EC2 queda entre 0.5 y 1.0, muy por debajo de los ~4 500 req/s del stack local.
 - Hay outliers aislados (20,5 s en una petición de la corrida 0.2; bloqueos de conexión de
   ~1,1 s por posibles retransmisiones de SYN) sin errores asociados.
+- Pendiente: etiquetar cada petición del batch (`tags: { endpoint: ... }` en `sustained.js`) para
+  ver la latencia por ruta y confirmar cuál genera la cola.
 - Pendiente frente al enunciado: en producción se llegó a 75 VUs (se piden 100-200) y no se
   corrieron `spike` ni `breakpoint`.
+
+### Cómo leer estos números: es un monolito, la carga no se distribuye
+
+La app es un **monolito desplegado como una sola instancia**: un contenedor `backend` (una
+JVM, `mem_limit` 1 GB por defecto), un `nginx` delante y una EC2. Según
+`deploy/env/production.env.example` la base de datos es RDS, un servicio aparte, pero todo
+el código de negocio corre en un único proceso. No hay balanceador ni réplicas, así que **el
+100 % del tráfico cae en el mismo nodo** y comparte sus recursos:
+
+- **Una sola capacidad que medir.** Lo que miden estas pruebas es lo que aguanta *una*
+  instancia (CPU de la EC2, hilos de Tomcat, heap de la JVM, pool de Hikari de 10
+  conexiones por defecto). Nada reparte la carga ni absorbe el exceso, por eso al acercarse
+  al límite lo que se ve es una **cola** (p95 y p99 suben antes que la mediana), no errores.
+  Es el patrón esperado de un nodo único: se degrada de forma gradual hasta saturarse.
+- **Los endpoints se pisan entre sí.** Cada iteración pide seis rutas (búsqueda de facturas,
+  historial, mapa, métricas, costo y estado del Circuit Breaker) y todas usan el mismo
+  pool y la misma CPU. Las agregaciones del tablero (`/dashboard/map` y `/metrics`) compiten
+  con las lecturas ligeras; en una arquitectura de servicios separados la ruta pesada no
+  afectaría a las demás. Hoy el resumen de k6 no separa la latencia por endpoint, así que
+  no se puede atribuir la cola a una ruta concreta (ver pendientes).
+- **Por qué el local aguantó ~4 500 req/s y la EC2 menos.** Ambos son un solo nodo, pero el
+  local es una máquina de desarrollo con CPU holgada y sin red de por medio; la EC2 es una
+  instancia mucho más pequeña con ~100 ms de RTT. La comparación mide *tamaño de nodo*, no
+  un cambio de arquitectura.
+- **El generador también es un solo punto.** k6 corre desde una única máquina y una única
+  ruta de red, así que parte de la cola y de los outliers de conexión puede venir del lado
+  del cliente y no del servidor.
+
+**Qué implica para escalar.** Con un monolito de una instancia, la salida inmediata es
+**vertical** (más vCPU/RAM, subir `DB_POOL_MAX_SIZE`; en la ronda local pasar el pool de 10
+a 30 movió el techo ~11 %). Escalar **horizontalmente** (varias réplicas detrás de un
+balanceador) es viable porque la sesión viaja en una cookie JWT sin estado en el servidor,
+pero hay estado local por instancia que habría que revisar antes: la caché Caffeine y el rate
+limiting de bucket4j (login y `/confirm`) viven en memoria de cada réplica, así que con
+varias los límites se multiplicarían y las cachés dejarían de ser coherentes entre sí.
+Estos resultados sirven como línea base de capacidad *por instancia* para dimensionar eso:
+~300 req/s con p95 ≈ 210 ms en esta EC2.
 
 ## Gráficas y carpetas
 
